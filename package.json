@@ -4,7 +4,9 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "echo \"No test specified\" && exit 0",
+    "test:precommit": "npm run test",
+    "prepare": "husky install"
   },
   "keywords": [
     "webrtc",
@@ -18,6 +20,11 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^7.0.4",
+    "lint-staged": "^12.1.7",
     "prettier": "2.5.1"
+  },
+  "lint-staged": {
+    "*.js": ["eslint --cache --fix", "npm run test:precommit"]
   }
 }
