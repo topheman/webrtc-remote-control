@@ -4,6 +4,7 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
+    "lint": "eslint --ext js .",
     "test": "echo \"No test specified\"",
     "test:precommit": "npm run test",
     "prepare": "husky install"
