@@ -11,5 +11,6 @@ module.exports = {
   },
   rules: {
     "prettier/prettier": ["error", {}, { usePrettierrc: true }],
+    "import/prefer-default-export": 0,
   },
 };

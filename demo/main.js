@@ -1,4 +1,7 @@
+import { hello } from "@webrtc-remote-control/core";
 import "./style.css";
+
+console.log(hello());
 
 document.querySelector("#app").innerHTML = `
   <h1>Hello Vite!</h1>

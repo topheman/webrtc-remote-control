@@ -1,5 +1,5 @@
 module.exports = {
   hello() {
-    console.log("Hello World");
+    console.log("Hello World in CJS");
   },
 };
