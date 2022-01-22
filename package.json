@@ -30,8 +30,11 @@
     "prettier": "2.5.1"
   },
   "lint-staged": {
-    "*.{js,css,html}": [
+    "*.js": [
       "eslint --cache --fix"
+    ],
+    "*.{css,html}": [
+      "prettier --write"
     ]
   }
 }
