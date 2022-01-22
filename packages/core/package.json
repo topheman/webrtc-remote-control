@@ -1,0 +1,11 @@
+{
+  "name": "@webrtc-remote-control/core",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"test @webrtc-remote-control/core@$npm_package_version\""
+  },
+  "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
+  "license": "ISC"
+}

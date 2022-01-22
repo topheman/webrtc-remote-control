@@ -4,8 +4,9 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
+    "diff": "lerna diff",
     "lint": "eslint --ext js .",
-    "test": "echo \"No test specified\"",
+    "test": "lerna run test",
     "test:precommit": "npm run test",
     "prepare": "husky install"
   },
@@ -22,10 +23,13 @@
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-prettier": "^4.0.0",
     "husky": "^7.0.4",
+    "lerna": "^4.0.0",
     "lint-staged": "^12.1.7",
     "prettier": "2.5.1"
   },
   "lint-staged": {
-    "*.{js,css,html}": ["eslint --cache --fix"]
+    "*.{js,css,html}": [
+      "eslint --cache --fix"
+    ]
   }
 }
