@@ -1,1 +1,3 @@
-console.log("Hello World Demo");
+const core = require("@webrtc-remote-control/core");
+
+console.log(core.hello());

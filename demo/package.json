@@ -2,10 +2,14 @@
   "name": "@webrtc-remote-control/demo",
   "version": "0.0.0",
   "description": "",
+  "private": true,
   "main": "index.js",
   "scripts": {
     "test": "echo test @webrtc-remote-control/demo@$npm_package_version"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@webrtc-remote-control/core": "^0.0.0"
+  }
 }

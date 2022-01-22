@@ -1,1 +1,5 @@
-console.log("Hello world Core");
+module.exports = {
+  hello() {
+    console.log("Hello World");
+  },
+};

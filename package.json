@@ -2,13 +2,15 @@
   "name": "webrtc-remote-control",
   "version": "0.0.1",
   "description": "",
+  "private": true,
   "main": "src/index.js",
   "scripts": {
+    "bootstrap": "lerna bootstrap",
     "diff": "lerna diff",
     "lint": "eslint --ext js .",
     "test": "lerna run test",
     "test:precommit": "npm run test",
-    "prepare": "husky install"
+    "prepare": "husky install; npm run bootstrap"
   },
   "keywords": [
     "webrtc",
