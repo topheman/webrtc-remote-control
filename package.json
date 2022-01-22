@@ -26,6 +26,6 @@
     "prettier": "2.5.1"
   },
   "lint-staged": {
-    "*.{js,css,html}": ["eslint --cache --fix", "npm run test:precommit"]
+    "*.{js,css,html}": ["eslint --cache --fix"]
   }
 }
