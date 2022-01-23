@@ -12,8 +12,8 @@ node_modules
 .pnp.js
 
 # production
-/build
-/dist
+build
+dist
 
 # misc
 .DS_Store

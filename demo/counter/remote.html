@@ -35,6 +35,27 @@
       <h2>remote</h2>
       <p>Some description ...</p>
     </div>
-    <script type="module" src="../main.js"></script>
+    <template>
+      <div class="initial-loading">
+        <span>Loading ...</span>
+      </div>
+      <errors-display></errors-display>
+      <qrcode-display width="160" height="160"></qrcode-display>
+      <p>
+        👆Snap the the QR code or <span class="open-remote">click here</span> to
+        open an
+        <strong>other window from where you will control the counters</strong>
+        on this page (like with a remote).
+      </p>
+      <p>
+        Global counter:
+        <counter-display data="0" class="global-counter"></counter-display>
+      </p>
+      <remotes-list></remotes-list>
+      <console-display></console-display>
+      <div class="static-content-wrapper"></div>
+      <footer-display from="2019"></footer-display>
+    </template>
+    <script type="module" src="./js/remote.js"></script>
   </body>
 </html>
