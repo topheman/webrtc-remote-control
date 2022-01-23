@@ -1,0 +1,15 @@
+.global-counter {
+  color: #900000;
+  font-weight: bold;
+  font-size: 120%;
+}
+qrcode-display {
+  display: block;
+  width: 160px;
+  margin: 0 auto;
+}
+.open-remote {
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: bold;
+}

@@ -1,0 +1,58 @@
+body {
+  /* prevent zoom when double tap: https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action#Syntax */
+  touch-action: manipulation;
+}
+.counter-control {
+  text-align: center;
+}
+.counter-control button {
+  width: 100px;
+  height: 100px;
+  font-size: 400%;
+  padding: 0;
+  color: #900000;
+  border: 1px solid #900000;
+  /* prevent user to trigger a selection (mostly on mobile) */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.counter-control button:disabled {
+  color: #ffc2c2;
+}
+console-display {
+  display: block;
+  margin-top: 20px;
+}
+.form-set-name label {
+  margin-top: 15px;
+  text-align: center;
+  display: block;
+  /* border: 1px solid red; */
+}
+.form-set-name label input,
+.form-set-name label button {
+  border-radius: 0;
+  font-size: 150%;
+  display: inline-block;
+  padding: 5px;
+  margin: 0px;
+  border: 1px solid #900000;
+}
+.form-set-name label input {
+  vertical-align: top;
+  width: 220px;
+}
+.form-set-name label input:disabled {
+  color: #ffc2c2;
+}
+.form-set-name label button {
+  color: white;
+  background: #900000;
+}
+.form-set-name label button:disabled {
+  color: #ffc2c2;
+}

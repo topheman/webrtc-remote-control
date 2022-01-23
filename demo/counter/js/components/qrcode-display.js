@@ -1,4 +1,8 @@
-// todo update qrcode implementation
+if (typeof QRCode === "undefined") {
+  throw new Error(
+    "Missing `QRCode` function, please include `qrcode.min.js` as script tags before from https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"
+  );
+}
 
 class QRCodeDisplay extends HTMLElement {
   constructor() {
