@@ -1,0 +1,31 @@
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+a,
+strong {
+  color: #900000;
+}
+button {
+  -webkit-appearance: none;
+}
+
+.hide {
+  display: none;
+}
+
+h1 a {
+  text-decoration: none;
+}
+
+@media only screen and (max-width: 410px) {
+  .title {
+    font-size: 120%;
+  }
+}
