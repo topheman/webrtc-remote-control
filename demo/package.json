@@ -8,7 +8,6 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "serve": "serve ./dist",
     "test": "echo test @webrtc-remote-control/demo@$npm_package_version"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
@@ -17,7 +16,6 @@
     "@webrtc-remote-control/core": "^0.0.0"
   },
   "devDependencies": {
-    "serve": "^13.0.2",
     "vite": "^2.7.13"
   }
 }

@@ -6,8 +6,15 @@
   "main": "src/index.js",
   "scripts": {
     "bootstrap": "lerna bootstrap",
+    "build": "npm run build:core && npm run build:demo",
+    "build:core": "lerna run --stream --scope @webrtc-remote-control/core build",
+    "build:demo": "lerna run --stream --scope @webrtc-remote-control/demo build",
+    "dev": "lerna run --parallel --scope @webrtc-remote-control/core --scope @webrtc-remote-control/demo dev",
+    "dev:core": "lerna run --stream --scope @webrtc-remote-control/core dev",
+    "dev:demo": "lerna run --stream --scope @webrtc-remote-control/demo dev",
     "diff": "lerna diff",
     "lint": "eslint --ext js .",
+    "preview": "lerna run --stream --scope @webrtc-remote-control/demo preview",
     "test": "lerna run test",
     "test:precommit": "npm run test",
     "prepare": "husky install; npm run bootstrap"
