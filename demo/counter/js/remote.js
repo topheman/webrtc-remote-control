@@ -1,3 +1,5 @@
-import { hello } from "@webrtc-remote-control/core";
+import { remote } from "@webrtc-remote-control/core";
+import { hello } from "@webrtc-remote-control/core/remote";
 
-console.log(`${hello()} this is remote`);
+remote.hello();
+hello();

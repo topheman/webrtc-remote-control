@@ -1,8 +1,10 @@
-import { hello } from "@webrtc-remote-control/core";
+import { master } from "@webrtc-remote-control/core";
+import { hello } from "@webrtc-remote-control/core/master";
 
 import { createView } from "./master.view";
 
-console.log(`${hello()} this is master`);
+master.hello();
+hello();
 
 function init() {
   // create view based on <template> tag content
