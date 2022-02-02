@@ -17,7 +17,10 @@
     "build:core": "microbundle build --raw",
     "build:master": "microbundle build --raw --cwd master",
     "build:remote": "microbundle build --raw --cwd remote",
-    "dev": "microbundle watch",
+    "dev": "npm-run-all --parallel dev:*",
+    "dev:core": "microbundle watch --raw",
+    "dev:master": "microbundle watch --raw --cwd master",
+    "dev:remote": "microbundle watch --raw --cwd remote",
     "test": "echo \"test @webrtc-remote-control/core@$npm_package_version\""
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
