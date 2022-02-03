@@ -17,7 +17,7 @@
     "preview": "lerna run --stream --scope @webrtc-remote-control/demo preview",
     "test": "npm run test:core",
     "test:core": "npm run --prefix packages/core test",
-    "test:precommit": "npm run test",
+    "test:core:precommit": "npm run --prefix packages/core test:precommit",
     "prepare": "husky install; npm run bootstrap"
   },
   "keywords": [
@@ -40,6 +40,9 @@
   "lint-staged": {
     "*.js": [
       "eslint --cache --fix"
+    ],
+    "packages/core/**/*.js": [
+      "npm run test:core:precommit"
     ],
     "*.{css,html}": [
       "prettier --write"

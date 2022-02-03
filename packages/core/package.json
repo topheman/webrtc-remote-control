@@ -21,7 +21,8 @@
     "dev:core": "microbundle watch --raw",
     "dev:master": "microbundle watch --raw --cwd master",
     "dev:remote": "microbundle watch --raw --cwd remote",
-    "test": "jest"
+    "test": "jest",
+    "test:precommit": "jest --bail --findRelatedTests"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "ISC",
