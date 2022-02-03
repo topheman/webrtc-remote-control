@@ -15,7 +15,8 @@
     "diff": "lerna diff",
     "lint": "eslint --ext js .",
     "preview": "lerna run --stream --scope @webrtc-remote-control/demo preview",
-    "test": "lerna run test",
+    "test": "npm run test:core",
+    "test:core": "npm run --prefix packages/core test",
     "test:precommit": "npm run test",
     "prepare": "husky install; npm run bootstrap"
   },
