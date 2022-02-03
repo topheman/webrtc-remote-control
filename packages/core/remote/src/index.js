@@ -2,6 +2,8 @@
 import { someUtil } from "../../shared/common";
 
 export function hello() {
-  console.log("Hello World from remote");
-  someUtil("remote");
+  return {
+    type: "remote",
+    message: someUtil("remote"),
+  };
 }

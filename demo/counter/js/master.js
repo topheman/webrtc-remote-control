@@ -3,8 +3,8 @@ import { hello } from "@webrtc-remote-control/core/master";
 
 import { createView } from "./master.view";
 
-master.hello();
-hello();
+console.log("@webrtc-remote-control/core", master.hello());
+console.log("@webrtc-remote-control/core/hello", hello());
 
 function init() {
   // create view based on <template> tag content
