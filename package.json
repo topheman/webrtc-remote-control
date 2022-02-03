@@ -18,6 +18,7 @@
     "test": "npm run test:core",
     "test:core": "npm run --prefix packages/core test",
     "test:core:precommit": "npm run --prefix packages/core test:precommit",
+    "test:core:watch": "npm run --prefix packages/core test:watch",
     "prepare": "husky install; npm run bootstrap"
   },
   "keywords": [
