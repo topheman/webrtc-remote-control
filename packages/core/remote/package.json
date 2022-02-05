@@ -8,7 +8,7 @@
   "module": "./dist/remote.module.js",
   "umd:main": "./dist/remote.umd.js",
   "exports": "./dist/remote.modern.js",
-  "source": "src/index.js",
+  "source": "src/core.remote.js",
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "ISC"
 }

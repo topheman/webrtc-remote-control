@@ -8,7 +8,7 @@
   "module": "./dist/master.module.js",
   "umd:main": "./dist/master.umd.js",
   "exports": "./dist/master.modern.js",
-  "source": "src/index.js",
+  "source": "src/core.master.js",
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "ISC"
 }

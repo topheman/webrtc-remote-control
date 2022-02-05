@@ -6,7 +6,7 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.module.js",
   "unpkg": "./dist/index.umd.js",
-  "source": "./src/index.js",
+  "source": "./src/core.index.js",
   "exports": {
     ".": "./dist/index.modern.js",
     "./master": "./master/dist/master.modern.js",
