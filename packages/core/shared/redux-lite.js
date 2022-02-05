@@ -2,7 +2,7 @@
 /**
  * from https://dev.to/selbekk/redux-in-27-lines-2i92
  *
- * Used in prvious project https://github.com/topheman/webrtc-experiments/blob/master/src/js/redux-lite.js
+ * Used in previous project https://github.com/topheman/webrtc-experiments/blob/master/src/js/redux-lite.js
  */
 export function createStore(initialReducer, initialState = {}, enhancer) {
   if (enhancer) {
