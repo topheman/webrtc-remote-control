@@ -1,6 +1,6 @@
 {
   "name": "core-remote",
-  "amdName": "coreRemote",
+  "amdName": "webrtcRemoteControlRemote",
   "version": "0.0.0",
   "private": true,
   "description": "",

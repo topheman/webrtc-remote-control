@@ -5,5 +5,6 @@ export function hello() {
   return {
     type: "remote",
     message: someUtil("remote"),
+    mode: process.env.NODE_ENV !== "production" ? "development" : "production",
   };
 }

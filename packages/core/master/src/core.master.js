@@ -5,5 +5,6 @@ export function hello() {
   return {
     type: "master",
     message: someUtil("master"),
+    mode: process.env.NODE_ENV !== "production" ? "development" : "production",
   };
 }

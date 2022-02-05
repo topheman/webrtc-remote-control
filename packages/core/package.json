@@ -1,5 +1,6 @@
 {
   "name": "@webrtc-remote-control/core",
+  "amdName": "webrtcRemoteControl",
   "version": "0.0.0",
   "description": "",
   "type": "module",
@@ -15,6 +16,8 @@
   "scripts": {
     "build": "npm-run-all --parallel build:*",
     "build:core": "microbundle build --raw",
+    "build:core-umd-dev": "microbundle build --raw --define process.env.NODE_ENV='development' --no-pkg-main -o dist/webrtc-remote-control.umd.dev.js -f umd",
+    "build:core-umd-prod": "microbundle build --raw --define process.env.NODE_ENV='production' --no-pkg-main -o dist/webrtc-remote-control.umd.prod.js -f umd",
     "build:master": "microbundle build --raw --cwd master",
     "build:remote": "microbundle build --raw --cwd remote",
     "dev": "npm-run-all --parallel dev:*",
