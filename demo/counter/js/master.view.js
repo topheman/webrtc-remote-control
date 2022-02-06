@@ -1,5 +1,3 @@
-import { makeRemotePeerUrl } from "./common";
-
 import "./components/console-display";
 // import "./components/counter-display";
 import "./components/errors-display";
@@ -8,15 +6,27 @@ import "./components/qrcode-display";
 import "./components/remotes-list";
 // import "./components/twitter-button";
 
+function makeRemotePeerUrl(peerId) {
+  return `${
+    window.location.origin +
+    window.location.pathname
+      .replace(/\/$/, "")
+      .split("/")
+      .slice(0, -1)
+      .join("/")
+  }/remote.html#${peerId}`;
+}
+
 export function createView(templateNode, staticContent) {
+  let peerId = null;
   const content = document.createElement("div");
   content.appendChild(templateNode);
   content.querySelector(".static-content-wrapper").appendChild(staticContent);
   content.addEventListener(
     "click",
     (e) => {
-      if (e.target.getAttribute("disabled") !== "disabled") {
-        console.log('Do someting on "Click here to open"');
+      if (e.target.classList.contains("open-remote") && peerId) {
+        window.open(makeRemotePeerUrl(peerId));
       }
     },
     false
@@ -68,12 +78,9 @@ export function createView(templateNode, staticContent) {
         buttonOpenRemote.setAttribute("disabled", "disabled");
       }
     },
-    setPeerId(peerId) {
-      console.log(`todo setsetQrcode(${peerId})`);
-      // todo
-      // update qrcode / update link to open
-    },
-    setQrcode(peerId) {
+    setPeerId(id) {
+      console.log(`update peerId: (${id})`);
+      peerId = id;
       if (peerId) {
         qrcodeDisplay.setAttribute("data", makeRemotePeerUrl(peerId));
       } else {

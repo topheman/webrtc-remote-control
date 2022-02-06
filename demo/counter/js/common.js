@@ -1,10 +1,3 @@
-// todo fix problem
-export function makeRemotePeerUrl(peerId) {
-  return `${
-    window.location.origin + window.location.pathname.replace(/\/$/, "")
-  }/remote.html#${peerId}`;
-}
-
 // todo part of it should be in core (expose humanized error ?)
 export function humanizeErrors(errors = []) {
   const transform = [
