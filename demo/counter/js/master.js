@@ -10,7 +10,7 @@ import { createView } from "./master.view";
 console.log("@webrtc-remote-control/core", master.hello());
 console.log("@webrtc-remote-control/core/hello", hello());
 
-function init() {
+async function init() {
   // create view based on <template> tag content
   const templateNode = document.importNode(
     document.querySelector("template").content,
@@ -34,28 +34,37 @@ function init() {
 
   // eslint-disable-next-line no-undef
   const peer = new Peer(getPeerjsID());
-  const { connections } = connect(peer);
-  window.connections = connections;
   peer.on("open", (peerId) => {
     setPeerId(peerId);
     showLoader(false);
   });
+  const wrcMaster = await connect(peer);
+  window.wrcMaster = wrcMaster;
+  wrcMaster.on("remote.connect", ({ id }) => {
+    console.log("master - remote.connect", id);
+    counters = [...counters, { counter: 0, peerId: id }];
+    setRemoteList(counters);
+  });
+  wrcMaster.on("data", ({ id }, data) => {
+    console.log("on data", id, data);
+  });
+  console.log("master opened");
   peer.on("error", () => {
     setPeerId(null);
     showLoader(false);
     enableButtonOpenRemote(false);
   });
-  peer.on("connection", (conn) => {
-    console.log("master on.connection");
-    counters = [...counters, { counter: 0, peerId: conn.peer }];
-    setRemoteList(counters);
-    conn.on("data", (...data) => {
-      console.log(conn.peer, data);
-    });
-  });
-  peer.on("data", (...data) => {
-    console.log(data);
-  });
+  // peer.on("connection", (conn) => {
+  //   console.log("master on.connection");
+  //   counters = [...counters, { counter: 0, peerId: conn.peer }];
+  //   setRemoteList(counters);
+  //   conn.on("data", (...data) => {
+  //     console.log(conn.peer, data);
+  //   });
+  // });
+  // peer.on("data", (...data) => {
+  //   console.log(data);
+  // });
   // app
   // setTimeout(() => {
   //   showLoader(false);

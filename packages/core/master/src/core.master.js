@@ -22,32 +22,47 @@ export function hello() {
 }
 
 export function connect(peer) {
-  const ee = eventEmitter();
-  const connections = [];
-  peer.on("open", (peerId) => {
-    setMasterPeerIdToLocalStorage(peerId);
-    console.info(`Peer object created, ${JSON.stringify({ peerId })}`);
-  });
-  peer.on("connection", (conn) => {
-    connections.push(conn);
-    console.info(`Data connection opened with remote ${conn.peer}`);
-    console.log("connections", peer.connections);
-    ee.emit("remoteConnect", { id: conn.peer });
-    conn.on("data", (data) => {
-      console.log({ data }, conn);
-      ee.emit("data", { id: conn.peer }, data);
-      // do some event handling
+  return new Promise((res) => {
+    const ee = eventEmitter();
+    const connections = [];
+    const wrcMaster = {
+      sendTo(id, payload) {
+        const conn = connections.find((currentConn) => currentConn.peer === id);
+        if (conn) {
+          return conn.send(payload);
+        }
+        return null;
+      },
+      sendAll(payload) {
+        connections.forEach((conn) => {
+          conn.send(payload);
+        });
+      },
+      on: ee.on,
+      off: ee.off,
+    };
+    peer.on("open", (peerId) => {
+      setMasterPeerIdToLocalStorage(peerId);
+      console.info(`Peer object created, ${JSON.stringify({ peerId })}`);
+      res(wrcMaster);
+    });
+    peer.on("connection", (conn) => {
+      connections.push(conn);
+      ee.emit("remote.connect", { id: conn.peer });
+      console.info(`Data connection opened with remote ${conn.peer}`);
+      console.log("connections", peer.connections);
+      ee.emit("remoteConnect", { id: conn.peer });
+      conn.on("data", (data) => {
+        console.log({ data }, conn);
+        ee.emit("data", { id: conn.peer }, data);
+        // do some event handling
+      });
+    });
+    peer.on("error", (error) => {
+      console.error(error);
+    });
+    peer.on("disconnected", (e) => {
+      console.log("disconnected", e);
     });
   });
-  peer.on("error", (error) => {
-    console.error(error);
-  });
-  peer.on("disconnected", (e) => {
-    console.log("disconnected", e);
-  });
-  return {
-    connections,
-    on: ee.on,
-    off: ee.off,
-  };
 }
