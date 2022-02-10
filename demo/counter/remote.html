@@ -33,29 +33,36 @@
       </h1>
     </header>
     <div id="content">
-      <h2>remote</h2>
-      <p>Some description ...</p>
+      <div class="initial-loading">
+        <span>Loading ...</span>
+      </div>
+      <div class="static-content">
+        <!-- Add static content if necessary -->
+      </div>
     </div>
     <template>
       <div class="initial-loading">
         <span>Loading ...</span>
       </div>
       <errors-display></errors-display>
-      <qrcode-display width="160" height="160"></qrcode-display>
+      <div class="counter-control">
+        <button type="button" class="counter-control-add">+</button>
+        <button type="button" class="counter-control-sub">-</button>
+      </div>
+      <form class="form-set-name" action=".">
+        <label>
+          <input type="text" placeholder="Enter name" /><button type="submit">
+            OK
+          </button>
+        </label>
+      </form>
       <p>
-        👆Snap the the QR code or <span class="open-remote">click here</span> to
-        open an
-        <strong>other window from where you will control the counters</strong>
-        on this page (like with a remote).
+        Check the counter updating in real-time on the original page, thanks to
+        WebRTC.
       </p>
-      <p>
-        Global counter:
-        <counter-display data="0" class="global-counter"></counter-display>
-      </p>
-      <remotes-list></remotes-list>
       <console-display></console-display>
       <div class="static-content-wrapper"></div>
-      <footer-display from="2019"></footer-display>
+      <footer-display from="2022"></footer-display>
     </template>
     <script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
     <script type="module" src="./js/remote.js"></script>
