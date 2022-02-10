@@ -17,7 +17,20 @@ function makeRemotePeerUrl(peerId) {
   }/remote.html#${peerId}`;
 }
 
-export function createView(templateNode, staticContent) {
+export function render() {
+  // create view based on <template> tag content
+  const templateNode = document.importNode(
+    document.querySelector("template").content,
+    true
+  );
+  const staticContent = document.querySelector(".static-content");
+  const { content, ...view } = createView(templateNode, staticContent);
+  document.querySelector("#content").innerHTML = "";
+  document.querySelector("#content").appendChild(content);
+  return view;
+}
+
+function createView(templateNode, staticContent) {
   let peerId = null;
   const content = document.createElement("div");
   content.appendChild(templateNode);

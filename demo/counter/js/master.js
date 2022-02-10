@@ -1,52 +1,10 @@
-import { master } from "@webrtc-remote-control/core";
-import {
-  hello,
-  connect,
-  getPeerjsID,
-} from "@webrtc-remote-control/core/master";
+import { connect, getPeerjsID } from "@webrtc-remote-control/core/master";
 
-import { createView } from "./master.view";
-
-console.log("@webrtc-remote-control/core", master.hello());
-console.log("@webrtc-remote-control/core/hello", hello());
-
-function counterReducer(state, action, id) {
-  return state.reduce((acc, cur) => {
-    if (cur.peerId === id) {
-      switch (action.type) {
-        case "COUNTER_INCREMENT":
-          acc.push({
-            ...cur,
-            counter: cur.counter + 1,
-          });
-          break;
-        case "COUNTER_DECREMENT":
-          acc.push({
-            ...cur,
-            counter: cur.counter - 1,
-          });
-          break;
-        default:
-          break;
-      }
-    }
-    return acc;
-  }, []);
-}
-
-function globalCount(counters) {
-  return counters.reduce((acc, { counter }) => counter + acc, 0);
-}
+import { counterReducer, globalCount } from "./master.logic";
+import { render } from "./master.view";
 
 async function init() {
-  // create view based on <template> tag content
-  const templateNode = document.importNode(
-    document.querySelector("template").content,
-    true
-  );
-  const staticContent = document.querySelector(".static-content");
   const {
-    content,
     showLoader,
     enableButtonOpenRemote,
     setPeerId,
@@ -54,20 +12,24 @@ async function init() {
     setGlobalCounter,
     // setErrors,
     // setConsoleDisplay,
-  } = createView(templateNode, staticContent);
-  document.querySelector("#content").innerHTML = "";
-  document.querySelector("#content").appendChild(content);
+  } = render();
 
   let counters = [];
 
-  // eslint-disable-next-line no-undef
+  // create your own PeerJS connection
   const peer = new Peer(getPeerjsID());
   peer.on("open", (peerId) => {
     setPeerId(peerId);
     showLoader(false);
   });
+  peer.on("error", () => {
+    setPeerId(null);
+    showLoader(false);
+    enableButtonOpenRemote(false);
+  });
+
+  // bind webrtc-remote-control to `peer`
   const wrcMaster = await connect(peer);
-  window.wrcMaster = wrcMaster;
   wrcMaster.on("remote.connect", ({ id }) => {
     console.log("master - remote.connect", id);
     counters = [...counters, { counter: 0, peerId: id }];
@@ -79,12 +41,6 @@ async function init() {
     counters = counterReducer(counters, data, id);
     setRemoteList(counters);
     setGlobalCounter(globalCount(counters));
-  });
-  console.log("master opened");
-  peer.on("error", () => {
-    setPeerId(null);
-    showLoader(false);
-    enableButtonOpenRemote(false);
   });
   // peer.on("connection", (conn) => {
   //   console.log("master on.connection");

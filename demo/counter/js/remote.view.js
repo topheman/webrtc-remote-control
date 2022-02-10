@@ -8,7 +8,24 @@ const defaultEvents = {
   onUpdateName() {},
 };
 
-export function createView(
+export function render(initialState) {
+  // create view based on <template> tag content
+  const templateNode = document.importNode(
+    document.querySelector("template").content,
+    true
+  );
+  const staticContent = document.querySelector(".static-content");
+  const { content, ...view } = createView(
+    templateNode,
+    staticContent,
+    initialState
+  );
+  document.querySelector("#content").innerHTML = "";
+  document.querySelector("#content").appendChild(content);
+  return view;
+}
+
+function createView(
   templateNode,
   staticContent,
   initialState = {
