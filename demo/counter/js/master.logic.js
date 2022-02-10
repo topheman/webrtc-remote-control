@@ -15,6 +15,12 @@ export function counterReducer(state, action, id) {
             counter: cur.counter - 1,
           });
           break;
+        case "REMOTE_SET_NAME":
+          acc.push({
+            ...cur,
+            name: action.name,
+          });
+          break;
         default:
           acc.push(cur);
           break;

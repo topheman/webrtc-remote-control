@@ -3,8 +3,21 @@ import { connect } from "@webrtc-remote-control/core/remote";
 import { makeLogger } from "./common";
 import { render } from "./remote.view";
 
+const REMOTE_NAME_LOCAL_STORAGE_KEY = "remote-name";
+
+export function getRemoteNameFromSessionStorage() {
+  return sessionStorage.getItem(REMOTE_NAME_LOCAL_STORAGE_KEY) || "";
+}
+
+export function setRemoteNameToSessionStorage(remoteName) {
+  sessionStorage.setItem(REMOTE_NAME_LOCAL_STORAGE_KEY, remoteName);
+}
+
 async function init() {
-  const { showLoader, setConnected, setEvents, setConsoleDisplay } = render();
+  const initialName = getRemoteNameFromSessionStorage();
+  const { showLoader, setConnected, setEvents, setConsoleDisplay } = render({
+    initialName,
+  });
 
   const logger = makeLogger(setConsoleDisplay);
 
@@ -26,6 +39,13 @@ async function init() {
 
   // bind webrtc-remote-control to `peer`
   const wrcRemote = await connect(peer, masterPeerId);
+  if (initialName) {
+    // todo - need some api change to wait for connection opened ?
+    setTimeout(() => {
+      logger.log(`Ready to set name`);
+      wrcRemote.send({ type: "REMOTE_SET_NAME", name: initialName });
+    }, 500);
+  }
   window.wrcRemote = wrcRemote;
   setEvents({
     onClickPlus() {
@@ -34,7 +54,10 @@ async function init() {
     onClickMinus() {
       wrcRemote.send({ type: "COUNTER_DECREMENT" });
     },
-    onUpdateName() {},
+    onUpdateName(name) {
+      wrcRemote.send({ type: "REMOTE_SET_NAME", name });
+      setRemoteNameToSessionStorage(name);
+    },
   });
 }
 init();
