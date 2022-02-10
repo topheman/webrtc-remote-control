@@ -1,5 +1,6 @@
 import { connect, getPeerjsID } from "@webrtc-remote-control/core/master";
 
+import { makeLogger } from "./common";
 import { counterReducer, globalCount } from "./master.logic";
 import { render } from "./master.view";
 
@@ -11,105 +12,40 @@ async function init() {
     setRemoteList,
     setGlobalCounter,
     // setErrors,
-    // setConsoleDisplay,
+    setConsoleDisplay,
   } = render();
 
   let counters = [];
+
+  const logger = makeLogger(setConsoleDisplay);
 
   // create your own PeerJS connection
   const peer = new Peer(getPeerjsID());
   peer.on("open", (peerId) => {
     setPeerId(peerId);
     showLoader(false);
+    logger.log(`Master connected - id: ${peerId}`);
   });
-  peer.on("error", () => {
+  peer.on("error", (error) => {
     setPeerId(null);
     showLoader(false);
     enableButtonOpenRemote(false);
+    logger.error({ event: "error", error });
+    // todo manage errors
   });
 
   // bind webrtc-remote-control to `peer`
   const wrcMaster = await connect(peer);
   wrcMaster.on("remote.connect", ({ id }) => {
-    console.log("master - remote.connect", id);
+    logger.log({ event: "remote.connect", payload: { id } });
     counters = [...counters, { counter: 0, peerId: id }];
     setRemoteList(counters);
   });
   wrcMaster.on("data", ({ id }, data) => {
-    console.log("on data", id, data);
-    console.log(counters);
+    logger.log({ event: "data", data, id });
     counters = counterReducer(counters, data, id);
     setRemoteList(counters);
     setGlobalCounter(globalCount(counters));
   });
-  // peer.on("connection", (conn) => {
-  //   console.log("master on.connection");
-  //   counters = [...counters, { counter: 0, peerId: conn.peer }];
-  //   setRemoteList(counters);
-  //   conn.on("data", (...data) => {
-  //     console.log(conn.peer, data);
-  //   });
-  // });
-  // peer.on("data", (...data) => {
-  //   console.log(data);
-  // });
-  // app
-  // setTimeout(() => {
-  //   showLoader(false);
-  // }, 500);
-  // setTimeout(() => {
-  //   enableButtonOpenRemote(false);
-  // }, 1000);
-  // setTimeout(() => {
-  //   setRemoteList([
-  //     { counter: 2, peerId: "AZERTYUIO" },
-  //     { counter: -1, peerId: "QSDFGHJ" },
-  //     { counter: 10, peerId: "WXCVBN" },
-  //   ]);
-  // }, 1000);
-  // setTimeout(() => {
-  //   setGlobalCounter(201);
-  // }, 1000);
-  // setTimeout(() => {
-  //   setErrors(["Some error example"]);
-  // }, 1200);
-  // setTimeout(() => {
-  //   setErrors(null);
-  // }, 4000);
-  // setTimeout(() => {
-  //   setConsoleDisplay([
-  //     {
-  //       type: "LOG",
-  //       level: "info",
-  //       payload:
-  //         "Data connection opened with remote 1e733687-49f6-4cff-b5c0-48ec82f5586f",
-  //       key: 4,
-  //     },
-  //     {
-  //       type: "LOG",
-  //       level: "log",
-  //       payload: {
-  //         peerId: "1e733687-49f6-4cff-b5c0-48ec82f5586f",
-  //         type: "REMOTE_CONNECT",
-  //       },
-  //       key: 3,
-  //     },
-  //     {
-  //       type: "LOG",
-  //       level: "log",
-  //       payload: {
-  //         peerId: "ogpfgw38unp00000",
-  //         type: "SIGNAL_OPEN",
-  //       },
-  //       key: 2,
-  //     },
-  //     {
-  //       type: "LOG",
-  //       level: "info",
-  //       payload: 'Peer object created, {"peerId":"ogpfgw38unp00000"}',
-  //       key: 1,
-  //     },
-  //   ]);
-  // }, 500);
 }
 init();

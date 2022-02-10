@@ -137,7 +137,13 @@ li.log::before {
           line.key % 3 === 1 ? "two" : line.key % 3 === 2 ? "three" : ""
         }">${
           typeof line.payload === "object"
-            ? JSON.stringify(line.payload)
+            ? (() => {
+                try {
+                  return JSON.stringify(line.payload);
+                } catch (_) {
+                  return "";
+                }
+              })()
             : line.payload
         }</li>`;
       })

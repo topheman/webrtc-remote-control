@@ -53,28 +53,6 @@ function createView(templateNode, staticContent) {
   const consoleDisplay = content.querySelector("console-display");
   const footerDisplay = content.querySelector("footer-display");
   footerDisplay.setAttribute("to", new Date().getFullYear());
-  // store.subscribe((state) => {
-  //   if (state.common.peerId || state.common.signalErrors.length > 0) {
-  //     loader.classList.add("hide");
-  //   }
-  //   if (!state.common.peerId || state.common.signalErrors.length > 0) {
-  //     buttonOpenRemote.setAttribute("disabled", "");
-  //   } else {
-  //     buttonOpenRemote.removeAttribute("disabled");
-  //   }
-  //   if (state.common.peerId) {
-  //     qrcodeDisplay.setAttribute("data", makePeerUrl(state.common.peerId));
-  //   } else {
-  //     qrcodeDisplay.removeAttribute("data");
-  //   }
-  //   errorsDisplay.data = state.common.signalErrors;
-  //   remotesList.data = state.main.remotes;
-  //   globalCounter.setAttribute(
-  //     "data",
-  //     getGlobalCounterFromMainState(state.main)
-  //   );
-  //   consoleDisplay.data = [...state.logs].reverse();
-  // });
   return {
     content,
     showLoader(display) {
@@ -110,7 +88,7 @@ function createView(templateNode, staticContent) {
       errorsDisplay.data = errors;
     },
     setConsoleDisplay(logs) {
-      consoleDisplay.data = logs;
+      consoleDisplay.data = [...logs].reverse();
     },
   };
 }

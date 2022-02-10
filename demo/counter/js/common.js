@@ -19,3 +19,29 @@ export function humanizeErrors(errors = []) {
     return errorsList;
   }, []);
 }
+
+export function makeLogger(onLog = () => {}, logs = [], size = 20) {
+  function makeLogFunction(type) {
+    return function log(payload) {
+      // eslint-disable-next-line no-param-reassign
+      logs = logs.concat({
+        payload,
+        key: (logs.slice(-1)[0] || { key: 0 }).key + 1,
+        level: type,
+      });
+      while (logs.length > size) {
+        logs.shift();
+      }
+      // eslint-disable-next-line no-console
+      console[type](payload);
+      onLog(logs);
+      return logs;
+    };
+  }
+  return {
+    log: makeLogFunction("log"),
+    info: makeLogFunction("info"),
+    warn: makeLogFunction("warn"),
+    error: makeLogFunction("error"),
+  };
+}
