@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "echo test @webrtc-remote-control/demo@$npm_package_version"
+    "test": "echo test @webrtc-remote-control/demo@$npm_package_version",
+    "forward:dev": "ssh -R 80:localhost:3000 localhost.run",
+    "forward:preview": "ssh -R 80:localhost:5000 localhost.run"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "ISC",
