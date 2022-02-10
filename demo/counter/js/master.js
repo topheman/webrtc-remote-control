@@ -10,6 +10,34 @@ import { createView } from "./master.view";
 console.log("@webrtc-remote-control/core", master.hello());
 console.log("@webrtc-remote-control/core/hello", hello());
 
+function counterReducer(state, action, id) {
+  return state.reduce((acc, cur) => {
+    if (cur.peerId === id) {
+      switch (action.type) {
+        case "COUNTER_INCREMENT":
+          acc.push({
+            ...cur,
+            counter: cur.counter + 1,
+          });
+          break;
+        case "COUNTER_DECREMENT":
+          acc.push({
+            ...cur,
+            counter: cur.counter - 1,
+          });
+          break;
+        default:
+          break;
+      }
+    }
+    return acc;
+  }, []);
+}
+
+function globalCount(counters) {
+  return counters.reduce((acc, { counter }) => counter + acc, 0);
+}
+
 async function init() {
   // create view based on <template> tag content
   const templateNode = document.importNode(
@@ -23,7 +51,7 @@ async function init() {
     enableButtonOpenRemote,
     setPeerId,
     setRemoteList,
-    // setGlobalCounter,
+    setGlobalCounter,
     // setErrors,
     // setConsoleDisplay,
   } = createView(templateNode, staticContent);
@@ -47,6 +75,10 @@ async function init() {
   });
   wrcMaster.on("data", ({ id }, data) => {
     console.log("on data", id, data);
+    console.log(counters);
+    counters = counterReducer(counters, data, id);
+    setRemoteList(counters);
+    setGlobalCounter(globalCount(counters));
   });
   console.log("master opened");
   peer.on("error", () => {

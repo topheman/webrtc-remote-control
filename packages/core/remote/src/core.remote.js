@@ -31,24 +31,45 @@ function makePeerConnection(peer, masterPeerId, { emit }) {
 }
 
 export function connect(peer, masterPeerId) {
-  const ee = eventEmitter();
-  // to ensure connections with iOs, must use json serialization
-  let conn = null;
-  peer.on("open", (peerId) => {
-    console.info(`Peer object created, ${JSON.stringify({ peerId })}`);
-    conn = makePeerConnection(peer, masterPeerId, ee);
-    console.log("conn", conn);
-    ee.emit("connectionReady", conn);
+  return new Promise((res) => {
+    let conn = null;
+    const ee = eventEmitter();
+    const wrcRemote = {
+      send(payload) {
+        if (conn) {
+          conn.send(payload);
+        } else {
+          console.warning("You called `send` with no connection");
+        }
+      },
+      on: ee.on,
+      off: ee.off,
+    };
+    peer.on("open", (peerId) => {
+      console.info(`Peer object created, ${JSON.stringify({ peerId })}`);
+      conn = makePeerConnection(peer, masterPeerId, ee);
+      console.log("conn", conn);
+      res(wrcRemote);
+    });
   });
-  peer.on("error", (error) => {
-    console.error(error);
-  });
-  peer.on("disconnected", (e) => {
-    console.log("disconnected", e);
-  });
-  return {
-    conn,
-    on: ee.on,
-    off: ee.off,
-  };
+  // const ee = eventEmitter();
+  // // to ensure connections with iOs, must use json serialization
+  // let conn = null;
+  // peer.on("open", (peerId) => {
+  //   console.info(`Peer object created, ${JSON.stringify({ peerId })}`);
+  //   conn = makePeerConnection(peer, masterPeerId, ee);
+  //   console.log("conn", conn);
+  //   ee.emit("connectionReady", conn);
+  // });
+  // peer.on("error", (error) => {
+  //   console.error(error);
+  // });
+  // peer.on("disconnected", (e) => {
+  //   console.log("disconnected", e);
+  // });
+  // return {
+  //   conn,
+  //   on: ee.on,
+  //   off: ee.off,
+  // };
 }

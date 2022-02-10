@@ -2,15 +2,20 @@ import "./components/errors-display";
 import "./components/console-display";
 import "./components/footer-display";
 
+const defaultEvents = {
+  onClickPlus() {},
+  onClickMinus() {},
+  onUpdateName() {},
+};
+
 export function createView(
   templateNode,
   staticContent,
-  props = {
-    onClickPlus() {},
-    onClickMinus() {},
+  initialState = {
     initialName: "",
   }
 ) {
+  let events = { ...defaultEvents };
   const content = document.createElement("div");
   content.appendChild(templateNode);
   content.querySelector(".static-content-wrapper").appendChild(staticContent);
@@ -19,7 +24,7 @@ export function createView(
   const formInput = content.querySelector(".form-set-name input");
   const formButton = content.querySelector(".form-set-name button");
   const buttons = content.querySelectorAll(".counter-control button");
-  formInput.value = props.initialName || "";
+  formInput.value = initialState.initialName || "";
   const consoleDisplay = content.querySelector("console-display");
   const footerDisplay = content.querySelector("footer-display");
   footerDisplay.setAttribute("to", new Date().getFullYear());
@@ -28,11 +33,11 @@ export function createView(
     "click",
     (e) => {
       if (e.target.classList.contains("counter-control-add")) {
-        props.onClickPlus();
+        events.onClickPlus();
         return;
       }
       if (e.target.classList.contains("counter-control-sub")) {
-        props.onClickMinus();
+        events.onClickMinus();
       }
     },
     false
@@ -42,13 +47,16 @@ export function createView(
     (e) => {
       if (e.target.classList.contains("form-set-name")) {
         e.preventDefault();
-        props.onUpdateName(e.target.querySelector("input").value);
+        events.onUpdateName(e.target.querySelector("input").value);
       }
     },
     false
   );
   return {
     content,
+    setEvents(passedEvents) {
+      events = passedEvents;
+    },
     showLoader(display) {
       if (display) {
         loader.classList.remove("hide");
