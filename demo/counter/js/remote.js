@@ -40,11 +40,7 @@ async function init() {
   // bind webrtc-remote-control to `peer`
   const wrcRemote = await connect(peer, masterPeerId);
   if (initialName) {
-    // todo - need some api change to wait for connection opened ?
-    setTimeout(() => {
-      logger.log(`Ready to set name`);
-      wrcRemote.send({ type: "REMOTE_SET_NAME", name: initialName });
-    }, 500);
+    wrcRemote.send({ type: "REMOTE_SET_NAME", name: initialName });
   }
   window.wrcRemote = wrcRemote;
   setEvents({

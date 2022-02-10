@@ -10,7 +10,7 @@ export function hello() {
   };
 }
 
-function makePeerConnection(peer, masterPeerId, { emit }) {
+function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
   // to ensure connections with iOs, must use json serialization
   const conn = peer.connect(masterPeerId, { serialization: "json" });
   // send a disconnect message to master when reloading/closing
@@ -22,6 +22,9 @@ function makePeerConnection(peer, masterPeerId, { emit }) {
   window.addEventListener("beforeunload", onBeforeUnload);
   conn.on("open", () => {
     console.info(`Data connection opened with master ${masterPeerId}`, conn);
+    if (typeof onConnectionOpened === "function") {
+      onConnectionOpened();
+    }
   });
   conn.on("data", (data) => {
     console.log({ data });
@@ -47,9 +50,8 @@ export function connect(peer, masterPeerId) {
     };
     peer.on("open", (peerId) => {
       console.info(`Peer object created, ${JSON.stringify({ peerId })}`);
-      conn = makePeerConnection(peer, masterPeerId, ee);
+      conn = makePeerConnection(peer, masterPeerId, ee, () => res(wrcRemote));
       console.log("conn", conn);
-      res(wrcRemote);
     });
   });
   // const ee = eventEmitter();
