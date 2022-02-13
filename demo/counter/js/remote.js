@@ -1,4 +1,4 @@
-import { connect } from "@webrtc-remote-control/core/remote";
+import { connect, getPeerjsID } from "@webrtc-remote-control/core/remote";
 
 import { makeLogger } from "./common";
 import { render } from "./remote.view";
@@ -24,7 +24,7 @@ async function init() {
   const masterPeerId = window.location.hash.replace(/^#/, "");
 
   // create your own PeerJS connection
-  const peer = new Peer();
+  const peer = new Peer(getPeerjsID());
   peer.on("open", (peerId) => {
     showLoader(false);
     setConnected(true);

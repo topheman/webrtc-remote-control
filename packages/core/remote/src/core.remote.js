@@ -10,6 +10,16 @@ export function hello() {
   };
 }
 
+const REMOTE_PEER_ID_SESSION_STORAGE_KEY = "remote-peer-id";
+
+export function getPeerjsID() {
+  return sessionStorage.getItem(REMOTE_PEER_ID_SESSION_STORAGE_KEY);
+}
+
+function setRemoteNameToSessionStorage(remotePeerId) {
+  sessionStorage.setItem(REMOTE_PEER_ID_SESSION_STORAGE_KEY, remotePeerId);
+}
+
 function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
   // to ensure connections with iOs, must use json serialization
   const conn = peer.connect(masterPeerId, { serialization: "json" });
@@ -46,7 +56,8 @@ export function connect(peer, masterPeerId) {
       on: ee.on,
       off: ee.off,
     };
-    peer.on("open", () => {
+    peer.on("open", (peerId) => {
+      setRemoteNameToSessionStorage(peerId);
       conn = makePeerConnection(peer, masterPeerId, ee, () => res(wrcRemote));
     });
   });
