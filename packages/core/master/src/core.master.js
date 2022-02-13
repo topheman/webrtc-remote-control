@@ -47,12 +47,14 @@ export function connect(peer) {
     });
     peer.on("connection", (conn) => {
       connections.push(conn);
-      ee.emit("remote.connect", { id: conn.peer });
+      conn.on("open", () => {
+        ee.emit("remote.connect", { id: conn.peer });
+      });
       conn.on("data", (data) => {
         ee.emit("data", { id: conn.peer }, data);
       });
       conn.on("close", () => {
-        ee.emit("remote.close", { id: conn.peer });
+        ee.emit("remote.disconnect", { id: conn.peer });
       });
     });
     peer.on("error", (error) => {

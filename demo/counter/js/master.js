@@ -41,8 +41,8 @@ async function init() {
     counters = [...counters, { counter: 0, peerId: id }];
     setRemoteList(counters);
   });
-  wrcMaster.on("remote.close", ({ id }) => {
-    logger.log({ event: "remote.close", payload: { id } });
+  wrcMaster.on("remote.disconnect", ({ id }) => {
+    logger.log({ event: "remote.disconnect", payload: { id } });
     counters = counters.filter(({ peerId }) => peerId !== id);
     setRemoteList(counters);
   });
