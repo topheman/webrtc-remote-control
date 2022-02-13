@@ -43,19 +43,13 @@ export function connect(peer) {
     };
     peer.on("open", (peerId) => {
       setMasterPeerIdToLocalStorage(peerId);
-      console.info(`Peer object created, ${JSON.stringify({ peerId })}`);
       res(wrcMaster);
     });
     peer.on("connection", (conn) => {
       connections.push(conn);
       ee.emit("remote.connect", { id: conn.peer });
-      console.info(`Data connection opened with remote ${conn.peer}`);
-      console.log("connections", peer.connections);
-      ee.emit("remoteConnect", { id: conn.peer });
       conn.on("data", (data) => {
-        console.log({ data }, conn);
         ee.emit("data", { id: conn.peer }, data);
-        // do some event handling
       });
       conn.on("close", () => {
         ee.emit("remote.close", { id: conn.peer });

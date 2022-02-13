@@ -21,13 +21,11 @@ function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
   window.removeEventListener("beforeunload", onBeforeUnload);
   window.addEventListener("beforeunload", onBeforeUnload);
   conn.on("open", () => {
-    console.info(`Data connection opened with master ${masterPeerId}`, conn);
     if (typeof onConnectionOpened === "function") {
       onConnectionOpened();
     }
   });
   conn.on("data", (data) => {
-    console.log({ data });
     emit("data", data);
   });
   return conn;
@@ -48,10 +46,8 @@ export function connect(peer, masterPeerId) {
       on: ee.on,
       off: ee.off,
     };
-    peer.on("open", (peerId) => {
-      console.info(`Peer object created, ${JSON.stringify({ peerId })}`);
+    peer.on("open", () => {
       conn = makePeerConnection(peer, masterPeerId, ee, () => res(wrcRemote));
-      console.log("conn", conn);
     });
   });
   // const ee = eventEmitter();

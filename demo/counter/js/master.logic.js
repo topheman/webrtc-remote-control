@@ -1,5 +1,4 @@
 export function counterReducer(state, action, id) {
-  console.log(state, action, id);
   return state.reduce((acc, cur) => {
     if (cur.peerId === id) {
       switch (action.type) {

@@ -70,7 +70,6 @@ function createView(templateNode, staticContent) {
       }
     },
     setPeerId(id) {
-      console.log(`update peerId: (${id})`);
       peerId = id;
       if (peerId) {
         qrcodeDisplay.setAttribute("data", makeRemotePeerUrl(peerId));
