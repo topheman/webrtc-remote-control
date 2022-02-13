@@ -1,10 +1,12 @@
-import { connect, getPeerjsID } from "@webrtc-remote-control/core/master";
+import prepare from "@webrtc-remote-control/core/master";
 
 import { makeLogger } from "./common";
 import { counterReducer, globalCount } from "./master.logic";
 import { render } from "./master.view";
 
 async function init() {
+  const { bindConnection, getPeerjsID } = prepare();
+
   const {
     showLoader,
     enableButtonOpenRemote,
@@ -35,7 +37,7 @@ async function init() {
   });
 
   // bind webrtc-remote-control to `peer`
-  const wrcMaster = await connect(peer);
+  const wrcMaster = await bindConnection(peer);
   wrcMaster.on("remote.connect", ({ id }) => {
     logger.log({ event: "remote.connect", payload: { id } });
     counters = [...counters, { counter: 0, peerId: id }];

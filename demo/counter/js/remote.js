@@ -1,4 +1,4 @@
-import { connect, getPeerjsID } from "@webrtc-remote-control/core/remote";
+import prepare from "@webrtc-remote-control/core/remote";
 
 import { makeLogger } from "./common";
 import { render } from "./remote.view";
@@ -14,6 +14,8 @@ export function setRemoteNameToSessionStorage(remoteName) {
 }
 
 async function init() {
+  const { bindConnection, getPeerjsID } = prepare();
+
   const initialName = getRemoteNameFromSessionStorage();
   const { showLoader, setConnected, setEvents, setConsoleDisplay } = render({
     initialName,
@@ -38,7 +40,7 @@ async function init() {
   });
 
   // bind webrtc-remote-control to `peer`
-  const wrcRemote = await connect(peer, masterPeerId);
+  const wrcRemote = await bindConnection(peer, masterPeerId);
   if (initialName) {
     wrcRemote.send({ type: "REMOTE_SET_NAME", name: initialName });
   }

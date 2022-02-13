@@ -41,44 +41,31 @@ function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
   return conn;
 }
 
-export function connect(peer, masterPeerId) {
-  return new Promise((res) => {
-    let conn = null;
-    const ee = eventEmitter();
-    const wrcRemote = {
-      send(payload) {
-        if (conn) {
-          conn.send(payload);
-        } else {
-          console.warning("You called `send` with no connection");
-        }
-      },
-      on: ee.on,
-      off: ee.off,
-    };
-    peer.on("open", (peerId) => {
-      setRemoteNameToSessionStorage(peerId);
-      conn = makePeerConnection(peer, masterPeerId, ee, () => res(wrcRemote));
-    });
-  });
-  // const ee = eventEmitter();
-  // // to ensure connections with iOs, must use json serialization
-  // let conn = null;
-  // peer.on("open", (peerId) => {
-  //   console.info(`Peer object created, ${JSON.stringify({ peerId })}`);
-  //   conn = makePeerConnection(peer, masterPeerId, ee);
-  //   console.log("conn", conn);
-  //   ee.emit("connectionReady", conn);
-  // });
-  // peer.on("error", (error) => {
-  //   console.error(error);
-  // });
-  // peer.on("disconnected", (e) => {
-  //   console.log("disconnected", e);
-  // });
-  // return {
-  //   conn,
-  //   on: ee.on,
-  //   off: ee.off,
-  // };
+export default function prepare() {
+  return {
+    getPeerjsID,
+    bindConnection(peer, masterPeerId) {
+      return new Promise((res) => {
+        let conn = null;
+        const ee = eventEmitter();
+        const wrcRemote = {
+          send(payload) {
+            if (conn) {
+              conn.send(payload);
+            } else {
+              console.warning("You called `send` with no connection");
+            }
+          },
+          on: ee.on,
+          off: ee.off,
+        };
+        peer.on("open", (peerId) => {
+          setRemoteNameToSessionStorage(peerId);
+          conn = makePeerConnection(peer, masterPeerId, ee, () =>
+            res(wrcRemote)
+          );
+        });
+      });
+    },
+  };
 }
