@@ -57,6 +57,9 @@ export function connect(peer) {
         ee.emit("data", { id: conn.peer }, data);
         // do some event handling
       });
+      conn.on("close", () => {
+        ee.emit("remote.close", { id: conn.peer });
+      });
     });
     peer.on("error", (error) => {
       console.error(error);
