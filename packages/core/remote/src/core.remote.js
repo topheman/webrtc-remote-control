@@ -59,11 +59,33 @@ export default function prepare() {
           on: ee.on,
           off: ee.off,
         };
+        const createPeerConnectionWithReconnectOnClose = (
+          onConnectionOpened
+        ) => {
+          conn = null;
+          conn = makePeerConnection(peer, masterPeerId, ee, onConnectionOpened);
+          conn.on("close", () => {
+            ee.emit("remote.disconnect", { id: peer.id });
+            createPeerConnectionWithReconnectOnClose(() =>
+              ee.emit("remote.reconnect", { id: peer.id })
+            );
+          });
+        };
         peer.on("open", (peerId) => {
           setRemoteNameToSessionStorage(peerId);
-          conn = makePeerConnection(peer, masterPeerId, ee, () =>
-            res(wrcRemote)
-          );
+          createPeerConnectionWithReconnectOnClose(() => res(wrcRemote));
+          conn.on("error", (e) => {
+            console.log("conn.error", e);
+          });
+        });
+        peer.on("close", () => {
+          console.log("peer.close");
+        });
+        peer.on("disconnected", () => {
+          console.log("peer.disconnected");
+        });
+        peer.on("error", (e) => {
+          console.log("peer.error", e);
         });
       });
     },

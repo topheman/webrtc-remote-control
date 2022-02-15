@@ -41,6 +41,12 @@ async function init() {
 
   // bind webrtc-remote-control to `peer`
   const wrcRemote = await bindConnection(peer, masterPeerId);
+  wrcRemote.on("remote.disconnect", (payload) => {
+    logger.log({ event: "remote.disconnect", payload });
+  });
+  wrcRemote.on("remote.reconnect", (payload) => {
+    logger.log({ event: "remote.reconnect", payload });
+  });
   if (initialName) {
     wrcRemote.send({ type: "REMOTE_SET_NAME", name: initialName });
   }
