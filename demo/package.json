@@ -13,11 +13,5 @@
     "forward:preview": "ssh -R 80:localhost:5000 localhost.run"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
-  "license": "ISC",
-  "dependencies": {
-    "@webrtc-remote-control/core": "^0.0.0"
-  },
-  "devDependencies": {
-    "vite": "^2.7.13"
-  }
+  "license": "ISC"
 }
