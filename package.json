@@ -19,10 +19,13 @@
     "preview": "lerna run --stream --scope @webrtc-remote-control/demo preview",
     "preview:forward": "npm run preview",
     "prepreview:forward": "npm run --prefix demo forward:preview &",
-    "test": "npm run test:core",
+    "test": "npm run test:core && npm run test:demo",
     "test:core": "npm run --prefix packages/core test",
     "test:core:precommit": "npm run --prefix packages/core test:precommit",
     "test:core:watch": "npm run --prefix packages/core test:watch",
+    "test:demo": "npm run --prefix demo test",
+    "test:demo:precommit": "npm run --prefix demo test:precommit",
+    "test:demo:watch": "npm run --prefix demo test:watch",
     "prepare": "husky install; npm run bootstrap"
   },
   "keywords": [
@@ -49,6 +52,9 @@
     ],
     "packages/core/**/*.js": [
       "npm run test:core:precommit"
+    ],
+    "demo/**/*.js": [
+      "npm run test:demo:precommit"
     ],
     "*.{css,html}": [
       "prettier --write"

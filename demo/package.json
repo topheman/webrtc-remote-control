@@ -8,9 +8,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "echo test @webrtc-remote-control/demo@$npm_package_version",
     "forward:dev": "ssh -R 80:localhost:3000 localhost.run",
-    "forward:preview": "ssh -R 80:localhost:5000 localhost.run"
+    "forward:preview": "ssh -R 80:localhost:5000 localhost.run",
+    "test": "jest",
+    "test:precommit": "jest --bail --findRelatedTests",
+    "test:watch": "jest --watch -o"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "ISC",
@@ -18,6 +20,8 @@
     "vite": "^2.8.3"
   },
   "dependencies": {
-    "@webrtc-remote-control/core": "^0.0.0"
+    "@babel/preset-env": "^7.16.11",
+    "@webrtc-remote-control/core": "^0.0.0",
+    "jest": "^27.5.1"
   }
 }
