@@ -9,7 +9,6 @@ async function init() {
 
   const {
     showLoader,
-    enableButtonOpenRemote,
     setPeerId,
     setRemoteList,
     setGlobalCounter,
@@ -31,7 +30,6 @@ async function init() {
   peer.on("error", (error) => {
     setPeerId(null);
     showLoader(false);
-    enableButtonOpenRemote(false);
     logger.error({ event: "error", error });
     // todo manage errors
   });

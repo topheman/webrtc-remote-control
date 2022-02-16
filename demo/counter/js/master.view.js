@@ -35,15 +35,6 @@ function createView(templateNode, staticContent) {
   const content = document.createElement("div");
   content.appendChild(templateNode);
   content.querySelector(".static-content-wrapper").appendChild(staticContent);
-  content.addEventListener(
-    "click",
-    (e) => {
-      if (e.target.classList.contains("open-remote") && peerId) {
-        window.open(makeRemotePeerUrl(peerId));
-      }
-    },
-    false
-  );
   const loader = content.querySelector(".initial-loading");
   const remotesList = content.querySelector("remotes-list");
   const errorsDisplay = content.querySelector("errors-display");
@@ -62,19 +53,16 @@ function createView(templateNode, staticContent) {
         loader.classList.add("hide");
       }
     },
-    enableButtonOpenRemote(enabled) {
-      if (enabled) {
-        buttonOpenRemote.removeAttribute("disabled");
-      } else {
-        buttonOpenRemote.setAttribute("disabled", "disabled");
-      }
-    },
     setPeerId(id) {
       peerId = id;
       if (peerId) {
         qrcodeDisplay.setAttribute("data", makeRemotePeerUrl(peerId));
+        buttonOpenRemote.setAttribute("href", makeRemotePeerUrl(peerId));
+        buttonOpenRemote.removeAttribute("disabled");
       } else {
         qrcodeDisplay.removeAttribute("data");
+        buttonOpenRemote.removeAttribute("href");
+        buttonOpenRemote.setAttribute("disabled", "disabled");
       }
     },
     setRemoteList(data) {

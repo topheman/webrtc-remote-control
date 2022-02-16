@@ -12,4 +12,9 @@ qrcode-display {
   cursor: pointer;
   text-decoration: underline;
   font-weight: bold;
+  color: black;
+}
+.open-remote[disabled="disabled"] {
+  cursor: not-allowed;
+  color: rgb(175, 175, 175);
 }
