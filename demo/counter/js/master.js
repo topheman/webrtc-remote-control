@@ -1,6 +1,10 @@
 import prepare from "@webrtc-remote-control/core/master";
 
 import { makeLogger } from "./common";
+import {
+  persistCountersToStorage,
+  getCountersFromStorage,
+} from "./master.persistance";
 import { counterReducer, globalCount } from "./master.logic";
 import { render } from "./master.view";
 
@@ -16,6 +20,7 @@ async function init() {
     setConsoleDisplay,
   } = render();
 
+  const countersFromStorage = getCountersFromStorage();
   let counters = [];
 
   const logger = makeLogger(setConsoleDisplay);
@@ -38,7 +43,10 @@ async function init() {
   const wrcMaster = await bindConnection(peer);
   wrcMaster.on("remote.connect", ({ id }) => {
     logger.log({ event: "remote.connect", payload: { id } });
-    counters = [...counters, { counter: 0, peerId: id }];
+    counters = [
+      ...counters,
+      { counter: countersFromStorage?.[id] ?? 0, peerId: id },
+    ];
     setRemoteList(counters);
   });
   wrcMaster.on("remote.disconnect", ({ id }) => {
@@ -50,6 +58,7 @@ async function init() {
     logger.log({ event: "data", data, id });
     counters = counterReducer(counters, { ...data, id });
     setRemoteList(counters);
+    persistCountersToStorage(counters);
     setGlobalCounter(globalCount(counters));
   });
 }
