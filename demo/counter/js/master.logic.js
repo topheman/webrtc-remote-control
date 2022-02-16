@@ -1,6 +1,6 @@
-export function counterReducer(state, action, id) {
+export function counterReducer(state, action) {
   return state.reduce((acc, cur) => {
-    if (cur.peerId === id) {
+    if (cur.peerId === action.id) {
       switch (action.type) {
         case "COUNTER_INCREMENT":
           acc.push({

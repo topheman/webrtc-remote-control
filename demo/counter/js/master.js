@@ -50,7 +50,7 @@ async function init() {
   });
   wrcMaster.on("data", ({ id }, data) => {
     logger.log({ event: "data", data, id });
-    counters = counterReducer(counters, data, id);
+    counters = counterReducer(counters, { ...data, id });
     setRemoteList(counters);
     setGlobalCounter(globalCount(counters));
   });
