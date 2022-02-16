@@ -46,6 +46,9 @@ async function init() {
   });
   wrcRemote.on("remote.reconnect", (payload) => {
     logger.log({ event: "remote.reconnect", payload });
+    if (initialName) {
+      wrcRemote.send({ type: "REMOTE_SET_NAME", name: initialName });
+    }
   });
   if (initialName) {
     wrcRemote.send({ type: "REMOTE_SET_NAME", name: initialName });
