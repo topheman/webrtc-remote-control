@@ -10,9 +10,10 @@ export function hello() {
   };
 }
 
-const REMOTE_PEER_ID_SESSION_STORAGE_KEY = "remote-peer-id";
+const REMOTE_PEER_ID_SESSION_STORAGE_KEY =
+  "webrtc-remote-control-remote-peer-id";
 
-export function getPeerjsID() {
+function getPeerjsID() {
   return sessionStorage.getItem(REMOTE_PEER_ID_SESSION_STORAGE_KEY);
 }
 

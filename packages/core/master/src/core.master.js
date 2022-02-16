@@ -10,22 +10,20 @@ export function hello() {
   };
 }
 
-export default function prepare(
-  { allowMultipleMasters } = { allowMultipleMasters: false }
-) {
-  const MASTER_PEER_ID_LOCAL_STORAGE_KEY = "master-peer-id";
+const MASTER_PEER_ID_SESSION_STORAGE_KEY =
+  "webrtc-remote-control-master-peer-id";
 
-  // By default, if you have multiple windows of master in the same browser, an error will occur
-  const storageManager = allowMultipleMasters ? sessionStorage : localStorage;
+function getPeerjsID() {
+  return sessionStorage.getItem(MASTER_PEER_ID_SESSION_STORAGE_KEY);
+}
 
-  function setMasterPeerIdToLocalStorage(masterPeerId) {
-    storageManager.setItem(MASTER_PEER_ID_LOCAL_STORAGE_KEY, masterPeerId);
-  }
+function setMasterPeerIdToSessionStorage(masterPeerId) {
+  sessionStorage.setItem(MASTER_PEER_ID_SESSION_STORAGE_KEY, masterPeerId);
+}
 
+export default function prepare() {
   return {
-    getPeerjsID() {
-      return storageManager.getItem(MASTER_PEER_ID_LOCAL_STORAGE_KEY);
-    },
+    getPeerjsID,
     bindConnection(peer) {
       return new Promise((res) => {
         const ee = eventEmitter();
@@ -49,7 +47,7 @@ export default function prepare(
           off: ee.off,
         };
         peer.on("open", (peerId) => {
-          setMasterPeerIdToLocalStorage(peerId);
+          setMasterPeerIdToSessionStorage(peerId);
           res(wrcMaster);
         });
         peer.on("connection", (conn) => {
