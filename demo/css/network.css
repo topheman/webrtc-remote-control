@@ -71,9 +71,9 @@ ul.site-networks li.github a span.icon {
   background-size: 32px 32px;
 }
 
-/* @media only screen and (max-width: 700px) and (min-width: 370px) {
+@media only screen and (max-width: 700px) and (min-width: 370px) {
   ul.site-networks {
-    right: 70px;
+    /* right: 70px; */
   }
   ul.site-networks li {
     margin-left: 0px;
@@ -87,7 +87,7 @@ ul.site-networks li.github a span.icon {
   img {
     max-width: 100%;
   }
-} */
+}
 
 .hide-site-networks .site-networks {
   display: none;

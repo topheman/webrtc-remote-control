@@ -20,7 +20,11 @@ button {
   display: none;
 }
 
-h1 a {
+h1.title {
+  max-width: 80%;
+}
+
+h1.title a {
   text-decoration: none;
 }
 
