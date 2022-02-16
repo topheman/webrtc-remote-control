@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 export function disableConsole(
   mockFunction = () => {},
   methodNames = ["error", "warn", "log", "info"]

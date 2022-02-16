@@ -40,6 +40,7 @@ class QRCodeDisplay extends HTMLElement {
     try {
       wrapAnchor = JSON.parse(this.getAttribute("wrap-anchor"));
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.warn(
         "Wrong `wrap-anchor` attribute passed to `qrcode-display` (only accepts `true` or `false`)"
       );

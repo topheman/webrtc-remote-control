@@ -53,6 +53,7 @@ export default function prepare() {
             if (conn) {
               conn.send(payload);
             } else {
+              // eslint-disable-next-line no-console
               console.warning("You called `send` with no connection");
             }
           },

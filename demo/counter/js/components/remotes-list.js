@@ -46,6 +46,7 @@ counter-display {
           const data = JSON.parse(newVal);
           this._data = data;
         } catch (e) {
+          // eslint-disable-next-line no-console
           console.error(
             "Failed to parse `data` attribute in `remotes-list` element",
             e
