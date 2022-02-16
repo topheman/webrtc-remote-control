@@ -17,11 +17,11 @@
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "ISC",
   "devDependencies": {
+    "@babel/preset-env": "^7.16.11",
+    "jest": "^27.5.1",
     "vite": "^2.8.3"
   },
   "dependencies": {
-    "@babel/preset-env": "^7.16.11",
-    "@webrtc-remote-control/core": "^0.0.0",
-    "jest": "^27.5.1"
+    "@webrtc-remote-control/core": "^0.0.0"
   }
 }
