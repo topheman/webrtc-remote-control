@@ -16,7 +16,9 @@ describe("master.logic", () => {
     });
     it("should return new correct state with COUNTER_INCREMENT", () => {
       const result = counterReducer(makeInitialState(), {
-        type: "COUNTER_INCREMENT",
+        data: {
+          type: "COUNTER_INCREMENT",
+        },
         id: "bar",
       });
       expect(result).toStrictEqual([
@@ -27,7 +29,9 @@ describe("master.logic", () => {
     });
     it("should return new correct state with COUNTER_DECREMENT", () => {
       const result = counterReducer(makeInitialState(), {
-        type: "COUNTER_DECREMENT",
+        data: {
+          type: "COUNTER_DECREMENT",
+        },
         id: "bar",
       });
       expect(result).toStrictEqual([
@@ -38,9 +42,11 @@ describe("master.logic", () => {
     });
     it("should return new correct state with REMOTE_SET_NAME", () => {
       const result = counterReducer(makeInitialState(), {
-        type: "REMOTE_SET_NAME",
+        data: {
+          type: "REMOTE_SET_NAME",
+          name: "tophe",
+        },
         id: "bar",
-        name: "tophe",
       });
       expect(result).toStrictEqual([
         { peerId: "foo", counter: 0 },

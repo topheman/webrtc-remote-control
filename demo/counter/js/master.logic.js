@@ -1,7 +1,7 @@
-export function counterReducer(state, action) {
+export function counterReducer(state, { data, id }) {
   return state.reduce((acc, cur) => {
-    if (cur.peerId === action.id) {
-      switch (action.type) {
+    if (cur.peerId === id) {
+      switch (data.type) {
         case "COUNTER_INCREMENT":
           acc.push({
             ...cur,
@@ -17,7 +17,7 @@ export function counterReducer(state, action) {
         case "REMOTE_SET_NAME":
           acc.push({
             ...cur,
-            name: action.name,
+            name: data.name,
           });
           break;
         default:
