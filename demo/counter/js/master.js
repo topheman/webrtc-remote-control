@@ -20,7 +20,6 @@ async function init() {
     setConsoleDisplay,
   } = render();
 
-  const countersFromStorage = getCountersFromStorage();
   let counters = [];
 
   const logger = makeLogger(setConsoleDisplay);
@@ -42,6 +41,7 @@ async function init() {
   // bind webrtc-remote-control to `peer`
   const wrcMaster = await bindConnection(peer);
   wrcMaster.on("remote.connect", ({ id }) => {
+    const countersFromStorage = getCountersFromStorage();
     logger.log({ event: "remote.connect", payload: { id } });
     counters = [
       ...counters,
