@@ -10,6 +10,7 @@ module.exports = defineConfig({
         main: resolve(__dirname, "index.html"),
         counterMaster: resolve(__dirname, "counter/master.html"),
         counterRemote: resolve(__dirname, "counter/remote.html"),
+        reactCounter: resolve(__dirname, "react-counter/index.html"),
       },
     },
   },
