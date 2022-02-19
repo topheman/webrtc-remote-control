@@ -1,31 +1,8 @@
+import { mockSessionStorage } from "../../../test.helpers";
 import {
   persistCountersToStorage,
   getCountersFromStorage,
 } from "../master.persistance";
-
-class SessionStorageMock {
-  constructor() {
-    this.store = {};
-  }
-
-  clear() {
-    this.store = {};
-  }
-
-  getItem(key) {
-    return this.store[key] || null;
-  }
-
-  setItem(key, value) {
-    this.store[key] = String(value);
-  }
-
-  removeItem(key) {
-    delete this.store[key];
-  }
-}
-
-global.sessionStorage = new SessionStorageMock();
 
 function makeState() {
   return [
@@ -35,7 +12,15 @@ function makeState() {
   ];
 }
 
+let sessionStorage = null;
+
 describe("master.persistance", () => {
+  beforeAll(() => {
+    sessionStorage = mockSessionStorage();
+  });
+  afterEach(() => {
+    sessionStorage.clear();
+  });
   it("should save an object in sessionStorage when an array is passed", () => {
     persistCountersToStorage(makeState());
     expect(getCountersFromStorage()).toStrictEqual({
