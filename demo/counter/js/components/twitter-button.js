@@ -27,7 +27,7 @@ class TwitterButton extends HTMLElement {
     display: inline-block;
   }
 </style>
-<iframe allowtransparency="true" frameborder="0" scrolling="no" width="78px" height="28px"></iframe>
+<iframe allowtransparency="true" frameborder="0" scrolling="no" width="82px" height="28px"></iframe>
     `;
     const shadow = this.attachShadow({ mode: "open" });
     shadow.appendChild(template.content.cloneNode(true));
