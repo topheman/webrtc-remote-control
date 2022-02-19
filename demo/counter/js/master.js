@@ -9,7 +9,7 @@ import { counterReducer, globalCount } from "./master.logic";
 import { render } from "./master.view";
 
 async function init() {
-  const { bindConnection, getPeerjsID } = prepare();
+  const { bindConnection, getPeerId } = prepare();
 
   const {
     showLoader,
@@ -25,7 +25,7 @@ async function init() {
   const logger = makeLogger(setConsoleDisplay);
 
   // create your own PeerJS connection
-  const peer = new Peer(getPeerjsID());
+  const peer = new Peer(getPeerId());
   peer.on("open", (peerId) => {
     setPeerId(peerId);
     showLoader(false);

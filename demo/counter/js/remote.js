@@ -14,7 +14,7 @@ export function setRemoteNameToSessionStorage(remoteName) {
 }
 
 async function init() {
-  const { bindConnection, getPeerjsID } = prepare();
+  const { bindConnection, getPeerId } = prepare();
 
   const initialName = getRemoteNameFromSessionStorage();
   const { showLoader, setConnected, setEvents, setConsoleDisplay } = render({
@@ -26,7 +26,7 @@ async function init() {
   const masterPeerId = window.location.hash.replace(/^#/, "");
 
   // create your own PeerJS connection
-  const peer = new Peer(getPeerjsID());
+  const peer = new Peer(getPeerId());
   peer.on("open", (peerId) => {
     showLoader(false);
     setConnected(true);

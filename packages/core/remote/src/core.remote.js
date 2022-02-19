@@ -1,16 +1,6 @@
 /* eslint-disable import/no-relative-packages */
+import { makeStoreAccessor } from "../../shared/common";
 import { eventEmitter } from "../../shared/event-emitter";
-
-const REMOTE_PEER_ID_SESSION_STORAGE_KEY =
-  "webrtc-remote-control-remote-peer-id";
-
-function getPeerjsID() {
-  return sessionStorage.getItem(REMOTE_PEER_ID_SESSION_STORAGE_KEY);
-}
-
-function setRemoteNameToSessionStorage(remotePeerId) {
-  sessionStorage.setItem(REMOTE_PEER_ID_SESSION_STORAGE_KEY, remotePeerId);
-}
 
 function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
   // to ensure connections with iOs, must use json serialization
@@ -33,9 +23,11 @@ function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
   return conn;
 }
 
-export default function prepare() {
+export default function prepare({ storageKey } = {}) {
+  const { getPeerId, setPeerIdToSessionStorage } =
+    makeStoreAccessor(storageKey);
   return {
-    getPeerjsID,
+    getPeerId,
     bindConnection(peer, masterPeerId) {
       return new Promise((res) => {
         let conn = null;
@@ -65,7 +57,7 @@ export default function prepare() {
           });
         };
         peer.on("open", (peerId) => {
-          setRemoteNameToSessionStorage(peerId);
+          setPeerIdToSessionStorage(peerId);
           createPeerConnectionWithReconnectOnClose(() => res(wrcRemote));
           conn.on("error", (e) => {
             console.log("conn.error", e);

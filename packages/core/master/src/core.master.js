@@ -1,20 +1,12 @@
 /* eslint-disable import/no-relative-packages */
+import { makeStoreAccessor } from "../../shared/common";
 import { eventEmitter } from "../../shared/event-emitter";
 
-const MASTER_PEER_ID_SESSION_STORAGE_KEY =
-  "webrtc-remote-control-master-peer-id";
-
-function getPeerjsID() {
-  return sessionStorage.getItem(MASTER_PEER_ID_SESSION_STORAGE_KEY);
-}
-
-function setMasterPeerIdToSessionStorage(masterPeerId) {
-  sessionStorage.setItem(MASTER_PEER_ID_SESSION_STORAGE_KEY, masterPeerId);
-}
-
-export default function prepare() {
+export default function prepare({ storageKey } = {}) {
+  const { getPeerId, setPeerIdToSessionStorage } =
+    makeStoreAccessor(storageKey);
   return {
-    getPeerjsID,
+    getPeerId,
     bindConnection(peer) {
       return new Promise((res) => {
         const ee = eventEmitter();
@@ -38,7 +30,7 @@ export default function prepare() {
           off: ee.off,
         };
         peer.on("open", (peerId) => {
-          setMasterPeerIdToSessionStorage(peerId);
+          setPeerIdToSessionStorage(peerId);
           res(wrcMaster);
         });
         peer.on("connection", (conn) => {
