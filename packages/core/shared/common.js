@@ -1,7 +1,3 @@
-export function someUtil(msg = "") {
-  return `Called some util: ${msg}`;
-}
-
 export function makeStoreAccessor(
   storageKey = "webrtc-remote-control-peer-id"
 ) {

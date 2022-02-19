@@ -1,14 +1,5 @@
 /* eslint-disable import/no-relative-packages */
-import { someUtil } from "../../shared/common";
 import { eventEmitter } from "../../shared/event-emitter";
-
-export function hello() {
-  return {
-    type: "master",
-    message: someUtil("master"),
-    mode: process.env.NODE_ENV !== "production" ? "development" : "production",
-  };
-}
 
 const MASTER_PEER_ID_SESSION_STORAGE_KEY =
   "webrtc-remote-control-master-peer-id";
