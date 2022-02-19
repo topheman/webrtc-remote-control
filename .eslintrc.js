@@ -8,7 +8,14 @@ module.exports = {
   globals: {
     Peer: true,
   },
-  extends: ["airbnb-base", "plugin:prettier/recommended"],
+  extends: [
+    "airbnb-base",
+    "plugin:prettier/recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:jsx-a11y/recommended",
+    "plugin:react/jsx-runtime",
+  ],
   parserOptions: {
     ecmaVersion: 13,
     sourceType: "module",
@@ -20,5 +27,18 @@ module.exports = {
     "prettier/prettier": ["error", {}, { usePrettierrc: true }],
     "import/prefer-default-export": 0,
     "no-use-before-define": 0,
+    // ignore 'React' is defined but never used
+    "react/jsx-uses-react": 1,
+  },
+  settings: {
+    "import/resolver": {
+      node: {
+        extensions: [".js", ".jsx"],
+      },
+    },
+    react: {
+      // to avoid "Warning: React version not specified in eslint-plugin-react settings." - https://github.com/yannickcr/eslint-plugin-react/issues/1955
+      version: "latest",
+    },
   },
 };
