@@ -12,6 +12,9 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 13,
     sourceType: "module",
+    ecmaFeatures: {
+      jsx: true,
+    },
   },
   rules: {
     "prettier/prettier": ["error", {}, { usePrettierrc: true }],

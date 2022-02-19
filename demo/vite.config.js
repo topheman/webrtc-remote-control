@@ -1,6 +1,7 @@
+/* eslint-disable import/no-extraneous-dependencies */
 const { resolve } = require("path");
-// eslint-disable-next-line import/no-extraneous-dependencies
 const { defineConfig } = require("vite");
+const react = require("@vitejs/plugin-react");
 
 module.exports = defineConfig({
   build: {
@@ -17,4 +18,5 @@ module.exports = defineConfig({
   server: {
     host: "0.0.0.0",
   },
+  plugins: [react()],
 });
