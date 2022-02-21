@@ -43,3 +43,7 @@ export function mockSessionStorage() {
   global.sessionStorage = new SessionStorageMock();
   return global.sessionStorage;
 }
+
+export function getE2eTestServerAddress() {
+  return `http://localhost:${process.env.PORT || 3000}`;
+}

@@ -12,7 +12,9 @@
     "forward:preview": "ssh -R 80:localhost:5000 localhost.run",
     "test": "jest",
     "test:precommit": "jest --bail --findRelatedTests",
-    "test:watch": "jest --watch -o"
+    "test:watch": "jest --watch -o",
+    "test:e2e": "jest --config ./jest.e2e.config.js",
+    "test:e2e:headless-false": "HEADLESS=false jest --config ./jest.e2e.config.js"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "ISC",
@@ -20,6 +22,7 @@
     "@babel/preset-env": "^7.16.11",
     "@vitejs/plugin-react": "^1.2.0",
     "jest": "^27.5.1",
+    "jest-puppeteer": "^6.1.0",
     "vite": "^2.8.3"
   },
   "dependencies": {
