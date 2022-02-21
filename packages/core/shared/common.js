@@ -10,3 +10,13 @@ export function makeStoreAccessor(
     },
   };
 }
+
+export function makeConnectionFilterUtilities() {
+  const connMetadata = "from-webrtc-remote-control";
+  return {
+    isConnectionFromRemote(conn) {
+      return conn.metadata === connMetadata;
+    },
+    connMetadata,
+  };
+}

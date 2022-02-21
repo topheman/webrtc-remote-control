@@ -1,11 +1,16 @@
 /* eslint-disable import/no-relative-packages */
-import { makeStoreAccessor } from "../../shared/common";
+import {
+  makeStoreAccessor,
+  makeConnectionFilterUtilities,
+} from "../../shared/common";
 import { eventEmitter } from "../../shared/event-emitter";
 
 export default function prepare({ sessionStorageKey } = {}) {
+  const { isConnectionFromRemote } = makeConnectionFilterUtilities();
   const { getPeerId, setPeerIdToSessionStorage } =
     makeStoreAccessor(sessionStorageKey);
   return {
+    isConnectionFromRemote,
     getPeerId,
     bindConnection(peer) {
       return new Promise((res) => {
@@ -34,6 +39,10 @@ export default function prepare({ sessionStorageKey } = {}) {
           res(wrcMaster);
         });
         peer.on("connection", (conn) => {
+          // we don't track the connections made by the user directly using `peer.connect`
+          if (!isConnectionFromRemote(conn)) {
+            return;
+          }
           connections.push(conn);
           conn.on("open", () => {
             ee.emit("remote.connect", { id: conn.peer });

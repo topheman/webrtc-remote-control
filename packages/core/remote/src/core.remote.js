@@ -1,10 +1,17 @@
 /* eslint-disable import/no-relative-packages */
-import { makeStoreAccessor } from "../../shared/common";
+import {
+  makeStoreAccessor,
+  makeConnectionFilterUtilities,
+} from "../../shared/common";
 import { eventEmitter } from "../../shared/event-emitter";
 
 function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
+  const { connMetadata } = makeConnectionFilterUtilities();
   // to ensure connections with iOs, must use json serialization
-  const conn = peer.connect(masterPeerId, { serialization: "json" });
+  const conn = peer.connect(masterPeerId, {
+    serialization: "json",
+    metadata: connMetadata, // will let us identify which connections are managed by the package / by the user
+  });
   // send a disconnect message to master when reloading/closing
   const onBeforeUnload = () => {
     // todo tell the master to disconnect the remote

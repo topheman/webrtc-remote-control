@@ -1,5 +1,5 @@
 import { mockSessionStorage } from "../test.helpers";
-import { makeStoreAccessor } from "./common";
+import { makeStoreAccessor, makeConnectionFilterUtilities } from "./common";
 
 let sessionStorage = null;
 
@@ -31,6 +31,14 @@ describe("shared/common", () => {
 
       expect(getPeerId()).toBe("bar");
       expect(sessionStorage.getItem("some-other-key")).toBe("bar");
+    });
+  });
+  describe("makeConnectionFilterUtilities", () => {
+    it("isConnectionFromRemote should return true if conn was issued by remote", () => {
+      const { isConnectionFromRemote } = makeConnectionFilterUtilities();
+      expect(
+        isConnectionFromRemote({ metadata: "from-webrtc-remote-control" })
+      ).toBe(true);
     });
   });
 });
