@@ -39,7 +39,7 @@ describe("common", () => {
     });
     it("array of logs should be limited to max length and rotate", () => {
       const restoreConsole = disableConsole();
-      const logger = makeLogger(() => {}, [], 3);
+      const logger = makeLogger({ onLog: () => {}, logs: [], size: 3 });
       const a = logger.log("foo");
       const b = logger.warn("bar");
       const c = logger.log("baz");
@@ -64,7 +64,7 @@ describe("common", () => {
     it("onLog callback should be called on log", () => {
       const restoreConsole = disableConsole();
       const onLog = jest.fn();
-      const logger = makeLogger(onLog);
+      const logger = makeLogger({ onLog });
       logger.log("foo");
       expect(onLog).toHaveBeenNthCalledWith(1, [
         { key: 1, level: "log", payload: "foo" },

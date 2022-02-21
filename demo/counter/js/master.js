@@ -22,7 +22,7 @@ async function init() {
 
   let counters = [];
 
-  const logger = makeLogger(setConsoleDisplay);
+  const logger = makeLogger({ onLog: setConsoleDisplay });
 
   // create your own PeerJS connection
   const peer = new Peer(getPeerId());

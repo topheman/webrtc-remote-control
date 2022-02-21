@@ -21,7 +21,7 @@ async function init() {
     initialName,
   });
 
-  const logger = makeLogger(setConsoleDisplay);
+  const logger = makeLogger({ onLog: setConsoleDisplay });
 
   const masterPeerId = window.location.hash.replace(/^#/, "");
 

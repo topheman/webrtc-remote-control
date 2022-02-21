@@ -20,7 +20,7 @@ export function humanizeErrors(errors = []) {
   }, []);
 }
 
-export function makeLogger(onLog = () => {}, logs = [], size = 20) {
+export function makeLogger({ onLog = () => {}, logs = [], size = 30 } = {}) {
   function makeLogFunction(type) {
     return function log(payload) {
       // eslint-disable-next-line no-param-reassign
