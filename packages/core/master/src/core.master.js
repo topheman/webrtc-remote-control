@@ -2,9 +2,9 @@
 import { makeStoreAccessor } from "../../shared/common";
 import { eventEmitter } from "../../shared/event-emitter";
 
-export default function prepare({ storageKey } = {}) {
+export default function prepare({ sessionStorageKey } = {}) {
   const { getPeerId, setPeerIdToSessionStorage } =
-    makeStoreAccessor(storageKey);
+    makeStoreAccessor(sessionStorageKey);
   return {
     getPeerId,
     bindConnection(peer) {

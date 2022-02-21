@@ -1,12 +1,12 @@
 export function makeStoreAccessor(
-  storageKey = "webrtc-remote-control-peer-id"
+  sessionStorageKey = "webrtc-remote-control-peer-id"
 ) {
   return {
     getPeerId() {
-      return sessionStorage.getItem(storageKey);
+      return sessionStorage.getItem(sessionStorageKey);
     },
     setPeerIdToSessionStorage(peerId) {
-      sessionStorage.setItem(storageKey, peerId);
+      sessionStorage.setItem(sessionStorageKey, peerId);
     },
   };
 }

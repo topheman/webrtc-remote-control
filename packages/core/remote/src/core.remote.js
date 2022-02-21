@@ -23,9 +23,9 @@ function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
   return conn;
 }
 
-export default function prepare({ storageKey } = {}) {
+export default function prepare({ sessionStorageKey } = {}) {
   const { getPeerId, setPeerIdToSessionStorage } =
-    makeStoreAccessor(storageKey);
+    makeStoreAccessor(sessionStorageKey);
   return {
     getPeerId,
     bindConnection(peer, masterPeerId) {
