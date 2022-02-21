@@ -29,7 +29,11 @@ async function init() {
   peer.on("open", (peerId) => {
     setPeerId(peerId);
     showLoader(false);
-    logger.log(`Master connected - id: ${peerId}`);
+    logger.log({
+      event: "open",
+      comment: "Master connected",
+      payload: { id: peerId },
+    });
   });
   peer.on("error", (error) => {
     setPeerId(null);

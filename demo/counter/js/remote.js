@@ -30,7 +30,11 @@ async function init() {
   peer.on("open", (peerId) => {
     showLoader(false);
     setConnected(true);
-    logger.log(`Remote connected - id: ${peerId}`);
+    logger.log({
+      event: "open",
+      comment: "Remote connected",
+      payload: { id: peerId },
+    });
   });
   peer.on("error", (error) => {
     showLoader(false);
