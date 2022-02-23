@@ -8,6 +8,7 @@ module.exports = {
   globals: {
     Peer: true,
     page: true,
+    browser: true,
   },
   extends: [
     "airbnb-base",
