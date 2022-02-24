@@ -26,6 +26,14 @@ module.exports = {
     },
   },
   rules: {
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        devDependencies: true,
+        optionalDependencies: false,
+        peerDependencies: false,
+      },
+    ],
     "prettier/prettier": ["error", {}, { usePrettierrc: true }],
     "import/prefer-default-export": 0,
     "no-use-before-define": 0,

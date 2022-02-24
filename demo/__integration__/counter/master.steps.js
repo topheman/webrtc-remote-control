@@ -1,6 +1,6 @@
 import { getE2eTestServerAddress, sleep } from "../../test.helpers";
 
-describe("counter/master", () => {
+describe.skip("counter/master", () => {
   // eslint-disable-next-line no-unused-vars
   let masterPeerId = null;
   // eslint-disable-next-line no-unused-vars
