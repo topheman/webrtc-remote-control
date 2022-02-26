@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="../css/main.css" />
     <link rel="stylesheet" href="../css/network.css" />
-    <link rel="stylesheet" href="./css/master.css" />
+    <link rel="stylesheet" href="./css/remote.css" />
     <title>webrtc-remote-control / demo / counter</title>
   </head>
   <body>
@@ -29,7 +29,8 @@
         </li>
       </ul>
       <h1 class="title">
-        <a href="../index.html">webrtc-remote-control</a> / demo / counter
+        <a href="../index.html">webrtc-remote-control</a> / demo / vanilla /
+        counter
       </h1>
     </header>
     <div id="content">
@@ -45,24 +46,26 @@
         <span>Loading ...</span>
       </div>
       <errors-display></errors-display>
-      <qrcode-display width="160" height="160"></qrcode-display>
+      <div class="counter-control">
+        <button type="button" class="counter-control-add">+</button>
+        <button type="button" class="counter-control-sub">-</button>
+      </div>
+      <form class="form-set-name" action=".">
+        <label>
+          <input type="text" placeholder="Enter name" /><button type="submit">
+            OK
+          </button>
+        </label>
+      </form>
       <p>
-        👆Snap the the QR code or
-        <a class="open-remote" target="_blank">click here</a> to open an
-        <strong>other window from where you will control the counters</strong>
-        on this page (like with a remote).
+        Check the counter updating in real-time on the original page, thanks to
+        WebRTC.
       </p>
-      <p>
-        Global counter:
-        <counter-display data="0" class="global-counter"></counter-display>
-      </p>
-      <remotes-list></remotes-list>
       <console-display></console-display>
       <div class="static-content-wrapper"></div>
       <footer-display from="2022"></footer-display>
     </template>
-    <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
-    <script type="module" src="./js/master.js"></script>
+    <script type="module" src="./js/remote.js"></script>
   </body>
 </html>

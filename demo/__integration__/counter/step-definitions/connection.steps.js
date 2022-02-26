@@ -11,11 +11,11 @@ const feature = loadFeature(`${__dirname}/../features/connection.feature`);
 function getVisitInfosFromMode(mode) {
   const infos = {
     vanilla: {
-      url: "/counter/master.html",
-      title: "webrtc-remote-control / demo / counter",
+      url: "/counter-vanilla/master.html",
+      title: "webrtc-remote-control / demo / vanilla / counter",
     },
     react: {
-      url: "/react-counter/index.html",
+      url: "/counter-react/index.html",
       title: "webrtc-remote-control / demo / react / counter",
     },
   };

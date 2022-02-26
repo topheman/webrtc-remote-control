@@ -16,9 +16,9 @@ describe.skip("counter/master", () => {
   });
 
   test('[master] should have triggered native "open" peerjs event', async () => {
-    await page.goto(`${getE2eTestServerAddress()}/counter/master.html`);
+    await page.goto(`${getE2eTestServerAddress()}/counter-vanilla/master.html`);
     await expect(page.title()).resolves.toMatch(
-      "webrtc-remote-control / demo / counter"
+      "webrtc-remote-control / demo / vanilla / counter"
     );
     const logs = await page.evaluate(() => {
       return document.querySelector("console-display").data;
@@ -30,7 +30,7 @@ describe.skip("counter/master", () => {
 
   test('[master/remote] should receive/emit "remote.connect" on first remote', async () => {
     await expect(page.title()).resolves.toMatch(
-      "webrtc-remote-control / demo / counter"
+      "webrtc-remote-control / demo / vanilla / counter"
     );
     const remoteHref = await page.evaluate(() => {
       return document.querySelector(".open-remote").href;
