@@ -8,14 +8,30 @@ import {
 
 const feature = loadFeature(`${__dirname}/../features/connection.feature`);
 
-defineFeature(feature, (test) => {
-  test("Connecting multiple remotes", ({ given }) => {
-    givenIVisitDemoHomePage(given);
-    givenIVisitMasterPage(
-      given,
-      "/counter/master.html",
-      "webrtc-remote-control / demo / counter"
-    );
-    givenMasterPeerOpenEventIsTriggered(given);
+function getVisitInfosFromMode(mode) {
+  const infos = {
+    vanilla: {
+      url: "/counter/master.html",
+      title: "webrtc-remote-control / demo / counter",
+    },
+    react: {
+      url: "/react-counter/index.html",
+      title: "webrtc-remote-control / demo / react / counter",
+    },
+  };
+  return infos[mode];
+}
+
+describe.each([
+  "vanilla",
+  // "react"
+])("[%s]", (mode) => {
+  defineFeature(feature, (test) => {
+    test("Connecting multiple remotes", ({ given }) => {
+      const infos = getVisitInfosFromMode(mode);
+      givenIVisitDemoHomePage(given);
+      givenIVisitMasterPage(given, infos.url, infos.title);
+      givenMasterPeerOpenEventIsTriggered(given);
+    });
   });
 });
