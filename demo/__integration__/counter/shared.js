@@ -182,23 +182,14 @@ export function setupBackground(given, mode) {
   givenIVisitMasterPage(given, infos.url, infos.title);
   const getMasterPeerId = givenMasterPeerOpenEventIsTriggered(given);
 
-  addRemote(givenIOpenANewRemote(given));
-  givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
-    getRemote: getRemote(-1),
-  });
-  givenRemoteListShouldContain(given, { getRemotes });
-
-  addRemote(givenIOpenANewRemote(given));
-  givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
-    getRemote: getRemote(-1),
-  });
-  givenRemoteListShouldContain(given, { getRemotes });
-
-  addRemote(givenIOpenANewRemote(given));
-  givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
-    getRemote: getRemote(-1),
-  });
-  givenRemoteListShouldContain(given, { getRemotes });
+  // open 3 remotes
+  for (let i = 0; i < 3; i++) {
+    addRemote(givenIOpenANewRemote(given));
+    givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
+      getRemote: getRemote(-1),
+    });
+    givenRemoteListShouldContain(given, { getRemotes });
+  }
 
   return {
     getRemotes,
