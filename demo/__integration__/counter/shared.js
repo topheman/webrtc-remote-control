@@ -33,13 +33,14 @@ export function givenMasterPeerOpenEventIsTriggered(given) {
 
 export function givenIOpenANewRemote(given) {
   let remotePeerId = null;
+  let remotePage = null;
   given(
     "I open a new remote from master, it should trigger an open event on remote",
     async () => {
       const remoteHref = await page.evaluate(() => {
         return document.querySelector(".open-remote").href;
       });
-      const remotePage = await browser.newPage();
+      remotePage = await browser.newPage();
       await remotePage.goto(remoteHref);
       await expect(remotePage.url()).toBe(remoteHref);
 
@@ -55,7 +56,28 @@ export function givenIOpenANewRemote(given) {
     }
   );
 
-  return function getRemotePeerId() {
-    return remotePeerId;
+  return function getRemote() {
+    return {
+      peerId: remotePeerId,
+      page: remotePage,
+    };
   };
+}
+
+export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
+  given,
+  { getRemote }
+) {
+  given("[master] should receive remote.connect event", async () => {
+    // check the events on the master page
+    const masterLogs = await page.evaluate(() => {
+      return document.querySelector("console-display").data;
+    });
+    expect(masterLogs[0].payload).toEqual({
+      event: "remote.connect",
+      payload: {
+        id: getRemote().peerId,
+      },
+    });
+  });
 }
