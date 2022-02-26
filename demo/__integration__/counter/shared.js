@@ -105,10 +105,24 @@ export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
 
 export function givenICloseEveryRemoteTabs(given, { getRemotes }) {
   given("I close every remotes", async () => {
-    // eslint-disable-next-line no-restricted-syntax
     for (const getRemote of getRemotes()) {
-      // eslint-disable-next-line no-await-in-loop
       await getRemote().page.close();
+    }
+  });
+}
+
+export function givenIResetSessionStorage(given, { getRemotes }) {
+  given("I reset the sessionStorage of master page", async () => {
+    for (const getRemote of getRemotes()) {
+      const peerIdInStorage = await getRemote().page.evaluate(() => {
+        return sessionStorage.getItem("webrtc-remote-control-peer-id");
+      });
+      // check the correct peerId was stored in sessionStorage
+      expect(peerIdInStorage).toBe(getRemote().peerId);
+      // cleanup
+      await getRemote().page.evaluate(() => {
+        return sessionStorage.removeItem("webrtc-remote-control-peer-id");
+      });
     }
   });
 }

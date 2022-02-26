@@ -15,7 +15,9 @@ Feature: Counter
     And [master] remote lists should be "[0,0,0]"
 
   Scenario: Basic
-    Given I close every remotes
+    Given I reset the sessionStorage of master page
+    And I close every remotes
 
   Scenario: Send events
-    Given I close every remotes
+    Given I reset the sessionStorage of master page
+    And I close every remotes
