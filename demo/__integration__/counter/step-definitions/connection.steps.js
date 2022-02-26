@@ -4,6 +4,7 @@ import {
   givenIVisitDemoHomePage,
   givenIVisitMasterPage,
   givenMasterPeerOpenEventIsTriggered,
+  givenIOpenANewRemote,
 } from "../shared";
 
 const feature = loadFeature(`${__dirname}/../features/connection.feature`);
@@ -29,9 +30,14 @@ describe.each([
   defineFeature(feature, (test) => {
     test("Connecting multiple remotes", ({ given }) => {
       const infos = getVisitInfosFromMode(mode);
+      const getRemotePeerIds = [];
       givenIVisitDemoHomePage(given);
       givenIVisitMasterPage(given, infos.url, infos.title);
-      givenMasterPeerOpenEventIsTriggered(given);
+      // eslint-disable-next-line no-unused-vars
+      const getMasterPeerId = givenMasterPeerOpenEventIsTriggered(given);
+      getRemotePeerIds.push(givenIOpenANewRemote(given));
+      getRemotePeerIds.push(givenIOpenANewRemote(given));
+      getRemotePeerIds.push(givenIOpenANewRemote(given));
     });
   });
 });
