@@ -21,3 +21,7 @@ Feature: Counter
   Scenario: Send events
     Given I reset the sessionStorage of master page
     And I close every remotes
+
+  Scenario: Reconnection
+    Given I reset the sessionStorage of master page
+    And I close every remotes

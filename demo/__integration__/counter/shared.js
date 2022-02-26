@@ -1,4 +1,6 @@
-import { getE2eTestServerAddress } from "../../test.helpers";
+import { getE2eTestServerAddress, sleep } from "../../test.helpers";
+
+const SAFE_TIMEOUT = 3;
 
 export function getVisitInfosFromMode(mode) {
   const acceptedModes = ["react", "vanilla"];
@@ -46,6 +48,8 @@ export function givenMasterPeerOpenEventIsTriggered(given) {
 
     // update `masterPeerId` so that it will be exposed
     masterPeerId = logs[0].payload.payload.id;
+
+    await sleep(SAFE_TIMEOUT);
   });
 
   return function getMasterPeerId() {
@@ -74,6 +78,8 @@ export function givenIOpenANewRemote(given) {
 
       // update `remotePeerId` so that it will be exposed
       remotePeerId = remoteLogs[0].payload.payload.id;
+
+      await sleep(SAFE_TIMEOUT);
     }
   );
 
@@ -100,6 +106,8 @@ export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
         id: getRemote().peerId,
       },
     });
+
+    await sleep(SAFE_TIMEOUT);
   });
 }
 
@@ -173,21 +181,25 @@ export function setupBackground(given, mode) {
   givenIVisitDemoHomePage(given);
   givenIVisitMasterPage(given, infos.url, infos.title);
   const getMasterPeerId = givenMasterPeerOpenEventIsTriggered(given);
+
   addRemote(givenIOpenANewRemote(given));
   givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
     getRemote: getRemote(-1),
   });
   givenRemoteListShouldContain(given, { getRemotes });
+
   addRemote(givenIOpenANewRemote(given));
   givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
     getRemote: getRemote(-1),
   });
   givenRemoteListShouldContain(given, { getRemotes });
+
   addRemote(givenIOpenANewRemote(given));
   givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
     getRemote: getRemote(-1),
   });
   givenRemoteListShouldContain(given, { getRemotes });
+
   return {
     getRemotes,
     getRemote,

@@ -23,5 +23,10 @@ describe.each([
       givenIResetSessionStorage(given, { getRemotes });
       givenICloseEveryRemoteTabs(given, { getRemotes });
     });
+    test("Reconnection", async ({ given }) => {
+      const { getRemotes } = setupBackground(given, mode);
+      givenIResetSessionStorage(given, { getRemotes });
+      givenICloseEveryRemoteTabs(given, { getRemotes });
+    });
   });
 });
