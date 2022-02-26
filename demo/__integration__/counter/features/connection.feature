@@ -7,8 +7,11 @@ Feature: Connection
     And I visit master page
     And [master] triggers open event
     Then I open a new remote from master, it should trigger an open event on remote
-    And [master/remote] should receive/emit remote.connect event
+    And [master] should receive remote.connect event
+    And [master] remote lists should be "[0]"
     Then I open a new remote from master, it should trigger an open event on remote
-    And [master/remote] should receive/emit remote.connect event
+    And [master] should receive remote.connect event
+    And [master] remote lists should be "[0,0]"
     Then I open a new remote from master, it should trigger an open event on remote
-    And [master/remote] should receive/emit remote.connect event
+    And [master] should receive remote.connect event
+    And [master] remote lists should be "[0,0,0]"

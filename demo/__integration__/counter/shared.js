@@ -49,7 +49,6 @@ export function givenIOpenANewRemote(given) {
         return document.querySelector("console-display").data;
       });
       expect(remoteLogs[0].payload.event).toBe("open");
-      console.log((await browser.pages()).length);
 
       // update `remotePeerId` so that it will be exposed
       remotePeerId = remoteLogs[0].payload.payload.id;
@@ -80,4 +79,38 @@ export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
       },
     });
   });
+}
+
+/**
+ * Accepts in the feature a string "[0,1,2]" which will be matched to the counters
+ * of the connected remotes.
+ * No need to pass peerIds, they are derived via indexes.
+ */
+export function givenRemoteListShouldContain(given, { getRemotes }) {
+  given(
+    /^\[master\] remote lists should be "(.*)"$/,
+    async (expectedSerializedRemoteCounters) => {
+      // extract the counter list from the feature file and re-create an object-like
+      // that was passed to <remotes-list/>
+      const parsedRemoteCounters = JSON.parse(expectedSerializedRemoteCounters);
+      const remotesListExpectedData = getRemotes().reduce(
+        (acc, getRemote, index) => {
+          if (getRemote().peerId) {
+            acc.push({
+              counter: parsedRemoteCounters[index],
+              peerId: getRemote().peerId,
+            });
+          }
+          return acc;
+        },
+        []
+      );
+
+      // match
+      const remotesListCurrentData = await page.evaluate(() => {
+        return document.querySelector("remotes-list").data;
+      });
+      expect(remotesListCurrentData).toEqual(remotesListExpectedData);
+    }
+  );
 }

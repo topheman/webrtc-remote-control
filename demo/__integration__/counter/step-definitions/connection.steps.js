@@ -6,6 +6,7 @@ import {
   givenMasterPeerOpenEventIsTriggered,
   givenIOpenANewRemote,
   givenMasterAndRemoteEmitReceiveRemoteConnectEvent,
+  givenRemoteListShouldContain,
 } from "../shared";
 
 const feature = loadFeature(`${__dirname}/../features/connection.feature`);
@@ -31,23 +32,27 @@ describe.each([
   defineFeature(feature, (test) => {
     test("Connecting multiple remotes", ({ given }) => {
       const infos = getVisitInfosFromMode(mode);
-      const getRemotes = [];
+      const remotes = [];
+      const getRemotes = () => remotes;
       givenIVisitDemoHomePage(given);
       givenIVisitMasterPage(given, infos.url, infos.title);
       // eslint-disable-next-line no-unused-vars
       const getMasterPeerId = givenMasterPeerOpenEventIsTriggered(given);
-      getRemotes.push(givenIOpenANewRemote(given));
+      remotes.push(givenIOpenANewRemote(given));
       givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
-        getRemote: getRemotes[0],
+        getRemote: remotes[0],
       });
-      getRemotes.push(givenIOpenANewRemote(given));
+      givenRemoteListShouldContain(given, { getRemotes });
+      remotes.push(givenIOpenANewRemote(given));
       givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
-        getRemote: getRemotes[1],
+        getRemote: remotes[1],
       });
-      getRemotes.push(givenIOpenANewRemote(given));
+      givenRemoteListShouldContain(given, { getRemotes });
+      remotes.push(givenIOpenANewRemote(given));
       givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
-        getRemote: getRemotes[2],
+        getRemote: remotes[2],
       });
+      givenRemoteListShouldContain(given, { getRemotes });
     });
   });
 });
