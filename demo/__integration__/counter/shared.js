@@ -1,5 +1,27 @@
 import { getE2eTestServerAddress } from "../../test.helpers";
 
+export function getVisitInfosFromMode(mode) {
+  const acceptedModes = ["react", "vanilla"];
+  if (!acceptedModes.includes(mode)) {
+    throw new Error(
+      `mode ${mode} not supported, please pass one of ${acceptedModes.join(
+        ", "
+      )}`
+    );
+  }
+  const infos = {
+    vanilla: {
+      url: "/counter-vanilla/master.html",
+      title: "webrtc-remote-control / demo / vanilla / counter",
+    },
+    react: {
+      url: "/counter-react/index.html",
+      title: "webrtc-remote-control / demo / react / counter",
+    },
+  };
+  return infos[mode];
+}
+
 export function givenIVisitDemoHomePage(given) {
   given("I visit demo home page", async () => {
     await page.goto(getE2eTestServerAddress());
@@ -113,4 +135,39 @@ export function givenRemoteListShouldContain(given, { getRemotes }) {
       expect(remotesListCurrentData).toEqual(remotesListExpectedData);
     }
   );
+}
+
+/**
+ * Will setup all the backgroud steps
+ */
+export function setupBackground(given, mode) {
+  const infos = getVisitInfosFromMode(mode);
+  const remotes = [];
+  const getRemotes = () => remotes;
+  const addRemote = (remote) => remotes.push(remote);
+  const getRemote = (index) => remotes.at(index);
+  givenIVisitDemoHomePage(given);
+  givenIVisitMasterPage(given, infos.url, infos.title);
+  const getMasterPeerId = givenMasterPeerOpenEventIsTriggered(given);
+  addRemote(givenIOpenANewRemote(given));
+  givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
+    getRemote: getRemote(-1),
+  });
+  givenRemoteListShouldContain(given, { getRemotes });
+  addRemote(givenIOpenANewRemote(given));
+  givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
+    getRemote: getRemote(-1),
+  });
+  givenRemoteListShouldContain(given, { getRemotes });
+  addRemote(givenIOpenANewRemote(given));
+  givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
+    getRemote: getRemote(-1),
+  });
+  givenRemoteListShouldContain(given, { getRemotes });
+  return {
+    getRemotes,
+    getRemote,
+    addRemote,
+    getMasterPeerId,
+  };
 }
