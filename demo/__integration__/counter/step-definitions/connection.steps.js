@@ -1,6 +1,6 @@
 import { defineFeature, loadFeature } from "jest-cucumber";
 
-import { setupBackground } from "../shared";
+import { setupBackground, givenICloseEveryRemoteTabs } from "../shared";
 
 const feature = loadFeature(`${__dirname}/../features/connection.feature`);
 
@@ -10,7 +10,12 @@ describe.each([
 ])("[%s]", (mode) => {
   defineFeature(feature, (test) => {
     test("Basic", ({ given }) => {
-      setupBackground(given, mode);
+      const { getRemotes } = setupBackground(given, mode);
+      givenICloseEveryRemoteTabs(given, { getRemotes });
+    });
+    test("Send events", async ({ given }) => {
+      const { getRemotes } = setupBackground(given, mode);
+      givenICloseEveryRemoteTabs(given, { getRemotes });
     });
   });
 });

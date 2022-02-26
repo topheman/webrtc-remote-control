@@ -103,6 +103,16 @@ export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
   });
 }
 
+export function givenICloseEveryRemoteTabs(given, { getRemotes }) {
+  given("I close every remotes", async () => {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const getRemote of getRemotes()) {
+      // eslint-disable-next-line no-await-in-loop
+      await getRemote().page.close();
+    }
+  });
+}
+
 /**
  * Accepts in the feature a string "[0,1,2]" which will be matched to the counters
  * of the connected remotes.
