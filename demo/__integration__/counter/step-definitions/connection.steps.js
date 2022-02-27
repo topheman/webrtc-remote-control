@@ -6,6 +6,7 @@ import {
   givenIResetSessionStorage,
   giventIClickTimesOnRemote,
   givenRemoteListShouldContain,
+  givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent,
 } from "../shared";
 
 const feature = loadFeature(`${__dirname}/../features/connection.feature`);
@@ -31,6 +32,7 @@ describe.each([
     });
     test("Reconnection", async ({ given }) => {
       const api = setupBackground(given, mode);
+      givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(given, api);
       givenIResetSessionStorage(given, api);
       givenICloseEveryPages(given, api);
     });

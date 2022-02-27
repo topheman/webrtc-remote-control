@@ -237,6 +237,46 @@ export function giventIClickTimesOnRemote(given, { getRemote }) {
   );
 }
 
+export function givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(
+  given,
+  { getRemote, getMasterPage }
+) {
+  given(
+    /^I reload remote (\d+) then master should receive remote.disconnect\/remote.connect event$/,
+    async (remoteIndex) => {
+      const remotePeerId = getRemote(remoteIndex)().peerId;
+      await getRemote(remoteIndex)().page.reload();
+      const remoteLogs = await getRemote(remoteIndex)().page.evaluate(
+        async () => {
+          return document.querySelector("console-display").data;
+        }
+      );
+      // remote should re-open and re-use the same id
+      expect(remoteLogs[0].payload.event).toBe("open");
+      expect(remoteLogs[0].payload.payload.id).toBe(remotePeerId);
+
+      // master should receive remote.disconnect/remote.connect
+      const masterLogs = await getMasterPage().evaluate(async () => {
+        return document.querySelector("console-display").data;
+      });
+      expect(masterLogs[1].payload).toEqual({
+        event: "remote.disconnect",
+        payload: {
+          id: remotePeerId,
+        },
+      });
+      expect(masterLogs[0].payload).toEqual({
+        event: "remote.connect",
+        payload: {
+          id: remotePeerId,
+        },
+      });
+
+      await sleep(SAFE_TIMEOUT);
+    }
+  );
+}
+
 /**
  * Will setup all the backgroud steps
  */
@@ -244,7 +284,15 @@ export function setupBackground(given, mode) {
   const infos = getVisitInfosFromMode(mode);
   const remotes = [];
   const getAllRemotes = () => remotes;
-  const addRemote = (remote) => remotes.push(remote);
+  const addRemote = (remote) => {
+    remotes.push(remote);
+  };
+  const setRemote = (remote, index) => {
+    if (typeof index === "undefined") {
+      throw new Error(`setRemote must be passed both remote and index`);
+    }
+    remotes[index] = remote;
+  };
   const getRemote = (index) => remotes.at(index);
   const { getMasterPage } = givenIVisitDemoHomePage(given);
   givenIVisitMasterPage(given, infos.url, infos.title, { getMasterPage });
@@ -266,6 +314,7 @@ export function setupBackground(given, mode) {
     getAllRemotes,
     getRemote,
     addRemote,
+    setRemote,
     getMasterPeerId,
     getMasterPage,
   };
