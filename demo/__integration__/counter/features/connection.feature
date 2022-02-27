@@ -28,5 +28,6 @@ Feature: Counter
 
   Scenario: Reconnection
     Given I reload remote 1 then master should receive remote.disconnect/remote.connect event
+    And I reload master then all remotes should receive remote.disconnect/remote.reconnect
     Given I reset the sessionStorage of every pages
     And I close every pages

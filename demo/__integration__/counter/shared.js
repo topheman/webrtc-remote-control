@@ -277,6 +277,56 @@ export function givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(
   );
 }
 
+export function givenIReloadMasterThenRemotesShouldReconnect(
+  given,
+  { getAllRemotes, getMasterPage }
+) {
+  given(
+    "I reload master then all remotes should receive remote.disconnect/remote.reconnect",
+    async () => {
+      const expectedEventsOnMaster = getAllRemotes()
+        .map((getRemote) => ({
+          event: "remote.connect",
+          payload: {
+            id: getRemote().peerId,
+          },
+        }))
+        .sort((a, b) => (a.payload.id > b.payload.id ? -1 : 1));
+      await getMasterPage().reload();
+      await sleep(SAFE_TIMEOUT * 100);
+
+      // check remote connecting on master
+      const masterLogs = await getMasterPage().evaluate(async () => {
+        return document.querySelector("console-display").data;
+      });
+      const received = masterLogs
+        .slice(0, 3)
+        .map(({ payload }) => payload)
+        .sort((a, b) => (a.payload.id > b.payload.id ? -1 : 1));
+      expect(received).toEqual(expectedEventsOnMaster);
+
+      // check on each remote if they receive remote.disconnect/remote.reconnect
+      for (const getCurrentRemote of getAllRemotes()) {
+        const remoteLogs = await getCurrentRemote().page.evaluate(async () => {
+          return document.querySelector("console-display").data;
+        });
+        expect(remoteLogs[1].payload).toEqual({
+          event: "remote.disconnect",
+          payload: {
+            id: getCurrentRemote().peerId,
+          },
+        });
+        expect(remoteLogs[0].payload).toEqual({
+          event: "remote.reconnect",
+          payload: {
+            id: getCurrentRemote().peerId,
+          },
+        });
+      }
+    }
+  );
+}
+
 /**
  * Will setup all the backgroud steps
  */
