@@ -85,7 +85,7 @@ function createView(
       errorsDisplay.data = errors;
     },
     setConsoleDisplay(logs) {
-      consoleDisplay.data = logs;
+      consoleDisplay.data = [...logs].reverse();
     },
     setConnected(connected) {
       [...buttons, formInput, formButton].forEach((button) => {
