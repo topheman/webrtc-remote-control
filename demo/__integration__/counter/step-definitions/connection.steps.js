@@ -16,22 +16,25 @@ describe.each([
 ])("[%s]", (mode) => {
   defineFeature(feature, (test) => {
     test("Basic", ({ given }) => {
-      const { getAllRemotes } = setupBackground(given, mode);
-      givenIResetSessionStorage(given, { getAllRemotes });
+      const { getAllRemotes, getMasterPage } = setupBackground(given, mode);
+      givenIResetSessionStorage(given, { getAllRemotes, getMasterPage });
       givenICloseEveryRemoteTabs(given, { getAllRemotes });
     });
     test("Send events", async ({ given }) => {
-      const { getAllRemotes, getRemote } = setupBackground(given, mode);
+      const { getAllRemotes, getRemote, getMasterPage } = setupBackground(
+        given,
+        mode
+      );
       giventIClickTimesOnRemote(given, { getRemote });
       giventIClickTimesOnRemote(given, { getRemote });
       giventIClickTimesOnRemote(given, { getRemote });
-      givenRemoteListShouldContain(given, { getAllRemotes });
-      givenIResetSessionStorage(given, { getAllRemotes });
+      givenRemoteListShouldContain(given, { getAllRemotes, getMasterPage });
+      givenIResetSessionStorage(given, { getAllRemotes, getMasterPage });
       givenICloseEveryRemoteTabs(given, { getAllRemotes });
     });
     test("Reconnection", async ({ given }) => {
-      const { getAllRemotes } = setupBackground(given, mode);
-      givenIResetSessionStorage(given, { getAllRemotes });
+      const { getAllRemotes, getMasterPage } = setupBackground(given, mode);
+      givenIResetSessionStorage(given, { getAllRemotes, getMasterPage });
       givenICloseEveryRemoteTabs(given, { getAllRemotes });
     });
   });

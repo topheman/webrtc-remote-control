@@ -25,23 +25,35 @@ export function getVisitInfosFromMode(mode) {
 }
 
 export function givenIVisitDemoHomePage(given) {
+  let masterPage = null;
   given("I visit demo home page", async () => {
+    masterPage = await browser.newPage();
     await page.goto(getE2eTestServerAddress());
     await expect(page.title()).resolves.toMatch("webrtc-remote-control");
   });
+  return {
+    getMasterPage() {
+      return masterPage;
+    },
+  };
 }
 
-export function givenIVisitMasterPage(given, pathname, title) {
+export function givenIVisitMasterPage(
+  given,
+  pathname,
+  title,
+  { getMasterPage }
+) {
   given("I visit master page", async () => {
-    await page.goto(`${getE2eTestServerAddress()}${pathname}`);
-    await expect(page.title()).resolves.toMatch(title);
+    await getMasterPage().goto(`${getE2eTestServerAddress()}${pathname}`);
+    await expect(getMasterPage().title()).resolves.toMatch(title);
   });
 }
 
-export function givenMasterPeerOpenEventIsTriggered(given) {
+export function givenMasterPeerOpenEventIsTriggered(given, { getMasterPage }) {
   let masterPeerId = null;
   given("[master] triggers open event", async () => {
-    const logs = await page.evaluate(() => {
+    const logs = await getMasterPage().evaluate(() => {
       return document.querySelector("console-display").data;
     });
     expect(logs[0].payload.event).toBe("open");
@@ -57,13 +69,13 @@ export function givenMasterPeerOpenEventIsTriggered(given) {
   };
 }
 
-export function givenIOpenANewRemote(given) {
+export function givenIOpenANewRemote(given, { getMasterPage }) {
   let remotePeerId = null;
   let remotePage = null;
   given(
     "I open a new remote from master, it should trigger an open event on remote",
     async () => {
-      const remoteHref = await page.evaluate(() => {
+      const remoteHref = await getMasterPage().evaluate(() => {
         return document.querySelector(".open-remote").href;
       });
       remotePage = await browser.newPage();
@@ -93,11 +105,11 @@ export function givenIOpenANewRemote(given) {
 
 export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
   given,
-  { getCurrentRemote }
+  { getCurrentRemote, getMasterPage }
 ) {
   given("[master] should receive remote.connect event", async () => {
     // check the events on the master page
-    const masterLogs = await page.evaluate(() => {
+    const masterLogs = await getMasterPage().evaluate(() => {
       return document.querySelector("console-display").data;
     });
     expect(masterLogs[0].payload).toEqual({
@@ -140,7 +152,10 @@ export function givenIResetSessionStorage(given, { getAllRemotes }) {
  * of the connected remotes.
  * No need to pass peerIds, they are derived via indexes.
  */
-export function givenRemoteListShouldContain(given, { getAllRemotes }) {
+export function givenRemoteListShouldContain(
+  given,
+  { getAllRemotes, getMasterPage }
+) {
   given(
     /^\[master\] remote lists should be "(.*)"$/,
     async (expectedSerializedRemoteCounters) => {
@@ -161,7 +176,7 @@ export function givenRemoteListShouldContain(given, { getAllRemotes }) {
       );
 
       // match
-      const remotesListCurrentData = await page.evaluate(() => {
+      const remotesListCurrentData = await getMasterPage().evaluate(() => {
         return document.querySelector("remotes-list").data;
       });
       expect(remotesListCurrentData).toEqual(remotesListExpectedData);
@@ -215,17 +230,20 @@ export function setupBackground(given, mode) {
   const getAllRemotes = () => remotes;
   const addRemote = (remote) => remotes.push(remote);
   const getRemote = (index) => remotes.at(index);
-  givenIVisitDemoHomePage(given);
-  givenIVisitMasterPage(given, infos.url, infos.title);
-  const getMasterPeerId = givenMasterPeerOpenEventIsTriggered(given);
+  const { getMasterPage } = givenIVisitDemoHomePage(given);
+  givenIVisitMasterPage(given, infos.url, infos.title, { getMasterPage });
+  const getMasterPeerId = givenMasterPeerOpenEventIsTriggered(given, {
+    getMasterPage,
+  });
 
   // open 3 remotes
   for (let i = 0; i < 3; i++) {
-    addRemote(givenIOpenANewRemote(given));
+    addRemote(givenIOpenANewRemote(given, { getMasterPage }));
     givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
       getCurrentRemote: getRemote(-1),
+      getMasterPage,
     });
-    givenRemoteListShouldContain(given, { getAllRemotes });
+    givenRemoteListShouldContain(given, { getAllRemotes, getMasterPage });
   }
 
   return {
@@ -233,5 +251,6 @@ export function setupBackground(given, mode) {
     getRemote,
     addRemote,
     getMasterPeerId,
+    getMasterPage,
   };
 }
