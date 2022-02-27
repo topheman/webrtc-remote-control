@@ -19,6 +19,10 @@ Feature: Counter
     And I close every remotes
 
   Scenario: Send events
+    Given I click on increment 3 times on remote 0
+    And I click on increment 5 times on remote 1
+    And I click on decrement 2 times on remote 2
+    Then [master] remote lists should be "[3,5,-2]"
     Given I reset the sessionStorage of master page
     And I close every remotes
 

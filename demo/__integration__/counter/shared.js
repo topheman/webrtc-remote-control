@@ -83,7 +83,7 @@ export function givenIOpenANewRemote(given) {
     }
   );
 
-  return function getRemote() {
+  return function getCurrentRemote() {
     return {
       peerId: remotePeerId,
       page: remotePage,
@@ -93,7 +93,7 @@ export function givenIOpenANewRemote(given) {
 
 export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
   given,
-  { getRemote }
+  { getCurrentRemote }
 ) {
   given("[master] should receive remote.connect event", async () => {
     // check the events on the master page
@@ -103,7 +103,7 @@ export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
     expect(masterLogs[0].payload).toEqual({
       event: "remote.connect",
       payload: {
-        id: getRemote().peerId,
+        id: getCurrentRemote().peerId,
       },
     });
 
@@ -111,24 +111,24 @@ export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
   });
 }
 
-export function givenICloseEveryRemoteTabs(given, { getRemotes }) {
+export function givenICloseEveryRemoteTabs(given, { getAllRemotes }) {
   given("I close every remotes", async () => {
-    for (const getRemote of getRemotes()) {
-      await getRemote().page.close();
+    for (const getCurrentRemote of getAllRemotes()) {
+      await getCurrentRemote().page.close();
     }
   });
 }
 
-export function givenIResetSessionStorage(given, { getRemotes }) {
+export function givenIResetSessionStorage(given, { getAllRemotes }) {
   given("I reset the sessionStorage of master page", async () => {
-    for (const getRemote of getRemotes()) {
-      const peerIdInStorage = await getRemote().page.evaluate(() => {
+    for (const getCurrentRemote of getAllRemotes()) {
+      const peerIdInStorage = await getCurrentRemote().page.evaluate(() => {
         return sessionStorage.getItem("webrtc-remote-control-peer-id");
       });
       // check the correct peerId was stored in sessionStorage
-      expect(peerIdInStorage).toBe(getRemote().peerId);
+      expect(peerIdInStorage).toBe(getCurrentRemote().peerId);
       // cleanup
-      await getRemote().page.evaluate(() => {
+      await getCurrentRemote().page.evaluate(() => {
         return sessionStorage.removeItem("webrtc-remote-control-peer-id");
       });
     }
@@ -140,19 +140,19 @@ export function givenIResetSessionStorage(given, { getRemotes }) {
  * of the connected remotes.
  * No need to pass peerIds, they are derived via indexes.
  */
-export function givenRemoteListShouldContain(given, { getRemotes }) {
+export function givenRemoteListShouldContain(given, { getAllRemotes }) {
   given(
     /^\[master\] remote lists should be "(.*)"$/,
     async (expectedSerializedRemoteCounters) => {
       // extract the counter list from the feature file and re-create an object-like
       // that was passed to <remotes-list/>
       const parsedRemoteCounters = JSON.parse(expectedSerializedRemoteCounters);
-      const remotesListExpectedData = getRemotes().reduce(
-        (acc, getRemote, index) => {
-          if (getRemote().peerId) {
+      const remotesListExpectedData = getAllRemotes().reduce(
+        (acc, getCurrentRemote, index) => {
+          if (getCurrentRemote().peerId) {
             acc.push({
               counter: parsedRemoteCounters[index],
-              peerId: getRemote().peerId,
+              peerId: getCurrentRemote().peerId,
             });
           }
           return acc;
@@ -170,12 +170,49 @@ export function givenRemoteListShouldContain(given, { getRemotes }) {
 }
 
 /**
+ * I click on (increment|decrement) X times on remote Y
+ */
+export function giventIClickTimesOnRemote(given, { getRemote }) {
+  given(
+    /^I click on (increment|decrement) (\d+) times on remote (\d+)$/,
+    async (mode, times, remoteIndex) => {
+      /**
+       * We need to pass `selector` and `times` to puppeteer context
+       */
+      const fromPuppeteer = () => {
+        const mapping = {
+          increment: ".counter-control-add",
+          decrement: ".counter-control-sub",
+        };
+        return {
+          times: Number(times),
+          selector: mapping[mode],
+        };
+      };
+      await getRemote(Number(remoteIndex))().page.exposeFunction(
+        "fromPuppeteer",
+        fromPuppeteer
+      );
+      await getRemote(Number(remoteIndex))().page.evaluate(async () => {
+        // eslint-disable-next-line no-shadow
+        const { times, selector } = await window.fromPuppeteer();
+        for (let i = 0; i < times; i++) {
+          document.querySelector(selector).click();
+        }
+      });
+
+      await sleep(SAFE_TIMEOUT);
+    }
+  );
+}
+
+/**
  * Will setup all the backgroud steps
  */
 export function setupBackground(given, mode) {
   const infos = getVisitInfosFromMode(mode);
   const remotes = [];
-  const getRemotes = () => remotes;
+  const getAllRemotes = () => remotes;
   const addRemote = (remote) => remotes.push(remote);
   const getRemote = (index) => remotes.at(index);
   givenIVisitDemoHomePage(given);
@@ -186,13 +223,13 @@ export function setupBackground(given, mode) {
   for (let i = 0; i < 3; i++) {
     addRemote(givenIOpenANewRemote(given));
     givenMasterAndRemoteEmitReceiveRemoteConnectEvent(given, {
-      getRemote: getRemote(-1),
+      getCurrentRemote: getRemote(-1),
     });
-    givenRemoteListShouldContain(given, { getRemotes });
+    givenRemoteListShouldContain(given, { getAllRemotes });
   }
 
   return {
-    getRemotes,
+    getAllRemotes,
     getRemote,
     addRemote,
     getMasterPeerId,

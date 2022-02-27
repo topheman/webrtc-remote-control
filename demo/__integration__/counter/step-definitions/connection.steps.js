@@ -4,6 +4,8 @@ import {
   setupBackground,
   givenICloseEveryRemoteTabs,
   givenIResetSessionStorage,
+  giventIClickTimesOnRemote,
+  givenRemoteListShouldContain,
 } from "../shared";
 
 const feature = loadFeature(`${__dirname}/../features/connection.feature`);
@@ -14,19 +16,23 @@ describe.each([
 ])("[%s]", (mode) => {
   defineFeature(feature, (test) => {
     test("Basic", ({ given }) => {
-      const { getRemotes } = setupBackground(given, mode);
-      givenIResetSessionStorage(given, { getRemotes });
-      givenICloseEveryRemoteTabs(given, { getRemotes });
+      const { getAllRemotes } = setupBackground(given, mode);
+      givenIResetSessionStorage(given, { getAllRemotes });
+      givenICloseEveryRemoteTabs(given, { getAllRemotes });
     });
     test("Send events", async ({ given }) => {
-      const { getRemotes } = setupBackground(given, mode);
-      givenIResetSessionStorage(given, { getRemotes });
-      givenICloseEveryRemoteTabs(given, { getRemotes });
+      const { getAllRemotes, getRemote } = setupBackground(given, mode);
+      giventIClickTimesOnRemote(given, { getRemote });
+      giventIClickTimesOnRemote(given, { getRemote });
+      giventIClickTimesOnRemote(given, { getRemote });
+      givenRemoteListShouldContain(given, { getAllRemotes });
+      givenIResetSessionStorage(given, { getAllRemotes });
+      givenICloseEveryRemoteTabs(given, { getAllRemotes });
     });
     test("Reconnection", async ({ given }) => {
-      const { getRemotes } = setupBackground(given, mode);
-      givenIResetSessionStorage(given, { getRemotes });
-      givenICloseEveryRemoteTabs(given, { getRemotes });
+      const { getAllRemotes } = setupBackground(given, mode);
+      givenIResetSessionStorage(given, { getAllRemotes });
+      givenICloseEveryRemoteTabs(given, { getAllRemotes });
     });
   });
 });
