@@ -2,7 +2,7 @@ import { defineFeature, loadFeature } from "jest-cucumber";
 
 import {
   setupBackground,
-  givenICloseEveryRemoteTabs,
+  givenICloseEveryPages,
   givenIResetSessionStorage,
   giventIClickTimesOnRemote,
   givenRemoteListShouldContain,
@@ -16,26 +16,23 @@ describe.each([
 ])("[%s]", (mode) => {
   defineFeature(feature, (test) => {
     test("Basic", ({ given }) => {
-      const { getAllRemotes, getMasterPage } = setupBackground(given, mode);
-      givenIResetSessionStorage(given, { getAllRemotes, getMasterPage });
-      givenICloseEveryRemoteTabs(given, { getAllRemotes });
+      const api = setupBackground(given, mode);
+      givenIResetSessionStorage(given, api);
+      givenICloseEveryPages(given, api);
     });
     test("Send events", async ({ given }) => {
-      const { getAllRemotes, getRemote, getMasterPage } = setupBackground(
-        given,
-        mode
-      );
-      giventIClickTimesOnRemote(given, { getRemote });
-      giventIClickTimesOnRemote(given, { getRemote });
-      giventIClickTimesOnRemote(given, { getRemote });
-      givenRemoteListShouldContain(given, { getAllRemotes, getMasterPage });
-      givenIResetSessionStorage(given, { getAllRemotes, getMasterPage });
-      givenICloseEveryRemoteTabs(given, { getAllRemotes });
+      const api = setupBackground(given, mode);
+      giventIClickTimesOnRemote(given, api);
+      giventIClickTimesOnRemote(given, api);
+      giventIClickTimesOnRemote(given, api);
+      givenRemoteListShouldContain(given, api);
+      givenIResetSessionStorage(given, api);
+      givenICloseEveryPages(given, api);
     });
     test("Reconnection", async ({ given }) => {
-      const { getAllRemotes, getMasterPage } = setupBackground(given, mode);
-      givenIResetSessionStorage(given, { getAllRemotes, getMasterPage });
-      givenICloseEveryRemoteTabs(given, { getAllRemotes });
+      const api = setupBackground(given, mode);
+      givenIResetSessionStorage(given, api);
+      givenICloseEveryPages(given, api);
     });
   });
 });

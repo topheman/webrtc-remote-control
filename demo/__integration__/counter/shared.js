@@ -123,16 +123,21 @@ export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
   });
 }
 
-export function givenICloseEveryRemoteTabs(given, { getAllRemotes }) {
-  given("I close every remotes", async () => {
+export function givenICloseEveryPages(given, { getAllRemotes, getMasterPage }) {
+  given("I close every pages", async () => {
     for (const getCurrentRemote of getAllRemotes()) {
       await getCurrentRemote().page.close();
     }
+    await getMasterPage().close();
   });
 }
 
-export function givenIResetSessionStorage(given, { getAllRemotes }) {
-  given("I reset the sessionStorage of master page", async () => {
+export function givenIResetSessionStorage(
+  given,
+  { getAllRemotes, getMasterPage, getMasterPeerId }
+) {
+  given("I reset the sessionStorage of every pages", async () => {
+    // remote pages
     for (const getCurrentRemote of getAllRemotes()) {
       const peerIdInStorage = await getCurrentRemote().page.evaluate(() => {
         return sessionStorage.getItem("webrtc-remote-control-peer-id");
@@ -144,6 +149,17 @@ export function givenIResetSessionStorage(given, { getAllRemotes }) {
         return sessionStorage.removeItem("webrtc-remote-control-peer-id");
       });
     }
+
+    // master pages
+    const masterPeerIdInStorage = await getMasterPage().evaluate(() => {
+      return sessionStorage.getItem("webrtc-remote-control-peer-id");
+    });
+    // check the correct peerId was stored in sessionStorage
+    expect(masterPeerIdInStorage).toBe(getMasterPeerId());
+    // cleanup
+    await getMasterPage().evaluate(() => {
+      return sessionStorage.removeItem("webrtc-remote-control-peer-id");
+    });
   });
 }
 
