@@ -17,6 +17,7 @@ describe.each([
   // "react"
 ])("[%s]", (mode) => {
   defineFeature(feature, (test) => {
+    jest.retryTimes(3);
     test("Basic", ({ given }) => {
       const api = setupBackground(given, mode);
       givenIResetSessionStorage(given, api);

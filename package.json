@@ -27,6 +27,7 @@
     "test:demo:precommit": "npm run --prefix demo test:precommit",
     "test:demo:watch": "npm run --prefix demo test:watch",
     "test:e2e": "npm run --prefix demo test:e2e",
+    "test:e2e:watch": "npm run --prefix demo test:e2e:watch",
     "test:e2e:start-server-and-test": "npm run --prefix demo test:e2e:start-server-and-test",
     "prepare": "husky install; npm run bootstrap"
   },
