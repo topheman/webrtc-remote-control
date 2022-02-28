@@ -1,6 +1,6 @@
-import { disableConsole } from "../../../test.helpers";
+import { disableConsole } from "../../test.helpers";
 
-import { makeLogger } from "../common";
+import { makeLogger } from "./common";
 
 describe("common", () => {
   describe("makeLogger", () => {

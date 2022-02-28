@@ -1,6 +1,6 @@
-import "./components/errors-display";
-import "./components/console-display";
-import "./components/footer-display";
+import "../../shared/js/components/errors-display";
+import "../../shared/js/components/console-display";
+import "../../shared/js/components/footer-display";
 
 const defaultEvents = {
   onClickPlus() {},

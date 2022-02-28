@@ -1,10 +1,10 @@
-import "./components/console-display";
-// import "./components/counter-display";
-import "./components/errors-display";
-import "./components/footer-display";
-import "./components/qrcode-display";
-import "./components/remotes-list";
-// import "./components/twitter-button";
+import "../../shared/js/components/console-display";
+// import "../../shared/js/components/counter-display";
+import "../../shared/js/components/errors-display";
+import "../../shared/js/components/footer-display";
+import "../../shared/js/components/qrcode-display";
+import "../../shared/js/components/remotes-list";
+// import "../../shared/js/components/twitter-button";
 
 function makeRemotePeerUrl(peerId) {
   return `${

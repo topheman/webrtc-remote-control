@@ -1,6 +1,6 @@
 import prepare from "@webrtc-remote-control/core/master";
 
-import { makeLogger } from "./common";
+import { makeLogger } from "../../shared/js/common";
 import {
   persistCountersToStorage,
   getCountersFromStorage,
