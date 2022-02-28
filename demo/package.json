@@ -15,7 +15,8 @@
     "test:watch": "jest --watch -o",
     "test:e2e": "jest --config ./jest.e2e.config.js",
     "test:e2e:watch": "jest --config ./jest.e2e.config.js --watch -o",
-    "test:e2e:headless-false": "HEADLESS=false jest --config ./jest.e2e.config.js"
+    "test:e2e:headless-false": "HEADLESS=false jest --config ./jest.e2e.config.js",
+    "test:e2e:start-server-and-test": "PORT=5000 npx start-server-and-test preview :5000 test:e2e"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "ISC",
@@ -26,6 +27,7 @@
     "jest-cucumber": "^3.0.1",
     "jest-puppeteer": "^6.1.0",
     "puppeteer": "^13.4.0",
+    "start-server-and-test": "^1.14.0",
     "vite": "^2.8.3"
   },
   "dependencies": {
