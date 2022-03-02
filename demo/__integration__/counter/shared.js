@@ -2,6 +2,18 @@ import { getE2eTestServerAddress, sleep } from "../../test.helpers";
 
 const SAFE_TIMEOUT = 3;
 
+/**
+ * Accept flags
+ * - `CI=true`
+ * - `WEBRTC_CONNECTION_TIMEOUT=1000`
+ */
+const DEFAULT_WEBRTC_CONNECTION_TIMEOUT = process.env.CI ? 3000 : 0;
+const WEBRTC_CONNECTION_TIMEOUT = Number.isNaN(
+  Number(process.env.WEBRTC_CONNECTION_TIMEOUT)
+)
+  ? DEFAULT_WEBRTC_CONNECTION_TIMEOUT
+  : Number(process.env.WEBRTC_CONNECTION_TIMEOUT);
+
 export function getVisitInfosFromMode(mode) {
   const acceptedModes = ["react", "vanilla"];
   if (!acceptedModes.includes(mode)) {
@@ -53,6 +65,7 @@ export function givenIVisitMasterPage(
 export function givenMasterPeerOpenEventIsTriggered(given, { getMasterPage }) {
   let masterPeerId = null;
   given("[master] triggers open event", async () => {
+    await sleep(WEBRTC_CONNECTION_TIMEOUT);
     const logs = await getMasterPage().evaluate(() => {
       return document.querySelector("console-display").data;
     });
@@ -83,6 +96,7 @@ export function givenIOpenANewRemote(given, { getMasterPage }) {
       await expect(remotePage.url()).toBe(remoteHref);
 
       // check the events on the remote page
+      await sleep(WEBRTC_CONNECTION_TIMEOUT);
       const remoteLogs = await remotePage.evaluate(() => {
         return document.querySelector("console-display").data;
       });
@@ -181,10 +195,12 @@ export function givenRemoteListShouldContain(
       const remotesListExpectedData = getAllRemotes().reduce(
         (acc, getCurrentRemote, index) => {
           if (getCurrentRemote().peerId) {
-            acc.push({
-              counter: parsedRemoteCounters[index],
-              peerId: getCurrentRemote().peerId,
-            });
+            if (typeof parsedRemoteCounters[index] !== "undefined") {
+              acc.push({
+                counter: parsedRemoteCounters[index],
+                peerId: getCurrentRemote().peerId,
+              });
+            }
           }
           return acc;
         },
@@ -246,6 +262,7 @@ export function givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(
     async (remoteIndex) => {
       const remotePeerId = getRemote(remoteIndex)().peerId;
       await getRemote(remoteIndex)().page.reload();
+      await sleep(WEBRTC_CONNECTION_TIMEOUT);
       const remoteLogs = await getRemote(remoteIndex)().page.evaluate(
         async () => {
           return document.querySelector("console-display").data;
@@ -296,6 +313,7 @@ export function givenIReloadMasterThenRemotesShouldReconnect(
       await sleep(SAFE_TIMEOUT * 100);
 
       // check remote connecting on master
+      await sleep(WEBRTC_CONNECTION_TIMEOUT);
       const masterLogs = await getMasterPage().evaluate(async () => {
         return document.querySelector("console-display").data;
       });
@@ -307,6 +325,7 @@ export function givenIReloadMasterThenRemotesShouldReconnect(
 
       // check on each remote if they receive remote.disconnect/remote.reconnect
       for (const getCurrentRemote of getAllRemotes()) {
+        await sleep(WEBRTC_CONNECTION_TIMEOUT);
         const remoteLogs = await getCurrentRemote().page.evaluate(async () => {
           return document.querySelector("console-display").data;
         });
