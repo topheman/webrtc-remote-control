@@ -16,7 +16,7 @@ async function init() {
     setPeerId,
     setRemoteList,
     setGlobalCounter,
-    // setErrors,
+    setErrors,
     setConsoleDisplay,
   } = render();
 
@@ -39,7 +39,7 @@ async function init() {
     setPeerId(null);
     showLoader(false);
     logger.error({ event: "error", error });
-    // todo manage errors
+    setErrors([`An error of type "${error.type}" occured.`]);
   });
 
   // bind webrtc-remote-control to `peer`

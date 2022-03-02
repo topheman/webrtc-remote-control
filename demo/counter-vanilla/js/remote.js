@@ -17,9 +17,10 @@ async function init() {
   const { bindConnection, getPeerId } = prepare();
 
   const initialName = getRemoteNameFromSessionStorage();
-  const { showLoader, setConnected, setEvents, setConsoleDisplay } = render({
-    initialName,
-  });
+  const { showLoader, setConnected, setEvents, setConsoleDisplay, setErrors } =
+    render({
+      initialName,
+    });
 
   const logger = makeLogger({ onLog: setConsoleDisplay });
 
@@ -39,7 +40,7 @@ async function init() {
   peer.on("error", (error) => {
     showLoader(false);
     setConnected(false);
-    // setErrors([e.message]); // todo
+    setErrors([`An error of type "${error.type}" occured.`]);
     logger.error({ event: "error", error });
   });
 
