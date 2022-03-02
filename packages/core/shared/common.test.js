@@ -1,5 +1,9 @@
 import { mockSessionStorage } from "../test.helpers";
-import { makeStoreAccessor, makeConnectionFilterUtilities } from "./common";
+import {
+  makeStoreAccessor,
+  makeConnectionFilterUtilities,
+  makeHumanizeError,
+} from "./common";
 
 let sessionStorage = null;
 
@@ -39,6 +43,20 @@ describe("shared/common", () => {
       expect(
         isConnectionFromRemote({ metadata: "from-webrtc-remote-control" })
       ).toBe(true);
+    });
+  });
+  describe("makeHumanizeError", () => {
+    it("should be a factory that returns a translating function", () => {
+      const humanizeError = makeHumanizeError();
+      expect(humanizeError({ type: "browser-incompatible" })).toBe(
+        "Your browser doesn't support WebRTC features, please try with a recent browser."
+      );
+    });
+    it("non translated errors should show default message", () => {
+      const humanizeError = makeHumanizeError();
+      expect(humanizeError({ type: "some-unsupported-error" })).toBe(
+        'An error occured (type: "some-unsupported-error")'
+      );
     });
   });
 });

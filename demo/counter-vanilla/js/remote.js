@@ -14,7 +14,7 @@ export function setRemoteNameToSessionStorage(remoteName) {
 }
 
 async function init() {
-  const { bindConnection, getPeerId } = prepare();
+  const { bindConnection, getPeerId, humanizeError } = prepare();
 
   const initialName = getRemoteNameFromSessionStorage();
   const { showLoader, setConnected, setEvents, setConsoleDisplay, setErrors } =
@@ -40,7 +40,7 @@ async function init() {
   peer.on("error", (error) => {
     showLoader(false);
     setConnected(false);
-    setErrors([`An error of type "${error.type}" occured.`]);
+    setErrors([humanizeError(error)]);
     logger.error({ event: "error", error });
   });
 

@@ -2,14 +2,17 @@
 import {
   makeStoreAccessor,
   makeConnectionFilterUtilities,
+  makeHumanizeError,
 } from "../../shared/common";
 import { eventEmitter } from "../../shared/event-emitter";
 
-export default function prepare({ sessionStorageKey } = {}) {
+export default function prepare({ sessionStorageKey, humanErrors } = {}) {
+  const humanizeError = makeHumanizeError(humanErrors);
   const { isConnectionFromRemote } = makeConnectionFilterUtilities();
   const { getPeerId, setPeerIdToSessionStorage } =
     makeStoreAccessor(sessionStorageKey);
   return {
+    humanizeError,
     isConnectionFromRemote,
     getPeerId,
     bindConnection(peer) {

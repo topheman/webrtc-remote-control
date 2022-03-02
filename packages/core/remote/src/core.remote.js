@@ -2,6 +2,7 @@
 import {
   makeStoreAccessor,
   makeConnectionFilterUtilities,
+  makeHumanizeError,
 } from "../../shared/common";
 import { eventEmitter } from "../../shared/event-emitter";
 
@@ -30,10 +31,12 @@ function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
   return conn;
 }
 
-export default function prepare({ sessionStorageKey } = {}) {
+export default function prepare({ sessionStorageKey, humanErrors } = {}) {
+  const humanizeError = makeHumanizeError(humanErrors);
   const { getPeerId, setPeerIdToSessionStorage } =
     makeStoreAccessor(sessionStorageKey);
   return {
+    humanizeError,
     getPeerId,
     bindConnection(peer, masterPeerId) {
       return new Promise((res) => {

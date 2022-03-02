@@ -9,7 +9,7 @@ import { counterReducer, globalCount } from "./master.logic";
 import { render } from "./master.view";
 
 async function init() {
-  const { bindConnection, getPeerId } = prepare();
+  const { bindConnection, getPeerId, humanizeError } = prepare();
 
   const {
     showLoader,
@@ -39,7 +39,7 @@ async function init() {
     setPeerId(null);
     showLoader(false);
     logger.error({ event: "error", error });
-    setErrors([`An error of type "${error.type}" occured.`]);
+    setErrors([humanizeError(error)]);
   });
 
   // bind webrtc-remote-control to `peer`
