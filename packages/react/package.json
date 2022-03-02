@@ -1,0 +1,32 @@
+{
+  "name": "@webrtc-remote-control/react",
+  "amdName": "webrtcRemoteControlReact",
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "main": "./dist/react.cjs",
+  "module": "./dist/react.module.js",
+  "unpkg": "./dist/react.umd.js",
+  "source": "./src/react.js",
+  "exports": "./dist/react.modern.js",
+  "scripts": {
+    "build": "microbundle --no-compress --jsx React.createElement",
+    "dev": "microbundle watch --jsx React.createElement"
+  },
+  "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
+  "license": "ISC",
+  "files": [
+    "src",
+    "dist",
+    "master",
+    "master/dist",
+    "remote",
+    "remote/dist"
+  ],
+  "devDependencies": {
+    "microbundle": "^0.14.2"
+  },
+  "peerDependencies": {
+    "react": ">=16"
+  }
+}

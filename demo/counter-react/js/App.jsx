@@ -1,6 +1,8 @@
 /* eslint-disable no-nested-ternary */
 import React, { useEffect, useState } from "react";
 
+import { HelloWorld } from "@webrtc-remote-control/react";
+
 import Master from "./Master";
 import Remote from "./Remote";
 
@@ -15,13 +17,16 @@ export default function App() {
   }, []);
   return (
     <div>
-      {mode === null ? (
-        "Loading ..."
-      ) : mode === "remote" ? (
-        <Remote />
-      ) : (
-        <Master />
-      )}
+      <HelloWorld />
+      <>
+        {mode === null ? (
+          "Loading ..."
+        ) : mode === "remote" ? (
+          <Remote />
+        ) : (
+          <Master />
+        )}
+      </>
     </div>
   );
 }
