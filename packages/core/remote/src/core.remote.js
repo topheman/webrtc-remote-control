@@ -1,10 +1,8 @@
 /* eslint-disable import/no-relative-packages */
-import {
-  makeStoreAccessor,
-  makeConnectionFilterUtilities,
-  makeHumanizeError,
-} from "../../shared/common";
+import { makeConnectionFilterUtilities } from "../../shared/common";
 import { eventEmitter } from "../../shared/event-emitter";
+
+export { prepareUtils } from "../../shared/common";
 
 function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
   const { connMetadata } = makeConnectionFilterUtilities();
@@ -31,10 +29,11 @@ function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
   return conn;
 }
 
-export default function prepare({ sessionStorageKey, humanErrors } = {}) {
-  const humanizeError = makeHumanizeError(humanErrors);
-  const { getPeerId, setPeerIdToSessionStorage } =
-    makeStoreAccessor(sessionStorageKey);
+export default function prepare({
+  humanizeError,
+  getPeerId,
+  setPeerIdToSessionStorage,
+}) {
   return {
     humanizeError,
     getPeerId,

@@ -1,16 +1,14 @@
 /* eslint-disable import/no-relative-packages */
-import {
-  makeStoreAccessor,
-  makeConnectionFilterUtilities,
-  makeHumanizeError,
-} from "../../shared/common";
 import { eventEmitter } from "../../shared/event-emitter";
 
-export default function prepare({ sessionStorageKey, humanErrors } = {}) {
-  const humanizeError = makeHumanizeError(humanErrors);
-  const { isConnectionFromRemote } = makeConnectionFilterUtilities();
-  const { getPeerId, setPeerIdToSessionStorage } =
-    makeStoreAccessor(sessionStorageKey);
+export { prepareUtils } from "../../shared/common";
+
+export default function prepare({
+  humanizeError,
+  isConnectionFromRemote,
+  getPeerId,
+  setPeerIdToSessionStorage,
+}) {
   return {
     humanizeError,
     isConnectionFromRemote,

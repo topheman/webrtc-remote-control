@@ -46,3 +46,16 @@ export function makeHumanizeError(overrideMapping = {}) {
     return humanError;
   };
 }
+
+export function prepareUtils({ sessionStorageKey, humanErrors } = {}) {
+  const humanizeError = makeHumanizeError(humanErrors);
+  const { isConnectionFromRemote } = makeConnectionFilterUtilities();
+  const { getPeerId, setPeerIdToSessionStorage } =
+    makeStoreAccessor(sessionStorageKey);
+  return {
+    humanizeError,
+    isConnectionFromRemote,
+    getPeerId,
+    setPeerIdToSessionStorage,
+  };
+}

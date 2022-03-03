@@ -1,4 +1,4 @@
-import prepare from "@webrtc-remote-control/core/master";
+import prepare, { prepareUtils } from "@webrtc-remote-control/core/master";
 
 import { makeLogger } from "../../shared/js/common";
 import {
@@ -9,7 +9,7 @@ import { counterReducer, globalCount } from "./master.logic";
 import { render } from "./master.view";
 
 async function init() {
-  const { bindConnection, getPeerId, humanizeError } = prepare();
+  const { bindConnection, getPeerId, humanizeError } = prepare(prepareUtils());
 
   const {
     showLoader,

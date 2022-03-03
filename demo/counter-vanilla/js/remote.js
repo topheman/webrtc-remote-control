@@ -1,4 +1,4 @@
-import prepare from "@webrtc-remote-control/core/remote";
+import prepare, { prepareUtils } from "@webrtc-remote-control/core/remote";
 
 import { makeLogger } from "../../shared/js/common";
 import { render } from "./remote.view";
@@ -14,7 +14,7 @@ export function setRemoteNameToSessionStorage(remoteName) {
 }
 
 async function init() {
-  const { bindConnection, getPeerId, humanizeError } = prepare();
+  const { bindConnection, getPeerId, humanizeError } = prepare(prepareUtils());
 
   const initialName = getRemoteNameFromSessionStorage();
   const { showLoader, setConnected, setEvents, setConsoleDisplay, setErrors } =
