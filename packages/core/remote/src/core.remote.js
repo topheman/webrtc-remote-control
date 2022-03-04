@@ -60,9 +60,9 @@ export default function prepare({
           conn = makePeerConnection(peer, masterPeerId, ee, onConnectionOpened);
           conn.on("close", () => {
             ee.emit("remote.disconnect", { id: peer.id });
-            createPeerConnectionWithReconnectOnClose(() =>
-              ee.emit("remote.reconnect", { id: peer.id })
-            );
+            createPeerConnectionWithReconnectOnClose(() => {
+              ee.emit("remote.reconnect", { id: peer.id });
+            });
           });
         };
         peer.on("open", (peerId) => {

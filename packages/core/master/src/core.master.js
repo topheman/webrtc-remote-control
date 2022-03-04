@@ -44,7 +44,16 @@ export default function prepare({
           if (!isConnectionFromRemote(conn)) {
             return;
           }
-          connections.push(conn);
+          // if this is a reconnect from the same peer, replace connection with the latest one
+          if (connections.findIndex(({ peer: id }) => id === conn.peer) > -1) {
+            const index = connections.findIndex(
+              ({ peer: id }) => id === conn.peer
+            );
+            connections[index] = conn;
+          } else {
+            connections.push(conn);
+          }
+          console.log("connections", connections);
           conn.on("open", () => {
             ee.emit("remote.connect", { id: conn.peer });
           });

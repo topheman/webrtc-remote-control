@@ -7,7 +7,7 @@
   "main": "./dist/react.cjs",
   "module": "./dist/react.module.js",
   "unpkg": "./dist/react.umd.js",
-  "source": "./src/react.js",
+  "source": "./src/react.jsx",
   "exports": "./dist/react.modern.js",
   "scripts": {
     "build": "microbundle --no-compress --jsx React.createElement",
