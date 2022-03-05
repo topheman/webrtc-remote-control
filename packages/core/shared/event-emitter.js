@@ -1,4 +1,5 @@
 /**
+ * @deprecated Now using eventemitter3 to have the exact same implementation as the eventEmitter of peerjs
  * Very light implementation of an eventEmitter (with only what's needed)
  */
 export function eventEmitter() {

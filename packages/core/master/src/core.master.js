@@ -1,5 +1,5 @@
-/* eslint-disable import/no-relative-packages */
-import { eventEmitter } from "../../shared/event-emitter";
+/* eslint-disable import/no-relative-packages,import/no-extraneous-dependencies */
+import EventEmitter from "eventemitter3";
 
 export { prepareUtils } from "../../shared/common";
 
@@ -15,7 +15,7 @@ export default function prepare({
     getPeerId,
     bindConnection(peer) {
       return new Promise((res) => {
-        const ee = eventEmitter();
+        const ee = new EventEmitter();
         const connections = [];
         const wrcMaster = {
           sendTo(id, payload) {
@@ -32,8 +32,8 @@ export default function prepare({
               conn.send(payload);
             });
           },
-          on: ee.on,
-          off: ee.off,
+          on: ee.on.bind(ee),
+          off: ee.off.bind(ee),
         };
         peer.on("open", (peerId) => {
           setPeerIdToSessionStorage(peerId);

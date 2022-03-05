@@ -1,6 +1,7 @@
-/* eslint-disable import/no-relative-packages */
+/* eslint-disable import/no-relative-packages,import/no-extraneous-dependencies */
+import EventEmitter from "eventemitter3";
+
 import { makeConnectionFilterUtilities } from "../../shared/common";
-import { eventEmitter } from "../../shared/event-emitter";
 
 export { prepareUtils } from "../../shared/common";
 
@@ -40,7 +41,7 @@ export default function prepare({
     bindConnection(peer, masterPeerId) {
       return new Promise((res) => {
         let conn = null;
-        const ee = eventEmitter();
+        const ee = new EventEmitter();
         const wrcRemote = {
           send(payload) {
             if (conn) {
@@ -50,8 +51,8 @@ export default function prepare({
               console.warning("You called `send` with no connection");
             }
           },
-          on: ee.on,
-          off: ee.off,
+          on: ee.on.bind(ee),
+          off: ee.off.bind(ee),
         };
         const createPeerConnectionWithReconnectOnClose = (
           onConnectionOpened
