@@ -21,9 +21,9 @@
     "build:master": "microbundle build --raw --cwd master",
     "build:remote": "microbundle build --raw --cwd remote",
     "dev": "npm-run-all --parallel dev:*",
-    "dev:core": "microbundle watch --raw",
-    "dev:master": "microbundle watch --raw --cwd master",
-    "dev:remote": "microbundle watch --raw --cwd remote",
+    "dev:core": "microbundle watch --raw --no-compress",
+    "dev:master": "microbundle watch --raw --no-compress --cwd master",
+    "dev:remote": "microbundle watch --raw --no-compress --cwd remote",
     "test": "jest",
     "test:precommit": "jest --bail --findRelatedTests",
     "test:watch": "jest --watch -o"

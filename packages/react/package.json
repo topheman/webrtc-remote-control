@@ -11,7 +11,7 @@
   "exports": "./dist/react.modern.js",
   "scripts": {
     "build": "microbundle --no-compress --jsx React.createElement",
-    "dev": "microbundle watch --jsx React.createElement"
+    "dev": "microbundle watch --no-compress --jsx React.createElement"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "ISC",
