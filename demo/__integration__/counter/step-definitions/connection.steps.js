@@ -14,10 +14,7 @@ const feature = loadFeature(`${__dirname}/../features/connection.feature`);
 
 jest.setTimeout(process.env.CI ? 30000 : 5000);
 
-describe.each([
-  "vanilla",
-  // "react",
-])("[%s]", (mode) => {
+describe.each(["vanilla", "react"])("[%s]", (mode) => {
   defineFeature(feature, (test) => {
     jest.retryTimes(3);
     test("Basic", ({ given }) => {

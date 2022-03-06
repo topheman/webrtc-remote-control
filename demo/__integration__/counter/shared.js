@@ -7,7 +7,7 @@ const SAFE_TIMEOUT = 3;
  * - `CI=true`
  * - `WEBRTC_CONNECTION_TIMEOUT=1000`
  */
-const DEFAULT_WEBRTC_CONNECTION_TIMEOUT = process.env.CI ? 3000 : 0;
+const DEFAULT_WEBRTC_CONNECTION_TIMEOUT = process.env.CI ? 3000 : 300;
 const WEBRTC_CONNECTION_TIMEOUT = Number.isNaN(
   Number(process.env.WEBRTC_CONNECTION_TIMEOUT)
 )

@@ -20,6 +20,13 @@ export default function Remote() {
         comment: "Remote connected",
         payload: { id: peer.id },
       });
+      api.on("remote.disconnect", (payload) => {
+        logger.log({ event: "remote.disconnect", payload });
+      });
+      api.on("remote.reconnect", (payload) => {
+        logger.log({ event: "remote.reconnect", payload });
+        // todo send REMOTE_SET_NAME
+      });
     }
   }, [ready]);
 
@@ -54,7 +61,7 @@ export default function Remote() {
         Check the counter updating in real-time on the original page, thanks to
         WebRTC.
       </p>
-      <ConsoleDisplay data={logs} />
+      <ConsoleDisplay data={[...logs].reverse()} />
       <FooterDisplay from="2022" to="2022" />
     </>
   );
