@@ -33,7 +33,12 @@ export function Provider({
     sessionStorageKey,
     humanErrors,
   });
-  const providerValue = useRef({ peer: null, api: null });
+  const providerValue = useRef({
+    peer: null,
+    promise: null,
+    mode,
+    masterPeerId,
+  });
   function bindEvents(api) {
     api.on("remote.connect", ({ id }) => {
       console.log("remote.connect", id);
@@ -46,6 +51,8 @@ export function Provider({
     });
   }
   useEffect(() => {
+    providerValue.current.mode = mode;
+    providerValue.current.masterPeerId = masterPeerId;
     providerValue.current.peer = init({
       humanizeError: utils.humanizeError,
       getPeerId: utils.getPeerId,
@@ -55,28 +62,15 @@ export function Provider({
     providerValue.current.peer.on("open", (id) => {
       console.log("open", id);
     });
-    switch (mode) {
-      case "master":
-        master
-          .default(utils)
-          .bindConnection(providerValue.current.peer)
-          .then((wrcApi) => {
-            providerValue.current.api = wrcApi;
-            bindEvents(providerValue.current.api);
-          });
-        break;
-      case "remote":
-        remote
-          .default(utils)
-          .bindConnection(providerValue.current.peer, masterPeerId)
-          .then((wrcApi) => {
-            providerValue.current.api = wrcApi;
-            bindEvents(providerValue.current.api);
-          });
-        break;
-      default:
-        break;
-    }
+    providerValue.current.promise = (mode === "master" ? master : remote)
+      .default(utils)
+      .bindConnection(
+        providerValue.current.peer,
+        remote ? masterPeerId : undefined
+      );
+    providerValue.current.promise.then((wrcApi) => {
+      bindEvents(wrcApi);
+    });
     return () => {
       console.log("cleanup useEffect");
       providerValue.current.peer.disconnect();

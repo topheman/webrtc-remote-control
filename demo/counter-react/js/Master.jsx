@@ -1,4 +1,5 @@
 import React from "react";
+import { usePeer } from "@webrtc-remote-control/react";
 
 import ErrorsDisplay from "./ErrorsDisplay";
 import QrcodeDisplay from "./QrcodeDisplay";
@@ -9,6 +10,8 @@ import ConsoleDisplay from "./ConsoleDisplay";
 import FooterDisplay from "./Footer";
 
 export default function Master() {
+  const a = usePeer();
+  console.log("Master.usePeer()", a);
   return (
     <>
       <ErrorsDisplay data={["bar"]} />

@@ -1,4 +1,5 @@
 import React from "react";
+import { usePeer } from "@webrtc-remote-control/react";
 
 import ErrorsDisplay from "./ErrorsDisplay";
 import CounterControl from "./CounterControl";
@@ -6,6 +7,8 @@ import ConsoleDisplay from "./ConsoleDisplay";
 import FooterDisplay from "./Footer";
 
 export default function Remote() {
+  const a = usePeer();
+  console.log("Remote.usePeer()", a);
   function onIncrement() {
     console.log("onIncrement");
   }

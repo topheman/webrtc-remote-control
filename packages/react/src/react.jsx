@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 
 export { Provider as WebRTCRemoteControlProvider } from "./Provider";
+export { usePeer } from "./hooks";
 
 export const useActive = () => {
   const [active, set] = useState(false);
