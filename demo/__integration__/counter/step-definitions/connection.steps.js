@@ -16,7 +16,7 @@ jest.setTimeout(process.env.CI ? 30000 : 5000);
 
 describe.each([
   "vanilla",
-  // "react"
+  // "react",
 ])("[%s]", (mode) => {
   defineFeature(feature, (test) => {
     jest.retryTimes(3);

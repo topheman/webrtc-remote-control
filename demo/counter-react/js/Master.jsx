@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
 
 import ErrorsDisplay from "./ErrorsDisplay";
@@ -17,7 +17,7 @@ import {
   counterReducer,
   globalCount,
 } from "../../counter-vanilla/js/master.logic";
-import { makeLogger } from "../../shared/js/common";
+import { useLogger } from "./common";
 
 function makeRemotePeerUrl(peerId) {
   return `${
@@ -30,24 +30,6 @@ function makeRemotePeerUrl(peerId) {
   }/index.html#${peerId}`;
 }
 
-function useLogger() {
-  const loggerRef = useRef(makeLogger());
-  const [logs, setLogs] = useState([]);
-  const logger = Object.fromEntries(
-    ["log", "info", "warn", "error"].map((level) => [
-      level,
-      (msg) => {
-        const fullLogs = loggerRef.current[level](msg);
-        setLogs(fullLogs);
-      },
-    ])
-  );
-  return {
-    logger,
-    logs,
-  };
-}
-
 export default function Master() {
   const { logs, logger } = useLogger([]);
   const [peerId, setPeerId] = useState(null);
@@ -58,8 +40,12 @@ export default function Master() {
   console.log("Master.usePeer()", { ready, api, peer });
   useEffect(() => {
     if (ready) {
-      console.log("Master.ready", { ready, api, peer });
       setPeerId(peer.id);
+      logger.log({
+        event: "open",
+        comment: "Master connected",
+        payload: { id: peer.id },
+      });
       api.on("remote.connect", ({ id }) => {
         const countersFromStorage = getCountersFromStorage();
         logger.log({ event: "remote.connect", payload: { id } });
@@ -77,15 +63,21 @@ export default function Master() {
       });
       api.on("data", ({ id }, data) => {
         logger.log({ event: "data", data, id });
-        setRemotesList((counters) => counterReducer(counters, { data, id }));
-        // todo fix
-        persistCountersToStorage(remotesList);
+        setRemotesList((counters) => {
+          const state = counterReducer(counters, { data, id });
+          persistCountersToStorage(state);
+          return state;
+        });
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
+  useEffect(() => {
+    console.log("remotesList changed", remotesList);
+  }, [remotesList]);
   return (
     <>
-      <ErrorsDisplay data={["bar"]} />
+      <ErrorsDisplay data={["todo manage errors"]} />
       <QrcodeDisplay data={makeRemotePeerUrl(peerId)} />
       <OpenRemote peerId={peerId} />
       <p>

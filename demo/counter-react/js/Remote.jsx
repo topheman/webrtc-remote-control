@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
 
 import ErrorsDisplay from "./ErrorsDisplay";
@@ -6,8 +6,23 @@ import CounterControl from "./CounterControl";
 import ConsoleDisplay from "./ConsoleDisplay";
 import FooterDisplay from "./Footer";
 
+import { useLogger } from "./common";
+
 export default function Remote() {
+  const { logs, logger } = useLogger([]);
+
   const { ready, api, peer } = usePeer();
+
+  useEffect(() => {
+    if (ready) {
+      logger.log({
+        event: "open",
+        comment: "Remote connected",
+        payload: { id: peer.id },
+      });
+    }
+  }, [ready]);
+
   console.log("Remote.usePeer()", { ready, api, peer });
   function onIncrement() {
     console.log("onIncrement");
@@ -39,11 +54,7 @@ export default function Remote() {
         Check the counter updating in real-time on the original page, thanks to
         WebRTC.
       </p>
-      <ConsoleDisplay
-        data={[
-          { key: 1, level: "log", payload: { event: "foo", comment: "bar" } },
-        ]}
-      />
+      <ConsoleDisplay data={logs} />
       <FooterDisplay from="2022" to="2022" />
     </>
   );
