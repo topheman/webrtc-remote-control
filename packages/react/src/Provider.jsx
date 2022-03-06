@@ -4,7 +4,7 @@ import { master, remote, prepareUtils } from "@webrtc-remote-control/core";
 
 export const MyContext = createContext();
 
-export function WebRTCRemoteControlProvider({
+export function Provider({
   children,
   sessionStorageKey,
   humanErrors,

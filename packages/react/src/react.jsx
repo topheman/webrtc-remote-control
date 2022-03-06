@@ -1,7 +1,7 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import React, { useState } from "react";
 
-export { WebRTCRemoteControlProvider } from "./Provider";
+export { Provider as WebRTCRemoteControlProvider } from "./Provider";
 
 export const useActive = () => {
   const [active, set] = useState(false);
