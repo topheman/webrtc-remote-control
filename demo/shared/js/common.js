@@ -38,10 +38,10 @@ export function makeLogger({ onLog = () => {}, logs = [], size = 30 } = {}) {
       return logs;
     };
   }
-  return {
-    log: makeLogFunction("log"),
-    info: makeLogFunction("info"),
-    warn: makeLogFunction("warn"),
-    error: makeLogFunction("error"),
-  };
+  return Object.fromEntries(
+    ["log", "info", "warn", "error"].map((level) => [
+      level,
+      makeLogFunction(level),
+    ])
+  );
 }

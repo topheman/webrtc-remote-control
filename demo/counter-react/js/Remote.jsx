@@ -7,16 +7,25 @@ import ConsoleDisplay from "./ConsoleDisplay";
 import FooterDisplay from "./Footer";
 
 export default function Remote() {
-  const a = usePeer();
-  console.log("Remote.usePeer()", a);
+  const { ready, api, peer } = usePeer();
+  console.log("Remote.usePeer()", { ready, api, peer });
   function onIncrement() {
     console.log("onIncrement");
+    if (ready) {
+      api.send({ type: "COUNTER_INCREMENT" });
+    }
   }
   function onDecrement() {
     console.log("onDecrement");
+    if (ready) {
+      api.send({ type: "COUNTER_DECREMENT" });
+    }
   }
   function onChangeName(name) {
     console.log("onChangeName", name);
+    if (ready) {
+      api.send({ type: "REMOTE_SET_NAME", name });
+    }
   }
   return (
     <>

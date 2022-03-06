@@ -14,7 +14,7 @@ async function init() {
   const {
     showLoader,
     setPeerId,
-    setRemoteList,
+    setRemotesList,
     setGlobalCounter,
     setErrors,
     setConsoleDisplay,
@@ -51,17 +51,17 @@ async function init() {
       ...counters,
       { counter: countersFromStorage?.[id] ?? 0, peerId: id },
     ];
-    setRemoteList(counters);
+    setRemotesList(counters);
   });
   wrcMaster.on("remote.disconnect", ({ id }) => {
     logger.log({ event: "remote.disconnect", payload: { id } });
     counters = counters.filter(({ peerId }) => peerId !== id);
-    setRemoteList(counters);
+    setRemotesList(counters);
   });
   wrcMaster.on("data", ({ id }, data) => {
     logger.log({ event: "data", data, id });
     counters = counterReducer(counters, { data, id });
-    setRemoteList(counters);
+    setRemotesList(counters);
     persistCountersToStorage(counters);
     setGlobalCounter(globalCount(counters));
   });

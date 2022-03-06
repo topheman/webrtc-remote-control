@@ -65,7 +65,7 @@ function createView(templateNode, staticContent) {
         buttonOpenRemote.setAttribute("disabled", "disabled");
       }
     },
-    setRemoteList(data) {
+    setRemotesList(data) {
       remotesList.data = data;
     },
     setGlobalCounter(count) {
