@@ -55,13 +55,13 @@
     "prettier": "2.5.1"
   },
   "lint-staged": {
-    "*.js": [
+    "*.{js,jsx,ts,tsx}": [
       "eslint --cache --fix"
     ],
     "packages/core/**/*.js": [
       "npm run test:core:precommit"
     ],
-    "demo/**/*.js": [
+    "demo/**/*.{js,jsx,ts,tsx}": [
       "npm run test:demo:precommit"
     ],
     "*.{css,html}": [
