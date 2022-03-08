@@ -12,6 +12,7 @@ RemotesList.propTypes = {
     PropTypes.exact({
       counter: PropTypes.number,
       peerId: PropTypes.string,
+      name: PropTypes.string,
     })
   ),
 };

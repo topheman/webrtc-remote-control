@@ -2,7 +2,8 @@ import React, { useEffect } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
 
 import ErrorsDisplay from "./ErrorsDisplay";
-import CounterControl from "./CounterControl";
+import RemoteCountControl from "./RemoteCountControl";
+import RemoteNameControl from "./RemoteNameControl";
 import ConsoleDisplay from "./ConsoleDisplay";
 import FooterDisplay from "./Footer";
 
@@ -52,11 +53,8 @@ export default function Remote() {
   return (
     <>
       <ErrorsDisplay />
-      <CounterControl
-        onIncrement={onIncrement}
-        onDecrement={onDecrement}
-        onChangeName={onChangeName}
-      />
+      <RemoteCountControl onIncrement={onIncrement} onDecrement={onDecrement} />
+      <RemoteNameControl onChangeName={onChangeName} />
       <p>
         Check the counter updating in real-time on the original page, thanks to
         WebRTC.
