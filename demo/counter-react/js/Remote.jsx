@@ -7,10 +7,11 @@ import RemoteNameControl from "./RemoteNameControl";
 import ConsoleDisplay from "./ConsoleDisplay";
 import FooterDisplay from "./Footer";
 
-import { useLogger } from "./common";
+import { useLogger, useSessionStorage } from "./common";
 
 export default function Remote() {
   const { logs, logger } = useLogger([]);
+  const [name, setName] = useSessionStorage("remote-name", "");
 
   const { ready, api, peer } = usePeer();
 
@@ -26,8 +27,13 @@ export default function Remote() {
       });
       api.on("remote.reconnect", (payload) => {
         logger.log({ event: "remote.reconnect", payload });
-        // todo send REMOTE_SET_NAME
+        if (name) {
+          api.send({ type: "REMOTE_SET_NAME", name });
+        }
       });
+      if (name) {
+        api.send({ type: "REMOTE_SET_NAME", name });
+      }
     }
   }, [ready]);
 
@@ -44,8 +50,12 @@ export default function Remote() {
       api.send({ type: "COUNTER_DECREMENT" });
     }
   }
-  function onChangeName(name) {
-    console.log("onChangeName", name);
+  function onChangeName(value) {
+    console.log("onChangeName", value);
+    setName(value);
+  }
+  function onConfirmName() {
+    console.log("onConfirmName", name);
     if (ready) {
       api.send({ type: "REMOTE_SET_NAME", name });
     }
@@ -54,7 +64,11 @@ export default function Remote() {
     <>
       <ErrorsDisplay />
       <RemoteCountControl onIncrement={onIncrement} onDecrement={onDecrement} />
-      <RemoteNameControl onChangeName={onChangeName} />
+      <RemoteNameControl
+        onChangeName={onChangeName}
+        name={name}
+        onConfirmName={onConfirmName}
+      />
       <p>
         Check the counter updating in real-time on the original page, thanks to
         WebRTC.

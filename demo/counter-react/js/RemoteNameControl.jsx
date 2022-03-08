@@ -1,18 +1,27 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-export default function RemoteNameControl({ onChangeName }) {
+export default function RemoteNameControl({
+  onChangeName,
+  onConfirmName,
+  name,
+}) {
   return (
     <form
       className="form-set-name"
       action="."
       onSubmit={(e) => {
         e.preventDefault();
-        onChangeName(e.target.name.value);
+        onConfirmName(e.target.name.value);
       }}
     >
       <label>
-        <input type="text" placeholder="Enter name" name="name" />
+        <input
+          type="text"
+          placeholder="Enter name"
+          onChange={(e) => onChangeName(e.target.value)}
+          value={name}
+        />
         <button type="submit">OK</button>
       </label>
     </form>
@@ -21,4 +30,6 @@ export default function RemoteNameControl({ onChangeName }) {
 
 RemoteNameControl.propTypes = {
   onChangeName: PropTypes.func,
+  onConfirmName: PropTypes.func,
+  name: PropTypes.string,
 };
