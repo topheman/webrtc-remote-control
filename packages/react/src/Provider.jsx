@@ -85,7 +85,7 @@ export function Provider({
 }
 
 Provider.propTypes = {
-  children: PropTypes.children,
+  children: PropTypes.any,
   sessionStorageKey: PropTypes.string,
   humanErrors: PropTypes.object,
   mode: PropTypes.oneOf(["master", "remote"]),

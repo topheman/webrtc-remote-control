@@ -30,8 +30,10 @@ export default function App() {
         (window.location.hash && window.location.hash.replace("#", "")) || null
       }
     >
-      <HelloWorld />
-      <>{mode === "remote" ? <Remote /> : <Master />}</>
+      <>
+        <HelloWorld />
+        {mode === "remote" ? <Remote /> : <Master />}
+      </>
     </WebRTCRemoteControlProvider>
   ) : (
     "Loading ..."
