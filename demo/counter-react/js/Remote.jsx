@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
 
 import ErrorsDisplay from "./ErrorsDisplay";
@@ -11,12 +11,14 @@ import { useLogger, useSessionStorage } from "./common";
 
 export default function Remote() {
   const { logs, logger } = useLogger([]);
+  const [peerId, setPeerId] = useState(null);
   const [name, setName] = useSessionStorage("remote-name", "");
 
   const { ready, api, peer } = usePeer();
 
   useEffect(() => {
     if (ready) {
+      setPeerId(peer.id);
       logger.log({
         event: "open",
         comment: "Remote connected",
@@ -63,11 +65,16 @@ export default function Remote() {
   return (
     <>
       <ErrorsDisplay />
-      <RemoteCountControl onIncrement={onIncrement} onDecrement={onDecrement} />
+      <RemoteCountControl
+        onIncrement={onIncrement}
+        onDecrement={onDecrement}
+        disabled={!peerId}
+      />
       <RemoteNameControl
         onChangeName={onChangeName}
         name={name}
         onConfirmName={onConfirmName}
+        disabled={!peerId}
       />
       <p>
         Check the counter updating in real-time on the original page, thanks to

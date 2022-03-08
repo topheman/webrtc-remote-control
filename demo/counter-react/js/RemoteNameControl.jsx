@@ -5,6 +5,7 @@ export default function RemoteNameControl({
   onChangeName,
   onConfirmName,
   name,
+  disabled,
 }) {
   return (
     <form
@@ -14,6 +15,7 @@ export default function RemoteNameControl({
         e.preventDefault();
         onConfirmName(e.target.name.value);
       }}
+      disabled={disabled}
     >
       <label>
         <input
@@ -21,8 +23,11 @@ export default function RemoteNameControl({
           placeholder="Enter name"
           onChange={(e) => onChangeName(e.target.value)}
           value={name}
+          disabled={disabled}
         />
-        <button type="submit">OK</button>
+        <button type="submit" disabled={disabled}>
+          OK
+        </button>
       </label>
     </form>
   );
@@ -32,4 +37,5 @@ RemoteNameControl.propTypes = {
   onChangeName: PropTypes.func,
   onConfirmName: PropTypes.func,
   name: PropTypes.string,
+  disabled: PropTypes.bool,
 };
