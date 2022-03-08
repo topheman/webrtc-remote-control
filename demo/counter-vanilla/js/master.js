@@ -4,8 +4,11 @@ import { makeLogger } from "../../shared/js/common";
 import {
   persistCountersToStorage,
   getCountersFromStorage,
-} from "./master.persistance";
-import { counterReducer, globalCount } from "./master.logic";
+} from "../../shared/js/counter.master.persistance";
+import {
+  counterReducer,
+  globalCount,
+} from "../../shared/js/counter.master.logic";
 import { render } from "./master.view";
 
 async function init() {

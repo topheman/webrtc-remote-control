@@ -12,11 +12,11 @@ import FooterDisplay from "./Footer";
 import {
   persistCountersToStorage,
   getCountersFromStorage,
-} from "../../counter-vanilla/js/master.persistance";
+} from "../../shared/js/counter.master.persistance";
 import {
   counterReducer,
   globalCount,
-} from "../../counter-vanilla/js/master.logic";
+} from "../../shared/js/counter.master.logic";
 import { useLogger } from "./common";
 
 function makeRemotePeerUrl(peerId) {
