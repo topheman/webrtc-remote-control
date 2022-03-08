@@ -69,6 +69,13 @@ export function givenMasterPeerOpenEventIsTriggered(given, { getMasterPage }) {
     const logs = await getMasterPage().evaluate(() => {
       return document.querySelector("console-display").data;
     });
+    try {
+      expect(logs.length).toBeGreaterThan(0);
+    } catch (e) {
+      throw new Error(
+        `No events detected in console-display, check your connection / add a sleep before the assertion.`
+      );
+    }
     expect(logs[0].payload.event).toBe("open");
 
     // update `masterPeerId` so that it will be exposed
@@ -100,6 +107,13 @@ export function givenIOpenANewRemote(given, { getMasterPage }) {
       const remoteLogs = await remotePage.evaluate(() => {
         return document.querySelector("console-display").data;
       });
+      try {
+        expect(remoteLogs.length).toBeGreaterThan(0);
+      } catch (e) {
+        throw new Error(
+          `No events detected in console-display, check your connection / add a sleep before the assertion.`
+        );
+      }
       expect(remoteLogs[0].payload.event).toBe("open");
 
       // update `remotePeerId` so that it will be exposed
@@ -126,6 +140,13 @@ export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
     const masterLogs = await getMasterPage().evaluate(() => {
       return document.querySelector("console-display").data;
     });
+    try {
+      expect(masterLogs.length).toBeGreaterThan(0);
+    } catch (e) {
+      throw new Error(
+        `No events detected in console-display, check your connection / add a sleep before the assertion.`
+      );
+    }
     expect(masterLogs[0].payload).toEqual({
       event: "remote.connect",
       payload: {
@@ -268,6 +289,13 @@ export function givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(
           return document.querySelector("console-display").data;
         }
       );
+      try {
+        expect(remoteLogs.length).toBeGreaterThan(0);
+      } catch (e) {
+        throw new Error(
+          `No events detected in console-display, check your connection / add a sleep before the assertion.`
+        );
+      }
       // remote should re-open and re-use the same id
       expect(remoteLogs[0].payload.event).toBe("open");
       expect(remoteLogs[0].payload.payload.id).toBe(remotePeerId);
@@ -317,6 +345,13 @@ export function givenIReloadMasterThenRemotesShouldReconnect(
       const masterLogs = await getMasterPage().evaluate(async () => {
         return document.querySelector("console-display").data;
       });
+      try {
+        expect(masterLogs.length).toBeGreaterThan(0);
+      } catch (e) {
+        throw new Error(
+          `No events detected in console-display, check your connection / add a sleep before the assertion.`
+        );
+      }
       const received = masterLogs
         .slice(0, 3)
         .map(({ payload }) => payload)
@@ -329,6 +364,13 @@ export function givenIReloadMasterThenRemotesShouldReconnect(
         const remoteLogs = await getCurrentRemote().page.evaluate(async () => {
           return document.querySelector("console-display").data;
         });
+        try {
+          expect(remoteLogs.length).toBeGreaterThan(0);
+        } catch (e) {
+          throw new Error(
+            `No events detected in console-display, check your connection / add a sleep before the assertion.`
+          );
+        }
         expect(remoteLogs[1].payload).toEqual({
           event: "remote.disconnect",
           payload: {
