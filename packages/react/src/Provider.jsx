@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import React, { createContext, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import { master, remote, prepareUtils } from "@webrtc-remote-control/core";
 
 export const MyContext = createContext();
@@ -82,3 +83,12 @@ export function Provider({
     </MyContext.Provider>
   );
 }
+
+Provider.propTypes = {
+  children: PropTypes.children,
+  sessionStorageKey: PropTypes.string,
+  humanErrors: PropTypes.object,
+  mode: PropTypes.oneOf(["master", "remote"]),
+  masterPeerId: PropTypes.string,
+  init: PropTypes.func,
+};

@@ -30,6 +30,7 @@
     "react": ">=16.8.0"
   },
   "dependencies": {
-    "@webrtc-remote-control/core": "^0.0.0"
+    "@webrtc-remote-control/core": "^0.0.0",
+    "prop-types": "^15.8.1"
   }
 }
