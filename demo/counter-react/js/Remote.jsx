@@ -13,8 +13,9 @@ export default function Remote() {
   const { logs, logger } = useLogger([]);
   const [peerId, setPeerId] = useState(null);
   const [name, setName] = useSessionStorage("remote-name", "");
+  const [errors, setErrors] = useState(null);
 
-  const { ready, api, peer } = usePeer();
+  const { ready, api, peer, humanizeError } = usePeer();
 
   useEffect(() => {
     if (ready) {
@@ -32,6 +33,12 @@ export default function Remote() {
         if (name) {
           api.send({ type: "REMOTE_SET_NAME", name });
         }
+      });
+      peer.on("error", (error) => {
+        console.log("some error in remote", error);
+        setPeerId(null);
+        logger.error({ event: "error", error });
+        setErrors([humanizeError(error)]);
       });
       if (name) {
         api.send({ type: "REMOTE_SET_NAME", name });
@@ -64,7 +71,7 @@ export default function Remote() {
   }
   return (
     <>
-      <ErrorsDisplay />
+      <ErrorsDisplay data={errors} />
       <RemoteCountControl
         onIncrement={onIncrement}
         onDecrement={onDecrement}

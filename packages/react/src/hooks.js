@@ -20,5 +20,13 @@ export function usePeer() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return { ready, api: resolvedWrcApi.current, peer: context.peer };
+  return {
+    ready,
+    api: resolvedWrcApi.current,
+    peer: context.peer,
+    mode: context.mode,
+    masterPeerId: context.masterPeerId,
+    humanizeError: context.humanizeError,
+    isConnectionFromRemote: context.isConnectionFromRemote,
+  };
 }

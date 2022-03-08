@@ -52,14 +52,26 @@ export function Provider({
     });
   }
   useEffect(() => {
+    // expose the following on the ref forwarded to the provider
     providerValue.current.mode = mode;
     providerValue.current.masterPeerId = masterPeerId;
+    providerValue.current.humanizeError = utils.humanizeError;
+    providerValue.current.getPeerId = utils.getPeerId;
+    if (mode === "master") {
+      providerValue.current.isConnectionFromRemote =
+        utils.isConnectionFromRemote;
+    }
+    providerValue.current.humanizeError = utils.humanizeError;
+
+    // init callback that should return a peer instance like:
+    // `({ getPeerId }) => new Peer(getPeerId())`
     providerValue.current.peer = init({
       humanizeError: utils.humanizeError,
       getPeerId: utils.getPeerId,
       isConnectionFromRemote:
         mode === "master" ? utils.isConnectionFromRemote : undefined,
     });
+
     providerValue.current.peer.on("open", (id) => {
       console.log("open", id);
     });

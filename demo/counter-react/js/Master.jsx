@@ -34,8 +34,9 @@ export default function Master() {
   const { logs, logger } = useLogger([]);
   const [peerId, setPeerId] = useState(null);
   const [remotesList, setRemotesList] = useState([]);
+  const [errors, setErrors] = useState(null);
 
-  const { ready, api, peer } = usePeer();
+  const { ready, api, peer, humanizeError } = usePeer();
 
   console.log("Master.usePeer()", { ready, api, peer });
   useEffect(() => {
@@ -69,6 +70,11 @@ export default function Master() {
           return state;
         });
       });
+      peer.on("error", (error) => {
+        setPeerId(null);
+        logger.error({ event: "error", error });
+        setErrors([humanizeError(error)]);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
@@ -77,7 +83,7 @@ export default function Master() {
   }, [remotesList]);
   return (
     <>
-      <ErrorsDisplay data={["todo manage errors"]} />
+      <ErrorsDisplay data={errors} />
       <QrcodeDisplay data={makeRemotePeerUrl(peerId)} />
       <OpenRemote peerId={peerId} />
       <p>
