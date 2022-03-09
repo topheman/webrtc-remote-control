@@ -40,17 +40,6 @@ export function Provider({
     mode,
     masterPeerId,
   });
-  function bindEvents(api) {
-    api.on("remote.connect", ({ id }) => {
-      console.log("remote.connect", id);
-    });
-    api.on("remote.disconnect", ({ id }) => {
-      console.log("remote.disconnect", id);
-    });
-    api.on("remote.reconnect", ({ id }) => {
-      console.log("remote.reconnect", id);
-    });
-  }
   useEffect(() => {
     // expose the following on the ref forwarded to the provider
     providerValue.current.mode = mode;
@@ -69,21 +58,19 @@ export function Provider({
         mode === "master" ? utils.isConnectionFromRemote : undefined,
     });
 
-    providerValue.current.peer.on("open", (id) => {
-      console.log("open", id);
-    });
     providerValue.current.promise = (mode === "master" ? master : remote)
       .default(utils)
       .bindConnection(
         providerValue.current.peer,
         remote ? masterPeerId : undefined
       );
-    providerValue.current.promise.then((wrcApi) => {
-      bindEvents(wrcApi);
-    });
+    // start resolving the promise as soon as possible (it will be used in `usePeer`)
+    providerValue.current.promise.then(() => {});
     return () => {
-      console.log("cleanup useEffect");
-      providerValue.current.peer.disconnect();
+      if (providerValue.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        providerValue.current.peer.disconnect();
+      }
     };
   }, [mode, masterPeerId, init, utils]);
   return (

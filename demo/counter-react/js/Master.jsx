@@ -38,7 +38,35 @@ export default function Master() {
 
   const { ready, api, peer, humanizeError } = usePeer();
 
-  console.log("Master.usePeer()", { ready, api, peer });
+  const onRemoteConnect = ({ id }) => {
+    const countersFromStorage = getCountersFromStorage();
+    logger.log({ event: "remote.connect", payload: { id } });
+    setRemotesList((counters) => [
+      ...counters,
+      { counter: countersFromStorage?.[id] ?? 0, peerId: id },
+    ]);
+  };
+  const onRemoteDisconnect = ({ id }) => {
+    logger.log({ event: "remote.disconnect", payload: { id } });
+    setRemotesList((counters) =>
+      // eslint-disable-next-line no-shadow
+      counters.filter(({ peerId }) => peerId !== id)
+    );
+  };
+  const onData = ({ id }, data) => {
+    logger.log({ event: "data", data, id });
+    setRemotesList((counters) => {
+      const state = counterReducer(counters, { data, id });
+      persistCountersToStorage(state);
+      return state;
+    });
+  };
+  const onPeerError = (error) => {
+    setPeerId(null);
+    logger.error({ event: "error", error });
+    setErrors([humanizeError(error)]);
+  };
+
   useEffect(() => {
     if (ready) {
       setPeerId(peer.id);
@@ -47,44 +75,26 @@ export default function Master() {
         comment: "Master connected",
         payload: { id: peer.id },
       });
-      api.on("remote.connect", ({ id }) => {
-        const countersFromStorage = getCountersFromStorage();
-        logger.log({ event: "remote.connect", payload: { id } });
-        setRemotesList((counters) => [
-          ...counters,
-          { counter: countersFromStorage?.[id] ?? 0, peerId: id },
-        ]);
-      });
-      api.on("remote.disconnect", ({ id }) => {
-        logger.log({ event: "remote.disconnect", payload: { id } });
-        setRemotesList((counters) =>
-          // eslint-disable-next-line no-shadow
-          counters.filter(({ peerId }) => peerId !== id)
-        );
-      });
-      api.on("data", ({ id }, data) => {
-        logger.log({ event: "data", data, id });
-        setRemotesList((counters) => {
-          const state = counterReducer(counters, { data, id });
-          persistCountersToStorage(state);
-          return state;
-        });
-      });
-      peer.on("error", (error) => {
-        setPeerId(null);
-        logger.error({ event: "error", error });
-        setErrors([humanizeError(error)]);
-      });
+      api.on("remote.connect", onRemoteConnect);
+      api.on("remote.disconnect", onRemoteDisconnect);
+      api.on("data", onData);
+      peer.on("error", onPeerError);
     }
+    return () => {
+      console.log("Master.jsx.cleanup");
+      if (ready) {
+        api.off("remote.connect", onRemoteConnect);
+        api.off("remote.disconnect", onRemoteDisconnect);
+        api.off("data", onData);
+        peer.off("error", onPeerError);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
-  useEffect(() => {
-    console.log("remotesList changed", remotesList);
-  }, [remotesList]);
   return (
     <>
       <ErrorsDisplay data={errors} />
-      <QrcodeDisplay data={makeRemotePeerUrl(peerId)} />
+      {peerId ? <QrcodeDisplay data={makeRemotePeerUrl(peerId)} /> : null}
       <OpenRemote peerId={peerId} />
       <p>
         Global counter: <CounterDisplay count={globalCount(remotesList)} />

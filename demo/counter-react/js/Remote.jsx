@@ -17,6 +17,21 @@ export default function Remote() {
 
   const { ready, api, peer, humanizeError } = usePeer();
 
+  const onRemoteDisconnect = (payload) => {
+    logger.log({ event: "remote.disconnect", payload });
+  };
+  const onRemoteReconnect = (payload) => {
+    logger.log({ event: "remote.reconnect", payload });
+    if (name) {
+      api.send({ type: "REMOTE_SET_NAME", name });
+    }
+  };
+  const onPeerError = (error) => {
+    setPeerId(null);
+    logger.error({ event: "error", error });
+    setErrors([humanizeError(error)]);
+  };
+
   useEffect(() => {
     if (ready) {
       setPeerId(peer.id);
@@ -25,46 +40,37 @@ export default function Remote() {
         comment: "Remote connected",
         payload: { id: peer.id },
       });
-      api.on("remote.disconnect", (payload) => {
-        logger.log({ event: "remote.disconnect", payload });
-      });
-      api.on("remote.reconnect", (payload) => {
-        logger.log({ event: "remote.reconnect", payload });
-        if (name) {
-          api.send({ type: "REMOTE_SET_NAME", name });
-        }
-      });
-      peer.on("error", (error) => {
-        console.log("some error in remote", error);
-        setPeerId(null);
-        logger.error({ event: "error", error });
-        setErrors([humanizeError(error)]);
-      });
+      api.on("remote.disconnect", onRemoteDisconnect);
+      api.on("remote.reconnect", onRemoteReconnect);
+      peer.on("error", onPeerError);
       if (name) {
         api.send({ type: "REMOTE_SET_NAME", name });
       }
     }
+    return () => {
+      console.log("Remote.jsx.cleanup");
+      if (ready) {
+        api.off("remote.disconnect", onRemoteDisconnect);
+        api.off("remote.reconnect", onRemoteReconnect);
+        peer.off("error", onPeerError);
+      }
+    };
   }, [ready]);
 
-  console.log("Remote.usePeer()", { ready, api, peer });
   function onIncrement() {
-    console.log("onIncrement");
     if (ready) {
       api.send({ type: "COUNTER_INCREMENT" });
     }
   }
   function onDecrement() {
-    console.log("onDecrement");
     if (ready) {
       api.send({ type: "COUNTER_DECREMENT" });
     }
   }
   function onChangeName(value) {
-    console.log("onChangeName", value);
     setName(value);
   }
   function onConfirmName() {
-    console.log("onConfirmName", name);
     if (ready) {
       api.send({ type: "REMOTE_SET_NAME", name });
     }

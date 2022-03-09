@@ -70,6 +70,7 @@ export default function prepare({
           setPeerIdToSessionStorage(peerId);
           createPeerConnectionWithReconnectOnClose(() => res(wrcRemote));
           conn.on("error", (e) => {
+            // todo emit some error ? same on master ?
             console.log("conn.error", e);
           });
         });
