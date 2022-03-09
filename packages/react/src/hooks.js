@@ -23,10 +23,6 @@ export function usePeer() {
   return {
     ready,
     api: resolvedWrcApi.current,
-    peer: context.peer,
-    mode: context.mode,
-    masterPeerId: context.masterPeerId,
-    humanizeError: context.humanizeError,
-    isConnectionFromRemote: context.isConnectionFromRemote,
+    ...context,
   };
 }
