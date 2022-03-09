@@ -1,4 +1,4 @@
-import { counterReducer } from "../master.logic";
+import { counterReducer } from "../../../shared/js/counter.master.logic";
 
 function makeInitialState() {
   return [

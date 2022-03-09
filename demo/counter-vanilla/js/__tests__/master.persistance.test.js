@@ -2,7 +2,7 @@ import { mockSessionStorage } from "../../../test.helpers";
 import {
   persistCountersToStorage,
   getCountersFromStorage,
-} from "../master.persistance";
+} from "../../../shared/js/counter.master.persistance";
 
 function makeState() {
   return [
