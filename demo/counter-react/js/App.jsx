@@ -1,10 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import React, { useState, useEffect } from "react";
 
-import {
-  HelloWorld,
-  WebRTCRemoteControlProvider,
-} from "@webrtc-remote-control/react";
+import { WebRTCRemoteControlProvider } from "@webrtc-remote-control/react";
 
 import Master from "./Master";
 import Remote from "./Remote";
@@ -30,10 +27,7 @@ export default function App() {
         (window.location.hash && window.location.hash.replace("#", "")) || null
       }
     >
-      <>
-        <HelloWorld />
-        {mode === "remote" ? <Remote /> : <Master />}
-      </>
+      {mode === "remote" ? <Remote /> : <Master />}
     </WebRTCRemoteControlProvider>
   ) : (
     "Loading ..."
