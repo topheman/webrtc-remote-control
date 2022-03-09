@@ -5,6 +5,7 @@ import { WebRTCRemoteControlProvider } from "@webrtc-remote-control/react";
 
 import Master from "./Master";
 import Remote from "./Remote";
+import FooterDisplay from "./Footer";
 
 export default function App() {
   console.log("App render");
@@ -19,17 +20,23 @@ export default function App() {
       setMode("master");
     }
   }, []);
-  return mode ? (
-    <WebRTCRemoteControlProvider
-      mode={mode}
-      init={({ getPeerId }) => new Peer(getPeerId())}
-      masterPeerId={
-        (window.location.hash && window.location.hash.replace("#", "")) || null
-      }
-    >
-      {mode === "remote" ? <Remote /> : <Master />}
-    </WebRTCRemoteControlProvider>
-  ) : (
-    "Loading ..."
+  return (
+    <>
+      {mode ? (
+        <WebRTCRemoteControlProvider
+          mode={mode}
+          init={({ getPeerId }) => new Peer(getPeerId())}
+          masterPeerId={
+            (window.location.hash && window.location.hash.replace("#", "")) ||
+            null
+          }
+        >
+          {mode === "remote" ? <Remote /> : <Master />}
+        </WebRTCRemoteControlProvider>
+      ) : (
+        "Loading ..."
+      )}
+      <FooterDisplay from="2022" to={new Date().getFullYear()} />
+    </>
   );
 }

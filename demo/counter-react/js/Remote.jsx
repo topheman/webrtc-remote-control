@@ -5,7 +5,6 @@ import ErrorsDisplay from "./ErrorsDisplay";
 import RemoteCountControl from "./RemoteCountControl";
 import RemoteNameControl from "./RemoteNameControl";
 import ConsoleDisplay from "./ConsoleDisplay";
-import FooterDisplay from "./Footer";
 
 import { useLogger, useSessionStorage } from "./common";
 
@@ -94,7 +93,6 @@ export default function Remote() {
         WebRTC.
       </p>
       <ConsoleDisplay data={[...logs].reverse()} />
-      <FooterDisplay from="2022" to="2022" />
     </>
   );
 }
