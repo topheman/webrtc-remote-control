@@ -10,5 +10,6 @@
   "exports": "./dist/master.modern.js",
   "source": "src/core.master.js",
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
+  "types": "src/core.master.d.ts",
   "license": "ISC"
 }
