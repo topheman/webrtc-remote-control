@@ -64,12 +64,6 @@ export default function prepare({
             ee.emit("remote.disconnect", { id: conn.peer });
           });
         });
-        peer.on("error", (error) => {
-          console.error(error);
-        });
-        peer.on("disconnected", (e) => {
-          console.log("disconnected", e);
-        });
       });
     },
   };

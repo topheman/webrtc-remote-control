@@ -12,13 +12,6 @@ function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
     serialization: "json",
     metadata: connMetadata, // will let us identify which connections are managed by the package / by the user
   });
-  // send a disconnect message to master when reloading/closing
-  const onBeforeUnload = () => {
-    // todo tell the master to disconnect the remote
-  };
-  // make sure to remove a previous added event to prevent double trigger
-  window.removeEventListener("beforeunload", onBeforeUnload);
-  window.addEventListener("beforeunload", onBeforeUnload);
   conn.on("open", () => {
     if (typeof onConnectionOpened === "function") {
       onConnectionOpened();
@@ -73,15 +66,6 @@ export default function prepare({
             // todo emit some error ? same on master ?
             console.log("conn.error", e);
           });
-        });
-        peer.on("close", () => {
-          console.log("peer.close");
-        });
-        peer.on("disconnected", () => {
-          console.log("peer.disconnected");
-        });
-        peer.on("error", (e) => {
-          console.log("peer.error", e);
         });
       });
     },
