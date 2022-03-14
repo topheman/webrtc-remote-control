@@ -1,15 +1,11 @@
 import EventEmitter from "eventemitter3";
 
-import { prepareUtils } from "../../shared/common";
-
-type HumanizeErrorType = ReturnType<typeof prepareUtils>["humanizeError"];
-type GetPeerIdType = ReturnType<typeof prepareUtils>["getPeerId"];
-type IsConnectionFromRemoteType = ReturnType<
-  typeof prepareUtils
->["isConnectionFromRemote"];
-type SetPeerIdToSessionStorageType = ReturnType<
-  typeof prepareUtils
->["setPeerIdToSessionStorage"];
+import {
+  HumanizeErrorType,
+  IsConnectionFromRemoteType,
+  GetPeerIdType,
+  SetPeerIdToSessionStorageType,
+} from "../../shared/common";
 
 export default function ({
   humanizeError,

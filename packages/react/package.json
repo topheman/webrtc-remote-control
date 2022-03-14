@@ -17,6 +17,7 @@
     "dev": "microbundle watch --no-compress --jsx React.createElement"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
+  "types": "src/react.d.ts",
   "license": "ISC",
   "files": [
     "src",

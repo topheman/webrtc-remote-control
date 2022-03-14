@@ -32,3 +32,14 @@ export function prepareUtils({
     typeof makeStoreAccessor
   >["setPeerIdToSessionStorage"];
 };
+
+export type HumanizeErrorType = ReturnType<
+  typeof prepareUtils
+>["humanizeError"];
+export type IsConnectionFromRemoteType = ReturnType<
+  typeof prepareUtils
+>["isConnectionFromRemote"];
+export type GetPeerIdType = ReturnType<typeof prepareUtils>["getPeerId"];
+export type SetPeerIdToSessionStorageType = ReturnType<
+  typeof prepareUtils
+>["setPeerIdToSessionStorage"];
