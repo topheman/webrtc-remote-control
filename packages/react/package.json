@@ -11,10 +11,10 @@
   "exports": "./dist/react.modern.js",
   "scripts": {
     "build": "npm-run-all --parallel build:*",
-    "build:react": "microbundle --no-compress --jsx React.createElement",
-    "build:react-umd-dev": "microbundle build --globals react=React --jsx React.createElement --raw --external react --define process.env.NODE_ENV='development' --no-pkg-main -o dist/webrtc-remote-control-react.umd.dev.js -f umd  --no-compress",
-    "build:react-umd-prod": "microbundle build --globals react=React --jsx React.createElement --raw --external react --define process.env.NODE_ENV='production' --no-pkg-main -o dist/webrtc-remote-control-react.umd.prod.js -f umd",
-    "dev": "microbundle watch --no-compress --jsx React.createElement"
+    "build:react": "microbundle --generateTypes false --no-compress --jsx React.createElement",
+    "build:react-umd-dev": "microbundle build --generateTypes false --globals react=React --jsx React.createElement --raw --external react --define process.env.NODE_ENV='development' --no-pkg-main -o dist/webrtc-remote-control-react.umd.dev.js -f umd  --no-compress",
+    "build:react-umd-prod": "microbundle build --generateTypes false --globals react=React --jsx React.createElement --raw --external react --define process.env.NODE_ENV='production' --no-pkg-main -o dist/webrtc-remote-control-react.umd.prod.js -f umd",
+    "dev": "microbundle watch --generateTypes false --no-compress --jsx React.createElement"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "types": "src/react.d.ts",

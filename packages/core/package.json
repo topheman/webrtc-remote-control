@@ -21,7 +21,7 @@
     "build:master": "microbundle build --generateTypes false --raw --cwd master",
     "build:remote": "microbundle build --generateTypes false --raw --cwd remote",
     "dev": "npm-run-all --parallel dev:*",
-    "dev:core": "microbundle watch --raw --no-compress",
+    "dev:core": "microbundle watch --generateTypes false --raw --no-compress",
     "dev:master": "microbundle watch --generateTypes false --raw --no-compress --cwd master",
     "dev:remote": "microbundle watch --generateTypes false --raw --no-compress --cwd remote",
     "test": "jest",
