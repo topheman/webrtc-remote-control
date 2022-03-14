@@ -58,7 +58,7 @@ export default function prepare({
             ee.emit("remote.connect", { id: conn.peer });
           });
           conn.on("data", (data) => {
-            ee.emit("data", { id: conn.peer }, data);
+            ee.emit("data", { id: conn.peer, from: "remote" }, data);
           });
           conn.on("close", () => {
             ee.emit("remote.disconnect", { id: conn.peer });

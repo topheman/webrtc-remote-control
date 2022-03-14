@@ -25,7 +25,7 @@ function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
     }
   });
   conn.on("data", (data) => {
-    emit("data", data);
+    emit("data", { from: "master" }, data);
   });
   return conn;
 }
