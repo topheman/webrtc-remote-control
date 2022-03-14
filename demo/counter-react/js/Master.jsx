@@ -7,6 +7,7 @@ import OpenRemote from "./OpenRemote";
 import CounterDisplay from "./CounterDisplay";
 import RemotesList from "./RemotesList";
 import ConsoleDisplay from "./ConsoleDisplay";
+import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import {
   persistCountersToStorage,
@@ -100,6 +101,7 @@ export default function Master() {
       </p>
       <RemotesList data={remotesList} />
       <ConsoleDisplay data={[...logs].reverse()} />
+      <DirectLinkToSourceCode mode="master" />
     </>
   );
 }

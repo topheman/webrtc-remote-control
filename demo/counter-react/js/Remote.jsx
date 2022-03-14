@@ -5,6 +5,7 @@ import ErrorsDisplay from "./ErrorsDisplay";
 import RemoteCountControl from "./RemoteCountControl";
 import RemoteNameControl from "./RemoteNameControl";
 import ConsoleDisplay from "./ConsoleDisplay";
+import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import { useLogger, useSessionStorage } from "./common";
 
@@ -93,6 +94,7 @@ export default function Remote() {
         WebRTC.
       </p>
       <ConsoleDisplay data={[...logs].reverse()} />
+      <DirectLinkToSourceCode mode="remote" />
     </>
   );
 }
