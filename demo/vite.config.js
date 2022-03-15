@@ -2,6 +2,7 @@
 const { resolve } = require("path");
 const { defineConfig } = require("vite");
 const react = require("@vitejs/plugin-react");
+const vue = require("@vitejs/plugin-vue");
 
 module.exports = defineConfig({
   build: {
@@ -18,5 +19,5 @@ module.exports = defineConfig({
   server: {
     host: "0.0.0.0",
   },
-  plugins: [react()],
+  plugins: [react(), vue()],
 });

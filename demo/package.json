@@ -23,6 +23,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.16.11",
     "@vitejs/plugin-react": "^1.2.0",
+    "@vitejs/plugin-vue": "^2.2.4",
     "jest": "^27.5.1",
     "jest-cucumber": "^3.0.1",
     "jest-puppeteer": "^6.1.0",
