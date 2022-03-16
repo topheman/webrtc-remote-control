@@ -19,5 +19,16 @@ module.exports = defineConfig({
   server: {
     host: "0.0.0.0",
   },
-  plugins: [react(), vue()],
+  plugins: [
+    react(),
+    // https://vuejs.org/guide/extras/web-components.html#using-custom-elements-in-vue
+    vue({
+      template: {
+        compilerOptions: {
+          // treat all tags with a dash as custom elements
+          isCustomElement: (tag) => tag.includes("-"),
+        },
+      },
+    }),
+  ],
 });
