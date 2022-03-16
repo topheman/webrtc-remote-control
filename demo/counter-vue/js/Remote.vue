@@ -22,6 +22,7 @@
 
 <script>
 import { ref, computed, onMounted } from "vue";
+import { useSessionStorage } from "@vueuse/core";
 
 import "../../shared/js/components/errors-display";
 import "../../shared/js/components/console-display";
@@ -36,7 +37,7 @@ export default {
   setup() {
     const { logs, logger } = useLogger([]);
     const peerId = ref(null);
-    const name = ref(""); // todo handle localStorage
+    const name = useSessionStorage("remote-name", "");
     const errors = ref(null);
     const reversedLogs = computed(() => [...logs.value].reverse());
 
