@@ -21,11 +21,7 @@
   "license": "ISC",
   "files": [
     "src",
-    "dist",
-    "master",
-    "master/dist",
-    "remote",
-    "remote/dist"
+    "dist"
   ],
   "devDependencies": {
     "microbundle": "^0.14.2",
