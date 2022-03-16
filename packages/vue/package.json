@@ -1,0 +1,36 @@
+{
+  "name": "@webrtc-remote-control/vue",
+  "amdName": "webrtcRemoteControlVue",
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "main": "./dist/vue.cjs",
+  "module": "./dist/vue.module.js",
+  "unpkg": "./dist/vue.umd.js",
+  "source": "./src/vue.js",
+  "exports": "./dist/vue.modern.js",
+  "scripts": {
+    "build": "npm-run-all --parallel build:*",
+    "build:vue": "microbundle --generateTypes false --no-compress",
+    "build:vue-umd-dev": "microbundle build --generateTypes false --globals vue=Vue --raw --external vue --define process.env.NODE_ENV='development' --no-pkg-main -o dist/webrtc-remote-control-vue.umd.dev.js -f umd  --no-compress",
+    "build:vue-umd-prod": "microbundle build --generateTypes false --globals vue=Vue --raw --external vue --define process.env.NODE_ENV='production' --no-pkg-main -o dist/webrtc-remote-control-vue.umd.prod.js -f umd",
+    "dev": "microbundle watch --generateTypes false --no-compress"
+  },
+  "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
+  "types": "src/vue.d.ts",
+  "license": "ISC",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "devDependencies": {
+    "microbundle": "^0.14.2",
+    "npm-run-all": "^4.1.5"
+  },
+  "peerDependencies": {
+    "vue": ">=3.0.0"
+  },
+  "dependencies": {
+    "@webrtc-remote-control/core": "^0.0.0"
+  }
+}
