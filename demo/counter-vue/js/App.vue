@@ -9,6 +9,8 @@
 <script>
 import { onBeforeMount, ref } from "vue";
 
+import { provideWebTCRemoteControl } from "@webrtc-remote-control/vue";
+
 import "../../shared/js/components/footer-display";
 
 import Master from "./Master.vue";
@@ -20,6 +22,10 @@ export default {
     const mode = ref(null);
     onBeforeMount(() => {
       mode.value = window.location.hash ? "remote" : "master";
+      provideWebTCRemoteControl(
+        ({ getPeerId }) => new Peer(getPeerId()),
+        mode.value
+      );
     });
     return {
       mode,

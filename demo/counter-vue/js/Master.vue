@@ -21,7 +21,8 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watchEffect } from "vue";
+import { usePeer } from "@webrtc-remote-control/vue";
 
 import "../../shared/js/components/errors-display";
 import "../../shared/js/components/qrcode-display";
@@ -57,7 +58,15 @@ export default {
     const errors = ref(null);
     const reversedLogs = computed(() => [...logs.value].reverse());
 
+    const resultUsePeer = usePeer();
+    console.log("Master.setup", "resultUsePeer", resultUsePeer);
+
+    watchEffect(() => {
+      console.log("Master.watchEffect", "resultUsePeer", resultUsePeer);
+    });
+
     onMounted(() => {
+      console.log("Master.onMounted", "resultUsePeer", resultUsePeer);
       errors.value = ["Some fake error"];
       peerId.value = "foobar";
       remotesList.value = [
