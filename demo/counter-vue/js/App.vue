@@ -1,7 +1,7 @@
 <template>
   <div>
-    <master v-if="mode === 'master'" />
-    <remote v-if="mode === 'remote'" />
+    <master v-if="mode === 'master'" key="master" />
+    <remote v-if="mode === 'remote'" key="remote" />
     <footer-display from="2022" :to="new Date().getFullYear()" />
   </div>
 </template>
@@ -24,7 +24,12 @@ export default {
       mode.value = window.location.hash ? "remote" : "master";
       provideWebTCRemoteControl(
         ({ getPeerId }) => new Peer(getPeerId()),
-        mode.value
+        mode.value,
+        {
+          masterPeerId:
+            (window.location.hash && window.location.hash.replace("#", "")) ||
+            null,
+        }
       );
     });
     return {

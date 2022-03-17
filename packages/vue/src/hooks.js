@@ -4,6 +4,7 @@ import { inject, watchEffect, toRefs, unref, reactive } from "vue";
 import { MyContext } from "./Provider";
 
 export function usePeer() {
+  console.log("usePeer");
   // const ready = ref(false);
   const context = inject(MyContext);
   // const resolvedWrcApi = shallowRef(null);
@@ -27,5 +28,5 @@ export function usePeer() {
     });
   });
   // use toRefs ? https://vuejs.org/api/reactivity-utilities.html#torefs
-  return { ...toRefs(result) };
+  return toRefs(result); // todo - is spread necessary ?
 }

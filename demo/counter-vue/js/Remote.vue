@@ -21,8 +21,9 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, watch } from "vue";
 import { useSessionStorage } from "@vueuse/core";
+import { usePeer } from "@webrtc-remote-control/vue";
 
 import "../../shared/js/components/errors-display";
 import "../../shared/js/components/console-display";
@@ -41,33 +42,51 @@ export default {
     const errors = ref(null);
     const reversedLogs = computed(() => [...logs.value].reverse());
 
-    onMounted(() => {
-      errors.value = ["Some fake error"];
-      peerId.value = "foobar";
-      logger.log({
-        event: "open",
-        comment: "Master connected",
-        payload: {
-          id: "612b2138-b472-4730-b18e-24bc52413e57",
-        },
-      });
-      logger.log({
-        event: "remote.connect",
-        payload: {
-          id: "5711f631-985a-4b54-91a2-d6f873bda00e",
-        },
-      });
-      logger.log({
-        event: "remote.connect",
-        payload: {
-          id: "5d435104-7519-44c7-aa05-c6f201e1ae60",
-        },
-      });
-      logger.log({
-        event: "remote.connect",
-        payload: {
-          id: "f35884c0-12cd-40b9-805f-4e4ce3292421",
-        },
+    const { ready, api, peer, humanizeError } = usePeer();
+
+    const onRemoteDisconnect = (payload) => {
+      logger.log({ event: "remote.disconnect", payload });
+    };
+    const onRemoteReconnect = (payload) => {
+      logger.log({ event: "remote.reconnect", payload });
+      if (name.value) {
+        api.value.send({ type: "REMOTE_SET_NAME", name: name.value });
+      }
+    };
+    const onPeerError = (error) => {
+      peerId.value = null;
+      logger.error({ event: "error", error });
+      errors.value = [humanizeError.value(error)];
+    };
+
+    watch([ready], ([currentReady], [prevReady], onCleanup) => {
+      console.log(
+        "Remote.watchEffect",
+        { currentReady, prevReady },
+        ready.value,
+        api.value.on
+      );
+      if (ready.value) {
+        peerId.value = peer.value.id;
+        logger.log({
+          event: "open",
+          comment: "Remote connected",
+          payload: { id: peer.value.id },
+        });
+        api.value.on("remote.disconnect", onRemoteDisconnect);
+        api.value.on("remote.reconnect", onRemoteReconnect);
+        peer.value.on("error", onPeerError);
+        if (name.value) {
+          api.value.send({ type: "REMOTE_SET_NAME", name: name.value });
+        }
+      }
+      onCleanup(() => {
+        console.log("Remote.jsx.cleanup");
+        if (ready.value) {
+          api.value.off("remote.disconnect", onRemoteDisconnect);
+          api.value.off("remote.reconnect", onRemoteReconnect);
+          peer.value.off("error", onPeerError);
+        }
       });
     });
 
@@ -78,16 +97,22 @@ export default {
       reversedLogs,
       name,
       onIncrement: () => {
-        console.log("increment");
+        if (ready.value) {
+          api.value.send({ type: "COUNTER_INCREMENT" });
+        }
       },
       onDecrement: () => {
-        console.log("decrement");
+        if (ready.value) {
+          api.value.send({ type: "COUNTER_DECREMENT" });
+        }
       },
       onChangeName(value) {
         name.value = value;
       },
       onConfirmName() {
-        console.log("confirmName", name.value);
+        if (ready) {
+          api.value.send({ type: "REMOTE_SET_NAME", name: name.value });
+        }
       },
     };
   },

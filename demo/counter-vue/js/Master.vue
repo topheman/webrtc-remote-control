@@ -37,7 +37,7 @@ import {
   getCountersFromStorage,
 } from "../../shared/js/counter.master.persistance";
 import {
-  // counterReducer,
+  counterReducer,
   globalCount,
 } from "../../shared/js/counter.master.logic";
 import { useLogger } from "./common";
@@ -67,10 +67,13 @@ export default {
     const onRemoteConnect = ({ id }) => {
       const countersFromStorage = getCountersFromStorage();
       logger.log({ event: "remote.connect", payload: { id } });
-      remotesList.value.push({
-        counter: countersFromStorage?.[id] ?? 0,
-        peerId: id,
-      });
+      remotesList.value = [
+        ...remotesList.value,
+        {
+          counter: countersFromStorage?.[id] ?? 0,
+          peerId: id,
+        },
+      ];
     };
     const onRemoteDisconnect = ({ id }) => {
       logger.log({ event: "remote.disconnect", payload: { id } });
@@ -80,29 +83,27 @@ export default {
     };
     const onData = ({ id }, data) => {
       logger.log({ event: "data", data, id });
-      const newRemotesListeValue = counterReducer(remotesList.value, {
+      const newRemotesListValue = counterReducer(remotesList.value, {
         data,
         id,
       });
-      persistCountersToStorage(newRemotesListeValue);
-      remotesList.value = newRemotesListeValue;
+      persistCountersToStorage(newRemotesListValue);
+      remotesList.value = newRemotesListValue;
     };
     const onPeerError = (error) => {
       peerId.value = null;
       logger.error({ event: "error", error });
-      errors.value = [humanizeError(error)];
+      errors.value = [humanizeError.value(error)];
     };
 
     watch([ready], ([currentReady], [prevReady], onCleanup) => {
       console.log(
         "Master.watchEffect",
-        "resultUsePeer",
-        "ready",
         { currentReady, prevReady },
         ready.value,
         api.value.on
       );
-      if (ready) {
+      if (ready.value) {
         peerId.value = peer.value.id;
         logger.log({
           event: "open",
