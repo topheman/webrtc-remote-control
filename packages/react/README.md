@@ -3,7 +3,7 @@
 ## Installation
 
 ```sh
-npm install @webrtc-remote-control/react
+npm install peerjs @webrtc-remote-control/react
 ```
 
 ## Usage

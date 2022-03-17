@@ -42,7 +42,7 @@ I also provide a few implementations for react.
 ### VanillaJS
 
 ```sh
-npm install @webrtc-remote-control/core
+npm install peerjs @webrtc-remote-control/core
 ```
 
 [Documentation](./packages/core#readme)
@@ -50,10 +50,18 @@ npm install @webrtc-remote-control/core
 ### React
 
 ```sh
-npm install @webrtc-remote-control/react
+npm install peerjs @webrtc-remote-control/react
 ```
 
 [Documentation](./packages/react#readme)
+
+### Vue
+
+```sh
+npm install peerjs @webrtc-remote-control/vue
+```
+
+[Documentation](./packages/vue#readme)
 
 ## Contributing
 

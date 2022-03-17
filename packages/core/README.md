@@ -9,7 +9,7 @@ Check the demos to have a better understanding.
 ## Installation
 
 ```sh
-npm install @webrtc-remote-control/core
+npm install peerjs @webrtc-remote-control/core
 ```
 
 ## Usage

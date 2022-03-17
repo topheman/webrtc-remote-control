@@ -3,7 +3,7 @@
 ## Installation
 
 ```sh
-npm install @webrtc-remote-control/vue
+npm install peerjs @webrtc-remote-control/vue
 ```
 
 ## Usage
