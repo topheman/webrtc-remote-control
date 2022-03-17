@@ -64,7 +64,9 @@ export function provideWebTCRemoteControl(
         remote ? masterPeerId : undefined
       );
     // start resolving the promise as soon as possible (it will be used in `usePeer`)
-    providerValue.value.promise.then(() => {});
+    providerValue.value.promise.then((wrcApi) => {
+      console.log("Provider.then", wrcApi);
+    });
     // register cleanup
     onCleanup(() => {
       console.log("Provider.onInvalidate", providerValue.value);

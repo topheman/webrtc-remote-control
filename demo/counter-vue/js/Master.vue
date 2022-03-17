@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watchEffect } from "vue";
+import { ref, computed, onMounted, watchEffect, watch } from "vue";
 import { usePeer } from "@webrtc-remote-control/vue";
 
 import "../../shared/js/components/errors-display";
@@ -58,15 +58,35 @@ export default {
     const errors = ref(null);
     const reversedLogs = computed(() => [...logs.value].reverse());
 
-    const resultUsePeer = usePeer();
-    console.log("Master.setup", "resultUsePeer", resultUsePeer);
+    const { ready, api, peer } = usePeer();
 
-    watchEffect(() => {
-      console.log("Master.watchEffect", "resultUsePeer", resultUsePeer);
+    watch([ready], ([currentReady], [prevReady], onCleanup) => {
+      onCleanup(() => {
+        console.log("cleanup", { ready: ready.value });
+        if (ready.value) {
+          // cleanup
+        }
+      });
+      console.log(
+        "Master.watchEffect",
+        "resultUsePeer",
+        "ready",
+        { currentReady, prevReady },
+        ready.value,
+        api.value.on
+      );
+      if (ready) {
+        peerId.value = peer.value.id;
+        logger.log({
+          event: "open",
+          comment: "Master connected",
+          payload: { id: peer.value.id },
+        });
+      }
     });
 
     onMounted(() => {
-      console.log("Master.onMounted", "resultUsePeer", resultUsePeer);
+      // console.log("Master.onMounted", "resultUsePeer", resultUsePeer);
       errors.value = ["Some fake error"];
       peerId.value = "foobar";
       remotesList.value = [
@@ -74,31 +94,6 @@ export default {
         { counter: 2, peerId: "f35884c0-12cd-40b9-805f-4e4ce3292421" },
         { counter: 6, peerId: "5d435104-7519-44c7-aa05-c6f201e1ae60" },
       ];
-      logger.log({
-        event: "open",
-        comment: "Master connected",
-        payload: {
-          id: "612b2138-b472-4730-b18e-24bc52413e57",
-        },
-      });
-      logger.log({
-        event: "remote.connect",
-        payload: {
-          id: "5711f631-985a-4b54-91a2-d6f873bda00e",
-        },
-      });
-      logger.log({
-        event: "remote.connect",
-        payload: {
-          id: "5d435104-7519-44c7-aa05-c6f201e1ae60",
-        },
-      });
-      logger.log({
-        event: "remote.connect",
-        payload: {
-          id: "f35884c0-12cd-40b9-805f-4e4ce3292421",
-        },
-      });
     });
 
     return {
