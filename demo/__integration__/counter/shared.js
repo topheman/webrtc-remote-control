@@ -15,7 +15,7 @@ const WEBRTC_CONNECTION_TIMEOUT = Number.isNaN(
   : Number(process.env.WEBRTC_CONNECTION_TIMEOUT);
 
 export function getVisitInfosFromMode(mode) {
-  const acceptedModes = ["react", "vanilla"];
+  const acceptedModes = ["react", "vanilla", "vue"];
   if (!acceptedModes.includes(mode)) {
     throw new Error(
       `mode ${mode} not supported, please pass one of ${acceptedModes.join(
@@ -31,6 +31,10 @@ export function getVisitInfosFromMode(mode) {
     react: {
       url: "/counter-react/index.html",
       title: "webrtc-remote-control / demo / react / counter",
+    },
+    vue: {
+      url: "/counter-vue/index.html",
+      title: "webrtc-remote-control / demo / vue / counter",
     },
   };
   return infos[mode];
@@ -67,7 +71,10 @@ export function givenMasterPeerOpenEventIsTriggered(given, { getMasterPage }) {
   given("[master] triggers open event", async () => {
     await sleep(WEBRTC_CONNECTION_TIMEOUT);
     const logs = await getMasterPage().evaluate(() => {
-      return document.querySelector("console-display").data;
+      // JSON.parse(JSON.stringify(...)) to unwrap vue Proxies
+      return JSON.parse(
+        JSON.stringify(document.querySelector("console-display").data)
+      );
     });
     try {
       expect(logs.length).toBeGreaterThan(0);
@@ -105,7 +112,9 @@ export function givenIOpenANewRemote(given, { getMasterPage }) {
       // check the events on the remote page
       await sleep(WEBRTC_CONNECTION_TIMEOUT);
       const remoteLogs = await remotePage.evaluate(() => {
-        return document.querySelector("console-display").data;
+        return JSON.parse(
+          JSON.stringify(document.querySelector("console-display").data)
+        );
       });
       try {
         expect(remoteLogs.length).toBeGreaterThan(0);
@@ -138,7 +147,9 @@ export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
   given("[master] should receive remote.connect event", async () => {
     // check the events on the master page
     const masterLogs = await getMasterPage().evaluate(() => {
-      return document.querySelector("console-display").data;
+      return JSON.parse(
+        JSON.stringify(document.querySelector("console-display").data)
+      );
     });
     try {
       expect(masterLogs.length).toBeGreaterThan(0);
@@ -230,7 +241,9 @@ export function givenRemoteListShouldContain(
 
       // match
       const remotesListCurrentData = await getMasterPage().evaluate(() => {
-        return document.querySelector("remotes-list").data;
+        return JSON.parse(
+          JSON.stringify(document.querySelector("remotes-list").data)
+        );
       });
       expect(remotesListCurrentData).toEqual(remotesListExpectedData);
     }
@@ -286,7 +299,9 @@ export function givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(
       await sleep(WEBRTC_CONNECTION_TIMEOUT);
       const remoteLogs = await getRemote(remoteIndex)().page.evaluate(
         async () => {
-          return document.querySelector("console-display").data;
+          return JSON.parse(
+            JSON.stringify(document.querySelector("console-display").data)
+          );
         }
       );
       try {
@@ -302,7 +317,9 @@ export function givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(
 
       // master should receive remote.disconnect/remote.connect
       const masterLogs = await getMasterPage().evaluate(async () => {
-        return document.querySelector("console-display").data;
+        return JSON.parse(
+          JSON.stringify(document.querySelector("console-display").data)
+        );
       });
       expect(masterLogs[1].payload).toEqual({
         event: "remote.disconnect",
@@ -343,7 +360,9 @@ export function givenIReloadMasterThenRemotesShouldReconnect(
       // check remote connecting on master
       await sleep(WEBRTC_CONNECTION_TIMEOUT);
       const masterLogs = await getMasterPage().evaluate(async () => {
-        return document.querySelector("console-display").data;
+        return JSON.parse(
+          JSON.stringify(document.querySelector("console-display").data)
+        );
       });
       try {
         expect(masterLogs.length).toBeGreaterThan(0);
@@ -362,7 +381,9 @@ export function givenIReloadMasterThenRemotesShouldReconnect(
       for (const getCurrentRemote of getAllRemotes()) {
         await sleep(WEBRTC_CONNECTION_TIMEOUT);
         const remoteLogs = await getCurrentRemote().page.evaluate(async () => {
-          return document.querySelector("console-display").data;
+          return JSON.parse(
+            JSON.stringify(document.querySelector("console-display").data)
+          );
         });
         try {
           expect(remoteLogs.length).toBeGreaterThan(0);
