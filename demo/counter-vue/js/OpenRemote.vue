@@ -1,6 +1,6 @@
 <template>
   <p>
-    👆Snap the the QR code or {{ peerId }}
+    👆Snap the the QR code or
     <a
       class="open-remote"
       target="_blank"

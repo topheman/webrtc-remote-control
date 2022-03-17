@@ -33,6 +33,10 @@ import "../../shared/js/components/console-display";
 import OpenRemote from "./OpenRemote.vue";
 
 import {
+  persistCountersToStorage,
+  getCountersFromStorage,
+} from "../../shared/js/counter.master.persistance";
+import {
   // counterReducer,
   globalCount,
 } from "../../shared/js/counter.master.logic";
@@ -60,13 +64,36 @@ export default {
 
     const { ready, api, peer } = usePeer();
 
-    watch([ready], ([currentReady], [prevReady], onCleanup) => {
-      onCleanup(() => {
-        console.log("cleanup", { ready: ready.value });
-        if (ready.value) {
-          // cleanup
-        }
+    const onRemoteConnect = ({ id }) => {
+      const countersFromStorage = getCountersFromStorage();
+      logger.log({ event: "remote.connect", payload: { id } });
+      remotesList.value.push({
+        counter: countersFromStorage?.[id] ?? 0,
+        peerId: id,
       });
+    };
+    const onRemoteDisconnect = ({ id }) => {
+      logger.log({ event: "remote.disconnect", payload: { id } });
+      remotesList.value = remotesList.value.filter(
+        ({ peerId }) => peerId !== id
+      );
+    };
+    const onData = ({ id }, data) => {
+      logger.log({ event: "data", data, id });
+      const newRemotesListeValue = counterReducer(remotesList.value, {
+        data,
+        id,
+      });
+      persistCountersToStorage(newRemotesListeValue);
+      remotesList.value = newRemotesListeValue;
+    };
+    const onPeerError = (error) => {
+      peerId.value = null;
+      logger.error({ event: "error", error });
+      errors.value = [humanizeError(error)];
+    };
+
+    watch([ready], ([currentReady], [prevReady], onCleanup) => {
       console.log(
         "Master.watchEffect",
         "resultUsePeer",
@@ -82,18 +109,20 @@ export default {
           comment: "Master connected",
           payload: { id: peer.value.id },
         });
+        api.value.on("remote.connect", onRemoteConnect);
+        api.value.on("remote.disconnect", onRemoteDisconnect);
+        api.value.on("data", onData);
+        peer.value.on("error", onPeerError);
       }
-    });
-
-    onMounted(() => {
-      // console.log("Master.onMounted", "resultUsePeer", resultUsePeer);
-      errors.value = ["Some fake error"];
-      peerId.value = "foobar";
-      remotesList.value = [
-        { counter: -3, peerId: "5711f631-985a-4b54-91a2-d6f873bda00e" },
-        { counter: 2, peerId: "f35884c0-12cd-40b9-805f-4e4ce3292421" },
-        { counter: 6, peerId: "5d435104-7519-44c7-aa05-c6f201e1ae60" },
-      ];
+      onCleanup(() => {
+        console.log("Master.vue.cleanup");
+        if (ready.value) {
+          api.value.off("remote.connect", onRemoteConnect);
+          api.value.off("remote.disconnect", onRemoteDisconnect);
+          api.value.off("data", onData);
+          peer.value.off("error", onPeerError);
+        }
+      });
     });
 
     return {

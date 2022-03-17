@@ -1,21 +1,12 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
-import {
-  ref,
-  inject,
-  shallowRef,
-  watchEffect,
-  toRefs,
-  toRef,
-  unref,
-  reactive,
-} from "vue";
+import { inject, watchEffect, toRefs, unref, reactive } from "vue";
 
 import { MyContext } from "./Provider";
 
 export function usePeer() {
-  const ready = ref(false);
+  // const ready = ref(false);
   const context = inject(MyContext);
-  const resolvedWrcApi = shallowRef(null);
+  // const resolvedWrcApi = shallowRef(null);
   console.log("context", context);
   const result = reactive({
     ...unref(context),
@@ -28,8 +19,8 @@ export function usePeer() {
       console.log("hooks.Promise.resolve", context);
       context.value?.promise?.then((wrcApi) => {
         console.log("hooks.Promise.resolve - context.promise.then", wrcApi);
-        resolvedWrcApi.value = wrcApi;
-        ready.value = true;
+        // resolvedWrcApi.value = wrcApi;
+        // ready.value = true;
         result.ready = true;
         result.api = wrcApi;
       });
