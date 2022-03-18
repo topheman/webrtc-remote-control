@@ -13,6 +13,7 @@ module.exports = defineConfig({
         counterMaster: resolve(__dirname, "counter-vanilla/master.html"),
         counterRemote: resolve(__dirname, "counter-vanilla/remote.html"),
         reactCounter: resolve(__dirname, "counter-react/index.html"),
+        vueCounter: resolve(__dirname, "counter-vue/index.html"),
       },
     },
   },
