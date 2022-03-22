@@ -27,4 +27,4 @@ jobs:
         run: npm run test
 
       - name: End2end tests
-        run: JEST_TIMEOUT=30000 npm run test:e2e:start-server-and-test
+        run: MODE=vanilla,react JEST_TIMEOUT=30000 npm run test:e2e:start-server-and-test

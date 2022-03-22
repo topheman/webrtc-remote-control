@@ -1,4 +1,8 @@
 import { defineFeature, loadFeature } from "jest-cucumber";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import chalk from "chalk";
+
+import { makeGetModes } from "../../helpers";
 
 import {
   setupBackground,
@@ -14,11 +18,17 @@ const feature = loadFeature(`${__dirname}/../features/connection.feature`);
 
 jest.setTimeout(Number(process.env.JEST_TIMEOUT) || 10000);
 
-describe.each([
-  "vanilla",
-  "react",
-  // "vue" // todo re-enable once bug in built-version is fixed
-])("[%s]", (mode) => {
+/**
+ * You can pass:
+ * - `MODE=react npm run test:e2e`
+ * - `MODE=vanilla,react npm run test:e2e`
+ * By default, it runs all
+ */
+const getModes = makeGetModes("MODE", ["vanilla", "react", "vue"]);
+
+console.log(`Running tests for ${chalk.yellow(getModes().join(", "))}`);
+
+describe.each(getModes())("[%s]", (mode) => {
   defineFeature(feature, (test) => {
     jest.retryTimes(3);
     test("Basic", ({ given }) => {
