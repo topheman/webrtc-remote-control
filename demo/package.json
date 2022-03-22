@@ -7,9 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --port 5000",
-    "forward:dev": "ssh -R 80:localhost:3000 localhost.run",
-    "forward:preview": "ssh -R 80:localhost:5000 localhost.run",
+    "preview": "vite preview",
+    "forward": "ssh -R 80:localhost:3000 localhost.run",
     "test": "jest",
     "test:precommit": "jest --bail --findRelatedTests",
     "test:watch": "jest --watch -o",
