@@ -15,9 +15,9 @@
   },
   "scripts": {
     "build": "npm-run-all --parallel build:*",
-    "build:core": "microbundle build --generateTypes false --raw",
-    "build:core-umd-dev": "microbundle build --generateTypes false --raw --external none --define process.env.NODE_ENV='development' --no-pkg-main -o dist/webrtc-remote-control.umd.dev.js -f umd  --no-compress",
-    "build:core-umd-prod": "microbundle build --generateTypes false  --raw --external none --define process.env.NODE_ENV='production' --no-pkg-main -o dist/webrtc-remote-control.umd.prod.js -f umd",
+    "build:modules": "microbundle build --generateTypes false --raw",
+    "build:umd-dev": "microbundle build --generateTypes false --raw --external none --define process.env.NODE_ENV='development' --no-pkg-main -o dist/webrtc-remote-control.umd.dev.js -f umd  --no-compress",
+    "build:umd-prod": "microbundle build --generateTypes false  --raw --external none --define process.env.NODE_ENV='production' --no-pkg-main -o dist/webrtc-remote-control.umd.prod.js -f umd",
     "build:master": "microbundle build --generateTypes false --raw --cwd master",
     "build:remote": "microbundle build --generateTypes false --raw --cwd remote",
     "dev": "npm-run-all --parallel dev:*",

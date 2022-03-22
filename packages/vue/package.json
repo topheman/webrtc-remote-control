@@ -11,9 +11,9 @@
   "exports": "./dist/vue.modern.js",
   "scripts": {
     "build": "npm-run-all --parallel build:*",
-    "build:vue": "microbundle --generateTypes false --no-compress",
-    "build:vue-umd-dev": "microbundle build --generateTypes false --globals vue=Vue --raw --external vue --define process.env.NODE_ENV='development' --no-pkg-main -o dist/webrtc-remote-control-vue.umd.dev.js -f umd  --no-compress",
-    "build:vue-umd-prod": "microbundle build --generateTypes false --globals vue=Vue --raw --external vue --define process.env.NODE_ENV='production' --no-pkg-main -o dist/webrtc-remote-control-vue.umd.prod.js -f umd",
+    "build:modules": "microbundle --generateTypes false --no-compress",
+    "build:umd-dev": "microbundle build --generateTypes false --globals vue=Vue --raw --external vue --define process.env.NODE_ENV='development' --no-pkg-main -o dist/webrtc-remote-control-vue.umd.dev.js -f umd  --no-compress",
+    "build:umd-prod": "microbundle build --generateTypes false --globals vue=Vue --raw --external vue --define process.env.NODE_ENV='production' --no-pkg-main -o dist/webrtc-remote-control-vue.umd.prod.js -f umd",
     "dev": "microbundle watch --generateTypes false --no-compress"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
