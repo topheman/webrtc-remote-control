@@ -25,7 +25,19 @@ export default function App() {
       {mode ? (
         <WebRTCRemoteControlProvider
           mode={mode}
-          init={({ getPeerId }) => new Peer(getPeerId())}
+          init={({ getPeerId }) =>
+            new Peer(
+              getPeerId(),
+              // line bellow is optional - you can rely on the signaling server exposed by peerjs
+              import.meta.env.VITE_USE_LOCAL_PEER_SERVER
+                ? {
+                    host: "localhost",
+                    port: 9000,
+                    path: "/myapp",
+                  }
+                : undefined
+            )
+          }
           masterPeerId={
             (window.location.hash && window.location.hash.replace("#", "")) ||
             null

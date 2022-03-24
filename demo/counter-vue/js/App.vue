@@ -23,7 +23,18 @@ export default {
     onBeforeMount(() => {
       mode.value = window.location.hash ? "remote" : "master";
       provideWebTCRemoteControl(
-        ({ getPeerId }) => new Peer(getPeerId()),
+        ({ getPeerId }) =>
+          new Peer(
+            getPeerId(),
+            // line bellow is optional - you can rely on the signaling server exposed by peerjs
+            import.meta.env.VITE_USE_LOCAL_PEER_SERVER
+              ? {
+                  host: "localhost",
+                  port: 9000,
+                  path: "/myapp",
+                }
+              : undefined
+          ),
         mode.value,
         {
           masterPeerId:

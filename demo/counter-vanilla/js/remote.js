@@ -27,7 +27,17 @@ async function init() {
   const masterPeerId = window.location.hash.replace(/^#/, "");
 
   // create your own PeerJS connection
-  const peer = new Peer(getPeerId());
+  const peer = new Peer(
+    getPeerId(),
+    // line bellow is optional - you can rely on the signaling server exposed by peerjs
+    import.meta.env.VITE_USE_LOCAL_PEER_SERVER
+      ? {
+          host: "localhost",
+          port: 9000,
+          path: "/myapp",
+        }
+      : undefined
+  );
   peer.on("open", (peerId) => {
     showLoader(false);
     setConnected(true);

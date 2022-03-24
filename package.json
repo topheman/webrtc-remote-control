@@ -20,6 +20,7 @@
     "dev:demo": "lerna run --stream --scope @webrtc-remote-control/demo dev",
     "diff": "lerna diff",
     "lint": "eslint --ext .js,.jsx .",
+    "peer-server": "npx peerjs --port 9000 --key peerjs --path /myapp",
     "preview": "lerna run --stream --scope @webrtc-remote-control/demo preview",
     "prepreview:forward": "npm run --prefix demo forward &",
     "preview:forward": "npm run preview",
