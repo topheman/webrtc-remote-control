@@ -44,6 +44,12 @@ async function init() {
     logger.error({ event: "error", error });
     setErrors([humanizeError(error)]);
   });
+  peer.on("disconnected", (error) => {
+    setPeerId(null);
+    showLoader(false);
+    logger.error({ event: "disconnected", error });
+    setErrors([humanizeError(error)]);
+  });
 
   // bind webrtc-remote-control to `peer`
   const wrcMaster = await bindConnection(peer);

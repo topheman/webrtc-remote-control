@@ -34,6 +34,8 @@ export function makeHumanizeError(overrideMapping = {}) {
     network: "It seems you're experimenting some network problems ...",
     "peer-unavailable":
       "The peer you were connected to seems to have lost connection, try to reload it.",
+    "server-error":
+      "An error occured on the signaling server. Sorry, try to come back later.",
     default: (error) => `An error occured (type: "${error.type}")`,
     ...overrideMapping,
   };
