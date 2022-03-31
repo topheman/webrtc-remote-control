@@ -5,6 +5,13 @@ const react = require("@vitejs/plugin-react");
 const vue = require("@vitejs/plugin-vue");
 
 module.exports = defineConfig({
+  // necessary for production build with monorepo - vue will use the wrong instance
+  // in the node_modules of @webrtc-remote-control/vue and throw errors about:
+  // `provide() can only be used inside setup()` / `inject() can only be used inside setup()`
+  // https://github.com/vitejs/vite/issues/7454
+  resolve: {
+    dedupe: ["vue"],
+  },
   build: {
     rollupOptions: {
       // https://vitejs.dev/guide/build.html#multi-page-app
