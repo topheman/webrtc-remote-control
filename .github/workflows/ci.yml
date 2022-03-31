@@ -18,7 +18,9 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build
+        # run: npm run build
+        # Public peer server is down for the moment -> we use a local signaling server
+        run: npm run build:peer-server
 
       - name: Lint
         run: npm run lint
@@ -27,4 +29,6 @@ jobs:
         run: npm run test
 
       - name: End2end tests
-        run: MODE=vanilla,react JEST_TIMEOUT=30000 npm run test:e2e:start-server-and-test
+        # run: JEST_TIMEOUT=30000 npm run test:e2e:start-server-and-test
+        # Public peer server is down for the moment -> we use a local signaling server
+        run: JEST_TIMEOUT=30000 npm run test:e2e:start-server-and-test:peer-server
