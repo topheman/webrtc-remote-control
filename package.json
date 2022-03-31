@@ -11,7 +11,10 @@
     "build:react": "lerna run --stream --scope @webrtc-remote-control/react build",
     "build:vue": "lerna run --stream --scope @webrtc-remote-control/vue build",
     "build:demo": "lerna run --stream --scope @webrtc-remote-control/demo build",
+    "build:peer-server": "VITE_USE_LOCAL_PEER_SERVER=true npm run build",
     "dev": "lerna run --parallel --scope @webrtc-remote-control/core --scope @webrtc-remote-control/react --scope @webrtc-remote-control/vue --scope @webrtc-remote-control/demo dev",
+    "predev:peer-server": "npmpeer-server run peer-server &",
+    "dev:peer-server": "VITE_USE_LOCAL_PEER_SERVER=true npm run dev",
     "predev:forward": "npm run --prefix demo forward &",
     "dev:forward": "npm run dev",
     "dev:core": "lerna run --stream --scope @webrtc-remote-control/core dev",
@@ -22,6 +25,8 @@
     "lint": "eslint --ext .js,.jsx .",
     "peer-server": "npx peerjs --port 9000 --key peerjs --path /myapp",
     "preview": "lerna run --stream --scope @webrtc-remote-control/demo preview",
+    "prepreview:peer-server": "npm run peer-server &",
+    "preview:peer-server": "npm run preview",
     "prepreview:forward": "npm run --prefix demo forward &",
     "preview:forward": "npm run preview",
     "test": "npm run test:core && npm run test:demo",
@@ -34,6 +39,8 @@
     "test:e2e": "npm run --prefix demo test:e2e",
     "test:e2e:watch": "npm run --prefix demo test:e2e:watch",
     "test:e2e:start-server-and-test": "npm run --prefix demo test:e2e:start-server-and-test",
+    "pretest:e2e:start-server-and-test:peer-server": "npm run peer-server &",
+    "test:e2e:start-server-and-test:peer-server": "npm run test:e2e:start-server-and-test",
     "prepare": "husky install; npm run bootstrap"
   },
   "keywords": [
