@@ -12,9 +12,10 @@ type HumanErrorsMapping = Record<string, string> & {
   default: (error: { type: string }) => string;
 };
 
-export function makeHumanizeError(
-  overrideMapping?: HumanErrorsMapping
-): (error: { type: string }) => string;
+export function makeHumanizeError(options?: {
+  mapping?: HumanErrorsMapping;
+  withTechicalErrorMessage?: boolean;
+}): (error: { type: string }) => string;
 
 export function prepareUtils({
   sessionStorageKey,

@@ -55,8 +55,38 @@ describe("shared/common", () => {
     it("non translated errors should show default message", () => {
       const humanizeError = makeHumanizeError();
       expect(humanizeError({ type: "some-unsupported-error" })).toBe(
-        'An error occured (type: "some-unsupported-error")'
+        "An error occured - type: some-unsupported-error"
       );
+    });
+    it("you should be able to pass a mapping", () => {
+      const humanizeError = makeHumanizeError({
+        mapping: {
+          network: "My custom message",
+        },
+      });
+      expect(humanizeError({ type: "network" })).toBe("My custom message");
+    });
+    it("should have error.message by default if present", () => {
+      const humanizeError = makeHumanizeError();
+      expect(
+        humanizeError({
+          type: "network",
+          message: "Lost connection to server.",
+        })
+      ).toBe(
+        "It seems you're experimenting some network problems. (Lost connection to server.)"
+      );
+    });
+    it("should NOT have error.message of withTechicalErrorMessage = false", () => {
+      const humanizeError = makeHumanizeError({
+        withTechicalErrorMessage: false,
+      });
+      expect(
+        humanizeError({
+          type: "network",
+          message: "Lost connection to server.",
+        })
+      ).toBe("It seems you're experimenting some network problems.");
     });
   });
 });
