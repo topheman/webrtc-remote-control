@@ -62,7 +62,7 @@ export default {
     const errors = ref(null);
     const reversedLogs = computed(() => [...logs.value].reverse());
 
-    const { ready, api, peer } = usePeer();
+    const { ready, api, peer, peerReady, humanizeError } = usePeer();
 
     const onRemoteConnect = ({ id }) => {
       const countersFromStorage = getCountersFromStorage();
@@ -96,6 +96,17 @@ export default {
       errors.value = [humanizeError.value(error)];
     };
 
+    watch([peerReady], (_, __, onCleanup) => {
+      if (peer) {
+        peer.value.on("error", onPeerError);
+      }
+      onCleanup(() => {
+        if (peer) {
+          peer.value.off("error", onPeerError);
+        }
+      });
+    });
+
     watch([ready], ([currentReady], [prevReady], onCleanup) => {
       console.log(
         "Master.watchEffect",
@@ -113,7 +124,6 @@ export default {
         api.value.on("remote.connect", onRemoteConnect);
         api.value.on("remote.disconnect", onRemoteDisconnect);
         api.value.on("data", onData);
-        peer.value.on("error", onPeerError);
       }
       onCleanup(() => {
         console.log("Master.vue.cleanup");
@@ -121,7 +131,6 @@ export default {
           api.value.off("remote.connect", onRemoteConnect);
           api.value.off("remote.disconnect", onRemoteDisconnect);
           api.value.off("data", onData);
-          peer.value.off("error", onPeerError);
         }
       });
     });

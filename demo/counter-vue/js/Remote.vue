@@ -42,7 +42,7 @@ export default {
     const errors = ref(null);
     const reversedLogs = computed(() => [...logs.value].reverse());
 
-    const { ready, api, peer, humanizeError } = usePeer();
+    const { ready, api, peer, peerReady, humanizeError } = usePeer();
 
     const onRemoteDisconnect = (payload) => {
       logger.log({ event: "remote.disconnect", payload });
@@ -58,6 +58,17 @@ export default {
       logger.error({ event: "error", error });
       errors.value = [humanizeError.value(error)];
     };
+
+    watch([peerReady], (_, __, onCleanup) => {
+      if (peer) {
+        peer.value.on("error", onPeerError);
+      }
+      onCleanup(() => {
+        if (peer) {
+          peer.value.off("error", onPeerError);
+        }
+      });
+    });
 
     watch([ready], ([currentReady], [prevReady], onCleanup) => {
       console.log(
@@ -75,7 +86,6 @@ export default {
         });
         api.value.on("remote.disconnect", onRemoteDisconnect);
         api.value.on("remote.reconnect", onRemoteReconnect);
-        peer.value.on("error", onPeerError);
         if (name.value) {
           api.value.send({ type: "REMOTE_SET_NAME", name: name.value });
         }
@@ -85,7 +95,6 @@ export default {
         if (ready.value) {
           api.value.off("remote.disconnect", onRemoteDisconnect);
           api.value.off("remote.reconnect", onRemoteReconnect);
-          peer.value.off("error", onPeerError);
         }
       });
     });

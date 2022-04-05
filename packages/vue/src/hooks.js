@@ -11,6 +11,7 @@ export function usePeer() {
   console.log("context", context);
   const result = reactive({
     ...unref(context),
+    peerReady: false,
     ready: false,
     api: null,
   });
@@ -18,6 +19,7 @@ export function usePeer() {
     // run on next tick (ensure the `then` of the Provider has executed + retrieve the api from the resolve promise)
     Promise.resolve().then(() => {
       console.log("hooks.Promise.resolve", context);
+      result.peerReady = true;
       context.value?.promise?.then((wrcApi) => {
         console.log("hooks.Promise.resolve - context.promise.then", wrcApi);
         // resolvedWrcApi.value = wrcApi;
