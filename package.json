@@ -13,7 +13,7 @@
     "build:demo": "lerna run --stream --scope @webrtc-remote-control/demo build",
     "build:peer-server": "VITE_USE_LOCAL_PEER_SERVER=true npm run build",
     "dev": "lerna run --parallel --scope @webrtc-remote-control/core --scope @webrtc-remote-control/react --scope @webrtc-remote-control/vue --scope @webrtc-remote-control/demo dev",
-    "predev:peer-server": "npmpeer-server run peer-server &",
+    "predev:peer-server": "npm run peer-server &",
     "dev:peer-server": "VITE_USE_LOCAL_PEER_SERVER=true npm run dev",
     "predev:forward": "npm run --prefix demo forward &",
     "dev:forward": "npm run dev",
