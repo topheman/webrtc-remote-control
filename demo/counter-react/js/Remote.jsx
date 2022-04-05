@@ -33,6 +33,18 @@ export default function Remote() {
   };
 
   useEffect(() => {
+    if (peer) {
+      peer.on("error", onPeerError);
+    }
+    return () => {
+      if (peer) {
+        peer.off("error", onPeerError);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [peer]);
+
+  useEffect(() => {
     if (ready) {
       setPeerId(peer.id);
       logger.log({
@@ -42,7 +54,6 @@ export default function Remote() {
       });
       api.on("remote.disconnect", onRemoteDisconnect);
       api.on("remote.reconnect", onRemoteReconnect);
-      peer.on("error", onPeerError);
       if (name) {
         api.send({ type: "REMOTE_SET_NAME", name });
       }
@@ -52,7 +63,6 @@ export default function Remote() {
       if (ready) {
         api.off("remote.disconnect", onRemoteDisconnect);
         api.off("remote.reconnect", onRemoteReconnect);
-        peer.off("error", onPeerError);
       }
     };
   }, [ready]);

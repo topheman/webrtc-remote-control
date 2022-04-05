@@ -68,6 +68,18 @@ export default function Master() {
   };
 
   useEffect(() => {
+    if (peer) {
+      peer.on("error", onPeerError);
+    }
+    return () => {
+      if (peer) {
+        peer.off("error", onPeerError);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [peer]);
+
+  useEffect(() => {
     if (ready) {
       setPeerId(peer.id);
       logger.log({
@@ -78,7 +90,6 @@ export default function Master() {
       api.on("remote.connect", onRemoteConnect);
       api.on("remote.disconnect", onRemoteDisconnect);
       api.on("data", onData);
-      peer.on("error", onPeerError);
     }
     return () => {
       console.log("Master.jsx.cleanup");
@@ -86,7 +97,6 @@ export default function Master() {
         api.off("remote.connect", onRemoteConnect);
         api.off("remote.disconnect", onRemoteDisconnect);
         api.off("data", onData);
-        peer.off("error", onPeerError);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
