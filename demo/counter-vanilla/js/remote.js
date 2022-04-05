@@ -53,11 +53,10 @@ async function init() {
     setErrors([humanizeError(error)]);
     logger.error({ event: "error", error });
   });
-  peer.on("disconnected", (error) => {
+  peer.on("disconnected", (id) => {
     showLoader(false);
     setConnected(false);
-    logger.error({ event: "disconnected", error });
-    setErrors([humanizeError(error)]);
+    logger.error({ event: "disconnected", id });
   });
 
   // bind webrtc-remote-control to `peer`
