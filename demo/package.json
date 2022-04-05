@@ -15,7 +15,7 @@
     "test:e2e": "jest --config ./jest.e2e.config.js",
     "test:e2e:watch": "jest --config ./jest.e2e.config.js --watch -o",
     "test:e2e:headless-false": "HEADLESS=false jest --config ./jest.e2e.config.js",
-    "test:e2e:start-server-and-test": "PORT=5000 npx start-server-and-test preview :5000 test:e2e"
+    "test:e2e:start-server-and-test": "PORT=3001 npx start-server-and-test preview :3001 test:e2e"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "ISC",
