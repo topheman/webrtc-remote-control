@@ -17,10 +17,10 @@ module.exports = defineConfig({
       // https://vitejs.dev/guide/build.html#multi-page-app
       input: {
         main: resolve(__dirname, "index.html"),
-        counterMaster: resolve(__dirname, "counter-vanilla/master.html"),
-        counterRemote: resolve(__dirname, "counter-vanilla/remote.html"),
-        reactCounter: resolve(__dirname, "counter-react/index.html"),
-        vueCounter: resolve(__dirname, "counter-vue/index.html"),
+        counterVanillaMaster: resolve(__dirname, "counter-vanilla/master.html"),
+        counterVanillaRemote: resolve(__dirname, "counter-vanilla/remote.html"),
+        counterReact: resolve(__dirname, "counter-react/index.html"),
+        counterVue: resolve(__dirname, "counter-vue/index.html"),
       },
     },
   },
