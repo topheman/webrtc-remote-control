@@ -1,6 +1,7 @@
 import prepare, { prepareUtils } from "@webrtc-remote-control/core/master";
 
 import { makeLogger } from "../../shared/js/common";
+import "../../shared/js/animate"; // todo
 import {
   persistCountersToStorage,
   getCountersFromStorage,

@@ -1,6 +1,7 @@
 import prepare, { prepareUtils } from "@webrtc-remote-control/core/remote";
 
 import { makeLogger } from "../../shared/js/common";
+import "../../shared/js/animate"; // todo
 import { render } from "./remote.view";
 
 const REMOTE_NAME_LOCAL_STORAGE_KEY = "remote-name";
