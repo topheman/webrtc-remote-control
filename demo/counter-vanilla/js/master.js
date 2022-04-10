@@ -84,5 +84,12 @@ async function init() {
     persistCountersToStorage(counters);
     setGlobalCounter(globalCount(counters));
   });
+  // todo remove 👇
+  document.querySelector("remotes-list").addEventListener("pingAll", (e) => {
+    console.log("master - pingAll", e.detail);
+  });
+  document.querySelector("remotes-list").addEventListener("ping", (e) => {
+    console.log("master - ping", e.detail);
+  });
 }
 init();

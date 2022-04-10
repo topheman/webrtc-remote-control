@@ -39,6 +39,7 @@ module.exports = {
     "no-use-before-define": 0,
     // ignore 'React' is defined but never used
     "react/jsx-uses-react": 1,
+    "no-restricted-syntax": 0,
   },
   settings: {
     "import/resolver": {

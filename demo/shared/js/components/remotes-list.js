@@ -19,6 +19,15 @@ li::before {
 .remote-peerId {
   font-size: 80%;
 }
+.ping-button {
+  border: 0;
+  padding: 3px;
+  vertical-align: bottom;
+  cursor: pointer;
+}
+.ping-button::after {
+  content: " 🔔"
+}
 counter-display {
   font-weight: bold;
   font-size: 120%;
@@ -74,7 +83,7 @@ counter-display {
       const div = document.createElement("div"); // used for remote.name sanitizing
       content = `<p>${this._data.length} connected remote${
         this._data.length > 1 ? "s" : ""
-      }:</p><ul>${this.data
+      } <button class="ping-button ping-all">PING ALL</button></p><ul>${this.data
         .slice()
         .sort((a, b) => (a.peerId > b.peerId ? 1 : -1))
         .map((remote) => {
@@ -85,11 +94,58 @@ counter-display {
             remote.peerId
           }</span> counter: <counter-display data="${
             remote.counter
-          }"></counter-display>${remote.name ? ` ${div.innerHTML}` : ""}</li>`;
+          }"></counter-display>${
+            remote.name ? ` ${div.innerHTML}` : ""
+          } <button class="ping-button ping-one" data-id="${
+            remote.peerId
+          }">PING</button></li>`;
         })
         .join("")}</ul>`;
     }
     this.shadowRoot.querySelector("div").innerHTML = content;
+  }
+
+  /**
+   * Triggered when the shadowRoot is append to the document
+   *
+   * Exposes two events:
+   * - `pingAll`: ({detail: {all: true, id: null}})
+   * - `ping`: ({detail: {all: false, id: "someid"}})
+   */
+  connectedCallback() {
+    // event delegation - the webcomponent way
+    this.shadowRoot.addEventListener("click", (e) => {
+      for (const elm of e.composedPath()) {
+        if (elm.classList?.contains("ping-button")) {
+          if (elm.classList.contains("ping-all")) {
+            this.dispatchEvent(
+              new CustomEvent("pingAll", {
+                detail: {
+                  all: true,
+                  id: null,
+                },
+                bubbles: true,
+                composed: true,
+              })
+            );
+            break;
+          }
+          if (elm.classList.contains("ping-one")) {
+            this.dispatchEvent(
+              new CustomEvent("ping", {
+                detail: {
+                  all: false,
+                  id: elm.dataset.id,
+                },
+                bubbles: true,
+                composed: true,
+              })
+            );
+            break;
+          }
+        }
+      }
+    });
   }
 }
 
