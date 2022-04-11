@@ -84,12 +84,23 @@ async function init() {
     persistCountersToStorage(counters);
     setGlobalCounter(globalCount(counters));
   });
-  // todo remove 👇
-  document.querySelector("remotes-list").addEventListener("pingAll", (e) => {
-    console.log("master - pingAll", e.detail);
+
+  // bind "ping" buttons
+  document.querySelector("remotes-list").addEventListener("pingAll", () => {
+    if (wrcMaster) {
+      wrcMaster.sendAll({
+        type: "PING",
+        date: new Date(),
+      });
+    }
   });
   document.querySelector("remotes-list").addEventListener("ping", (e) => {
-    console.log("master - ping", e.detail);
+    if (wrcMaster) {
+      wrcMaster.sendTo(e.detail.id, {
+        type: "PING",
+        date: new Date(),
+      });
+    }
   });
 }
 init();

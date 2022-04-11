@@ -5,7 +5,7 @@ import { makeConnectionFilterUtilities } from "../../shared/common";
 
 export { prepareUtils } from "../../shared/common";
 
-function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
+function makePeerConnection(peer, masterPeerId, ee, onConnectionOpened) {
   const { connMetadata } = makeConnectionFilterUtilities();
   // to ensure connections with iOs, must use json serialization
   const conn = peer.connect(masterPeerId, {
@@ -18,7 +18,7 @@ function makePeerConnection(peer, masterPeerId, { emit }, onConnectionOpened) {
     }
   });
   conn.on("data", (data) => {
-    emit("data", { from: "master" }, data);
+    ee.emit("data", { from: "master" }, data);
   });
   return conn;
 }

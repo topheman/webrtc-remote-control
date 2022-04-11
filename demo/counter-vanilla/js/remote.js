@@ -71,6 +71,9 @@ async function init() {
       wrcRemote.send({ type: "REMOTE_SET_NAME", name: initialName });
     }
   });
+  wrcRemote.on("data", (_, data) => {
+    logger.log({ event: "data", data });
+  });
   if (initialName) {
     wrcRemote.send({ type: "REMOTE_SET_NAME", name: initialName });
   }
