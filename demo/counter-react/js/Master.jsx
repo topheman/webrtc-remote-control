@@ -109,7 +109,25 @@ export default function Master() {
       <p>
         Global counter: <CounterDisplay count={globalCount(remotesList)} />
       </p>
-      <RemotesList data={remotesList} />
+      <RemotesList
+        data={remotesList}
+        onPingAll={() => {
+          if (ready) {
+            api.sendAll({
+              type: "PING",
+              date: new Date(),
+            });
+          }
+        }}
+        onPing={(id) => {
+          if (ready) {
+            api.sendTo(id, {
+              type: "PING",
+              date: new Date(),
+            });
+          }
+        }}
+      />
       <ConsoleDisplay data={[...logs].reverse()} />
       <DirectLinkToSourceCode mode="master" />
     </>

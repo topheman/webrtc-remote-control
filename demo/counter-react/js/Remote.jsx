@@ -31,6 +31,12 @@ export default function Remote() {
     logger.error({ event: "error", error });
     setErrors([humanizeError(error)]);
   };
+  const onData = (_, data) => {
+    logger.log({ event: "data", data });
+    if (data.type === "PING") {
+      window?.frameworkIconPlay();
+    }
+  };
 
   useEffect(() => {
     if (peer) {
@@ -54,6 +60,7 @@ export default function Remote() {
       });
       api.on("remote.disconnect", onRemoteDisconnect);
       api.on("remote.reconnect", onRemoteReconnect);
+      api.on("data", onData);
       if (name) {
         api.send({ type: "REMOTE_SET_NAME", name });
       }
@@ -63,6 +70,7 @@ export default function Remote() {
       if (ready) {
         api.off("remote.disconnect", onRemoteDisconnect);
         api.off("remote.reconnect", onRemoteReconnect);
+        api.off("data", onData);
       }
     };
   }, [ready]);
