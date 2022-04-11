@@ -58,6 +58,12 @@ export default {
       logger.error({ event: "error", error });
       errors.value = [humanizeError.value(error)];
     };
+    const onData = (_, data) => {
+      logger.log({ event: "data", data });
+      if (data.type === "PING") {
+        window?.frameworkIconPlay();
+      }
+    };
 
     watch([peerReady], (_, __, onCleanup) => {
       if (peer) {
@@ -86,6 +92,7 @@ export default {
         });
         api.value.on("remote.disconnect", onRemoteDisconnect);
         api.value.on("remote.reconnect", onRemoteReconnect);
+        api.value.on("data", onData);
         if (name.value) {
           api.value.send({ type: "REMOTE_SET_NAME", name: name.value });
         }
@@ -95,6 +102,7 @@ export default {
         if (ready.value) {
           api.value.off("remote.disconnect", onRemoteDisconnect);
           api.value.off("remote.reconnect", onRemoteReconnect);
+          api.value.off("data", onData);
         }
       });
     });

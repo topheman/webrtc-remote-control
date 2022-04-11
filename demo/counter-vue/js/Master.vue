@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watchEffect, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { usePeer } from "@webrtc-remote-control/vue";
 
 import "../../shared/js/components/errors-display";
@@ -133,6 +133,42 @@ export default {
           api.value.off("data", onData);
         }
       });
+    });
+
+    // manage `ping` / `ping all` buttons
+
+    const onPingAll = () => {
+      if (ready.value) {
+        api.value.sendAll({
+          type: "PING",
+          date: new Date(),
+        });
+      }
+    };
+    const onPing = ({ detail: { id } }) => {
+      if (ready.value) {
+        api.value.sendTo(id, {
+          type: "PING",
+          date: new Date(),
+        });
+      }
+    };
+
+    onMounted(() => {
+      document
+        .querySelector("remotes-list")
+        .addEventListener("pingAll", onPingAll);
+      document.querySelector("remotes-list").addEventListener("ping", onPing);
+    });
+
+    // cleanup
+    onUnmounted(() => {
+      document
+        .querySelector("remotes-list")
+        .removeEventListener("pingAll", onPingAll);
+      document
+        .querySelector("remotes-list")
+        .removeEventListener("ping", onPing);
     });
 
     return {
