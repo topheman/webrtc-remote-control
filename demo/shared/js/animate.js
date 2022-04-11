@@ -1,36 +1,41 @@
-function makeAnimate(elm) {
-  return function start() {
-    function stop() {
+/**
+ * This file has side-effects.
+ * It exposes `window.frameworkIconPlay`
+ */
+
+function sleep(ms = 0) {
+  return new Promise((res) => {
+    setTimeout(res, ms);
+  });
+}
+
+function makeAnimate(elm, duration = 1500) {
+  let timerId = null;
+  return async function play() {
+    function rewind() {
       clearTimeout(timerId);
       elm.classList.remove("animate");
     }
-
-    let timerId = null;
+    // begin by rewinding the transition (whether it's started or not)
+    if (elm.classList.contains("animate")) {
+      rewind();
+      await sleep(1000);
+    }
+    // start the transition
     elm.classList.add("animate");
+    // rewind the transition after `duration` (rewindable meanwhile)
     timerId = setTimeout(() => {
-      stop();
-    }, 1500);
-    return stop;
+      rewind();
+    }, duration);
+    return rewind;
   };
 }
 
 // eslint-disable-next-line no-unused-vars
 function init() {
-  const start = makeAnimate(document.querySelector(".framework-icon"));
-
-  const refStop = { current: () => {} };
-
-  window.addEventListener("click", () => {
-    refStop.current();
-  });
-
-  const loop = () => {
-    const stop = start();
-    refStop.current = stop;
-    setTimeout(loop, 3000);
-  };
-
-  loop();
+  window.frameworkIconPlay = makeAnimate(
+    document.querySelector(".framework-icon")
+  );
 }
 
-// init();
+init();

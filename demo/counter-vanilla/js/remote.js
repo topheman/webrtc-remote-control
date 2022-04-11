@@ -73,6 +73,9 @@ async function init() {
   });
   wrcRemote.on("data", (_, data) => {
     logger.log({ event: "data", data });
+    if (data.type === "PING") {
+      window?.frameworkIconPlay();
+    }
   });
   if (initialName) {
     wrcRemote.send({ type: "REMOTE_SET_NAME", name: initialName });
