@@ -66,6 +66,13 @@ export default function prepare({
             // todo emit some error ? same on master ?
             console.log("conn.error", e);
           });
+          // ensure to disconnect remote when the page is closed
+          const onBeforeUnloadPeerDisconnect = () => {
+            if (conn) {
+              conn.disconnect();
+            }
+          };
+          window.addEventListener("beforeunload", onBeforeUnloadPeerDisconnect);
         });
       });
     },
