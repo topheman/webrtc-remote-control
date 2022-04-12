@@ -51,6 +51,12 @@ h1.title a {
   background-size: cover;
 }
 
+@media (max-width: 768px) {
+  .framework-icon {
+    top: calc(-0.6 * var(--icon-height));
+  }
+}
+
 .framework-icon.animate {
   width: calc(5 * var(--icon-width));
   height: calc(5 * var(--icon-height));
