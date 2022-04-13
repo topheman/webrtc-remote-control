@@ -1,5 +1,18 @@
 # Contributing
 
+## Prerequisites
+
+- Nodejs >=16
+- npm >=8
+
+## Setup
+
+This project is organized as a monorepo, with lerna. The following will install dependencies for every submodules and wire everything up (via `lerna bootstrap`).
+
+```sh
+npm install
+```
+
 ## Commonly used scripts
 
 - `npm run build`: builds all the packages + demo (you can use some more specific scripts)
@@ -29,4 +42,17 @@ Then on an other tab, set the env var `VITE_USE_LOCAL_PEER_SERVER=true`
 
 ```sh
 VITE_USE_LOCAL_PEER_SERVER=true npm run dev # also works with npm run build
+```
+
+## Adding dependencies
+
+If you need to add dependencies to one of the packages or the demo, dont use `npm` directly, use [@lerna/add](https://www.npmjs.com/package/@lerna/add).
+
+Examples:
+
+```sh
+npx lerna add npm-run-all --scope=@webrtc-remote-control/react --dev
+npx lerna add prop-types --scope=@webrtc-remote-control/react
+npx lerna add react@>=16.8.0 --scope=@webrtc-remote-control/react --peer
+npx lerna add react vue --scope=@webrtc-remote-control/demo
 ```
