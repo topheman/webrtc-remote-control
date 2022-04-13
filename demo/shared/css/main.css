@@ -51,6 +51,15 @@ h1.title a {
   background-size: cover;
 }
 
+.framework-icon:hover {
+  -webkit-transform: rotate(360deg);
+  -moz-transform: rotate(360deg);
+  -ms-transform: rotate(360deg);
+  -o-transform: rotate(360deg);
+  transform: rotate(360deg);
+  transition: all 1000ms;
+}
+
 @media (max-width: 768px) {
   .framework-icon {
     top: calc(-0.6 * var(--icon-height));
