@@ -68,7 +68,7 @@ export default function prepare({
           });
           // ensure to disconnect remote when the page is closed
           const onBeforeUnloadPeerDisconnect = () => {
-            if (conn) {
+            if (conn && conn.disconnect) {
               conn.disconnect();
             }
           };
