@@ -1,10 +1,12 @@
 # @webrtc-remote-control/core
 
-Imagine you could simply control a web page open in a browser (master) from an other page in an other browser (remote), just like you would with a TV and a remote.
+Imagine you could simply control a web page opened in a browser (master) from an other page in an other browser (remote), just like you would with a TV and a remote.
 
-webrtc-remote-control lets you do that (based on PeerJS) and handles the disconnections / reconnections.
+webrtc-remote-control lets you do that (based on [PeerJS](https://peerjs.com)) and handles the disconnections / reconnections, providing a simple API.
 
-Check the demos to have a better understanding.
+Check the [demos](https://github.com/topheman/webrtc-remote-control/tree/master/demo#readme) to have a better understanding.
+
+[More infos on topheman/webrtc-remote-control](https://github.com/topheman/webrtc-remote-control#readme).
 
 ## Installation
 
@@ -14,7 +16,7 @@ npm install peerjs @webrtc-remote-control/core
 
 ## Usage
 
-This package is the core one. A react implementation is available.
+This package is the core one. Implementations for popular frameworks such as react or vue ar available [here](https://github.com/topheman/webrtc-remote-control/tree/master/packages).
 
 ### master
 
