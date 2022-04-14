@@ -2,7 +2,14 @@
   "name": "@webrtc-remote-control/core",
   "amdName": "webrtcRemoteControl",
   "version": "0.0.0",
-  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/topheman/webrtc-remote-control.git"
+  },
+  "homepage": "https://github.com/topheman/webrtc-remote-control",
+  "bugs": "https://github.com/topheman/webrtc-remote-control/issues",
+  "description": "Thin abstraction layer above peerjs that will let you be more productive at making WebRTC data channels based apps.",
+  "keywords": ["WebRTC", "peerjs", "RTCDataChannel"],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.module.js",
