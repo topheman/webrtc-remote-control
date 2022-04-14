@@ -18,6 +18,16 @@ npm install peerjs @webrtc-remote-control/core
 
 This package is the core one. Implementations for popular frameworks such as react or vue are available [here](https://github.com/topheman/webrtc-remote-control/tree/master/packages).
 
+## Example code
+
+More examples in [demo](https://github.com/topheman/webrtc-remote-control/tree/master/demo).
+
+Add the peerjs library as a script tag in your html page. You'll have access to `Peer` constructor.
+
+```html
+<script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
+```
+
 ### master
 
 ```js

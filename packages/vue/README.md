@@ -18,9 +18,9 @@ npm install peerjs @webrtc-remote-control/vue
 
 This package relies on [@webrtc-remote-control/core](https://github.com/topheman/webrtc-remote-control/tree/master/packages/core#readme) (the implementation in vanillaJS). Other implementations for popular frameworks are available [here](https://github.com/topheman/webrtc-remote-control/tree/master/packages).
 
-### master
+## Example code
 
-### remote
+Checkout the [source code of the demo in vue](https://github.com/topheman/webrtc-remote-control/tree/master/demo/counter-vue).
 
 ## TypeScript
 
