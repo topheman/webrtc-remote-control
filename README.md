@@ -1,6 +1,11 @@
 # webrtc-remote-control
 
-A few years ago I made [topheman/webrtc-experiments](https://github.com/topheman/webrtc-experiments), as a proof of concept for WebRTC data-channels relying on PeerJS.
+- Implementations
+  - [@webrtc-remote-control/core](./packages/core#readme)
+  - [@webrtc-remote-control/react](./packages/react#readme)
+  - [@webrtc-remote-control/vue](./packages/vue#readme)
+- [Demo](./demo#readme)
+- [CONTRIBUTING](CONTRIBUTING.md)
 
 ## The problem
 
@@ -33,36 +38,6 @@ When "master" page drops connection (the page closes or reloads), the "remote" p
 
 When a "remote" page drops connection (the page closes or reloads), the "master" page gets notified (and the remote reconnects to master as soon as it reloads).
 
-## The implementations
+## Genesis
 
-A VanillaJS implementation is available so that you can use it with any kind of code.
-
-I also provide a few implementations for react.
-
-### VanillaJS
-
-```sh
-npm install peerjs @webrtc-remote-control/core
-```
-
-[Documentation](./packages/core#readme)
-
-### React
-
-```sh
-npm install peerjs @webrtc-remote-control/react
-```
-
-[Documentation](./packages/react#readme)
-
-### Vue
-
-```sh
-npm install peerjs @webrtc-remote-control/vue
-```
-
-[Documentation](./packages/vue#readme)
-
-## Contributing
-
-[CONTRIBUTING](CONTRIBUTING.md)
+A few years ago I made [topheman/webrtc-experiments](https://github.com/topheman/webrtc-experiments), as a proof of concept for WebRTC data-channels relying on PeerJS.

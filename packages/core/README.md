@@ -16,7 +16,7 @@ npm install peerjs @webrtc-remote-control/core
 
 ## Usage
 
-This package is the core one. Implementations for popular frameworks such as react or vue ar available [here](https://github.com/topheman/webrtc-remote-control/tree/master/packages).
+This package is the core one. Implementations for popular frameworks such as react or vue are available [here](https://github.com/topheman/webrtc-remote-control/tree/master/packages).
 
 ### master
 
