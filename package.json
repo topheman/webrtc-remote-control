@@ -37,7 +37,8 @@
     "test:e2e:watch": "npm run --prefix demo test:e2e:watch",
     "test:e2e:start-server-and-test": "npm run --prefix demo test:e2e:start-server-and-test",
     "test:e2e:start-server-and-test:peer-server": "npm-run-all --parallel --race peer-server test:e2e:start-server-and-test",
-    "prepare": "husky install; npm run bootstrap"
+    "prepare": "husky install; npm run bootstrap",
+    "check:dotenv": "dotenv -c -- node -e 'console.log(process.env.FOO_BAR)'"
   },
   "keywords": [
     "webrtc",
@@ -47,6 +48,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^27.4.0",
+    "dotenv-cli": "^5.1.0",
     "eslint": "^8.6.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^8.3.0",
