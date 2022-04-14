@@ -13,13 +13,6 @@ export default function App() {
   useEffect(() => {
     setMode(window.location.hash ? "remote" : "master");
   }, []);
-  useEffect(() => {
-    if (window.location.hash) {
-      setMode("remote");
-    } else {
-      setMode("master");
-    }
-  }, []);
   return (
     <>
       {mode ? (

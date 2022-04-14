@@ -1,6 +1,7 @@
 import { getE2eTestServerAddress, sleep } from "../../test.helpers";
 
 const SAFE_TIMEOUT = 3;
+const NEXT_TICK = 20;
 
 /**
  * Accept flags
@@ -221,6 +222,7 @@ export function givenRemoteListShouldContain(
   given(
     /^\[master\] remote lists should be "(.*)"$/,
     async (expectedSerializedRemoteCounters) => {
+      await sleep(NEXT_TICK);
       // extract the counter list from the feature file and re-create an object-like
       // that was passed to <remotes-list/>
       const parsedRemoteCounters = JSON.parse(expectedSerializedRemoteCounters);
