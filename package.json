@@ -45,7 +45,7 @@
     "remote"
   ],
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/jest": "^27.4.0",
     "dotenv-cli": "^5.1.0",

@@ -18,7 +18,7 @@
     "test:e2e:start-server-and-test": "PORT=3001 npx start-server-and-test preview :3001 test:e2e"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@babel/preset-env": "^7.16.11",
     "@vitejs/plugin-react": "^1.2.0",

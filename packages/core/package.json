@@ -37,7 +37,7 @@
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "types": "src/core.index.d.ts",
-  "license": "ISC",
+  "license": "MIT",
   "files": [
     "src",
     "dist",

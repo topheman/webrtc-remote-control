@@ -11,5 +11,5 @@
   "source": "src/core.remote.js",
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "types": "src/core.remote.d.ts",
-  "license": "ISC"
+  "license": "MIT"
 }
