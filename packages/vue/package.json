@@ -1,7 +1,7 @@
 {
   "name": "@webrtc-remote-control/vue",
   "amdName": "webrtcRemoteControlVue",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/topheman/webrtc-remote-control.git"
@@ -9,7 +9,12 @@
   "homepage": "https://github.com/topheman/webrtc-remote-control",
   "bugs": "https://github.com/topheman/webrtc-remote-control/issues",
   "description": "Thin abstraction layer above peerjs that will let you be more productive at making WebRTC data channels based apps.",
-  "keywords": ["WebRTC", "peerjs", "RTCDataChannel", "vue"],
+  "keywords": [
+    "WebRTC",
+    "peerjs",
+    "RTCDataChannel",
+    "vue"
+  ],
   "type": "module",
   "main": "./dist/vue.cjs",
   "module": "./dist/vue.module.js",
@@ -38,7 +43,7 @@
     "vue": ">=3.0.0"
   },
   "dependencies": {
-    "@webrtc-remote-control/core": "^0.0.0"
+    "@webrtc-remote-control/core": "^0.0.1"
   },
   "publishConfig": {
     "access": "public"
