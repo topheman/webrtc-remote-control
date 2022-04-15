@@ -43,7 +43,7 @@ a {
     ©${fromTo} - <a href="http://labs.topheman.com/">labs.topheman.com</a> - Christophe Rosset
 </p>
 <p>
-    <twitter-button text="An example of how you could use #WebRTC on the web, based on the #PeerJS library" url="https://topheman.github.io/webrtc-experiments" via="topheman"></twitter-button>
+    <twitter-button text="A wrapper around #PeerJS to make #WebRTC datachannels easy" url="https://github.com/topheman/webrtc-remote-control" via="topheman"></twitter-button>
 </p>
     `;
   }
