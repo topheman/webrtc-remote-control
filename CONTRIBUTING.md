@@ -56,3 +56,9 @@ npx lerna add prop-types --scope=@webrtc-remote-control/react
 npx lerna add react@>=16.8.0 --scope=@webrtc-remote-control/react --peer
 npx lerna add react vue --scope=@webrtc-remote-control/demo
 ```
+
+## Environment variables
+
+You can pass environment variables at build time **before publish** via microbundle - [see docs](https://github.com/developit/microbundle#defining-build-time-constants).
+
+This is currently used to create production (minified) and development (unminified) versions of the UMD builds.

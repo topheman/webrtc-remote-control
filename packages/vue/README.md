@@ -26,10 +26,6 @@ Checkout the [source code of the demo in vue](https://github.com/topheman/webrtc
 
 TypeScript types are shipped with the package.
 
-## Customize
-
-You can specify `process.env.NODE_ENV` to `production` or `development` (most bundlers will do it automatically) and you'll have debugging tools like warning/logging messages that won't happen in production mode.
-
 ## UMD build
 
 Don't want to use a bundler ? You can simply use the UMD (Universal Module Definition) build and drop it with a script tag, you'll have access to a `webrtcRemoteControlVue` object on the `window`.
