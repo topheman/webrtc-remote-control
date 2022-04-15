@@ -92,7 +92,7 @@ TypeScript types are shipped with the package.
 
 ## UMD build
 
-Don't want to use a bundler ? You can simply use the UMD (Universal Module Definition) build and drop it with a script tag, you'll have access to a `webrtcRemoteControl` object on the `window`.
+Don't want to use a bundler ? You can simply use the UMD (Universal Module Definition) build and drop it with a script tag from your favorite js cdn, you'll have access to a `webrtcRemoteControl` object on the `window`.
 
-- Development build: `packages/core/dist/webrtc-remote-control.umd.dev.js`
-- Production build: `packages/core/dist/webrtc-remote-control.umd.prod.js`
+- Development build: [https://unpkg.com/@webrtc-remote-control/core/dist/webrtc-remote-control.umd.dev.js](https://unpkg.com/@webrtc-remote-control/core/dist/webrtc-remote-control.umd.dev.js)
+- Production build: [https://unpkg.com/@webrtc-remote-control/core/dist/webrtc-remote-control.umd.prod.js](https://unpkg.com/@webrtc-remote-control/core/dist/webrtc-remote-control.umd.prod.js)
