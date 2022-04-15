@@ -38,7 +38,8 @@
     "test:e2e:start-server-and-test": "npm run --prefix demo test:e2e:start-server-and-test",
     "test:e2e:start-server-and-test:peer-server": "npm-run-all --parallel --race peer-server test:e2e:start-server-and-test",
     "prepare": "husky install; npm run bootstrap",
-    "check:dotenv": "dotenv -c -- node -e 'console.log(process.env.FOO_BAR)'"
+    "check:dotenv": "dotenv -c -- node -e 'console.log(process.env.FOO_BAR)'",
+    "publish": "HUSKY=0 lerna publish"
   },
   "keywords": [
     "webrtc",
