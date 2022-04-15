@@ -1,5 +1,7 @@
 # webrtc-remote-control
 
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://www.conventionalcommits.org)
+
 - Implementations
   - [@webrtc-remote-control/core](./packages/core#readme)
   - [@webrtc-remote-control/react](./packages/react#readme)
