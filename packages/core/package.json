@@ -56,5 +56,8 @@
   },
   "dependencies": {
     "eventemitter3": "^4.0.7"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
