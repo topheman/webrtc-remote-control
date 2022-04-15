@@ -7,6 +7,37 @@
     <link rel="stylesheet" href="./shared/css/main.css" />
     <link rel="stylesheet" href="./shared/css/network.css" />
     <title>webrtc-remote-control</title>
+    <style>
+      .demo-list {
+        font-size: 120%;
+        line-height: 150%;
+      }
+      .demo-list li {
+      }
+      .demo-list li a {
+        text-decoration: none;
+      }
+      .demo-list li a .demo-name {
+        text-decoration: underline;
+      }
+      .demo-list li a:hover .demo-name {
+        text-decoration: none;
+      }
+      .demo-list li a .demo-package {
+        margin-left: 10px;
+        text-decoration: none;
+        font-size: 80%;
+      }
+      @media (max-width: 768px) {
+        .demo-list li a .demo-package {
+          display: block;
+        }
+      }
+      .github-sources-wrapper {
+        margin-top: 40px;
+        text-align: right;
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -30,14 +61,53 @@
       <h1 class="title">webrtc-remote-control</h1>
     </header>
     <div id="content">
-      <p>Demos:</p>
-      <ul>
+      <p>
+        <strong>webrtc-remote-control</strong> is a set of tools providing a
+        thin abstraction layer above <strong>peerjs</strong> that will let you
+        be more productive at making <strong>WebRTC</strong> data channels based
+        apps.
+      </p>
+      <p>
+        As for now, there are multiple implementations : VanillaJS, react and
+        vue.
+      </p>
+      <p>
+        Try the <strong>demos</strong> (you'll find a direct link to the source
+        code):
+      </p>
+      <ul class="demo-list">
         <li>
-          <a href="./counter-vanilla/master.html">counter / vanilla</a>
+          <a
+            href="./counter-vanilla/master.html"
+            title="Demo (counter) with VanillaJS implementation"
+            ><span class="demo-name">counter / vanilla</span
+            ><span class="demo-package">@webrtc-remote-control/core</span></a
+          >
         </li>
-        <li><a href="./counter-react/index.html">counter / react</a></li>
-        <li><a href="./counter-vue/index.html">counter / vue</a></li>
+        <li>
+          <a
+            href="./counter-react/index.html"
+            title="Demo (counter) with React implementation"
+            ><span class="demo-name">counter / react</span
+            ><span class="demo-package">@webrtc-remote-control/react</span></a
+          >
+        </li>
+        <li>
+          <a
+            href="./counter-vue/index.html"
+            title="Demo (counter) with Vue implementation"
+            ><span class="demo-name">counter / vue</span
+            ><span class="demo-package">@webrtc-remote-control/vue</span></a
+          >
+        </li>
       </ul>
+      <p class="github-sources-wrapper">
+        <a
+          href="https://github.com/topheman/webrtc-remote-control"
+          title="Sources on github"
+          >Sources on Github</a
+        >
+      </p>
     </div>
     <footer-display from="2022"></footer-display>
     <script type="module" src="/index.js"></script>
