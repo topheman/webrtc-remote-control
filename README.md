@@ -1,11 +1,16 @@
 # webrtc-remote-control
 
+[![ci](https://github.com/topheman/webrtc-remote-control/actions/workflows/ci.yml/badge.svg)](https://github.com/topheman/webrtc-remote-control/actions/workflows/ci.yml)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://www.conventionalcommits.org)
 
-- Implementations
-  - [@webrtc-remote-control/core](./packages/core#readme)
-  - [@webrtc-remote-control/react](./packages/react#readme)
-  - [@webrtc-remote-control/vue](./packages/vue#readme)
+Implementations
+
+| Package                                                 | Version                                                                                                                                    |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| [@webrtc-remote-control/core](./packages/core#readme)   | [![npm](https://img.shields.io/npm/v/@webrtc-remote-control/core?color=blue)](https://www.npmjs.com/package/@webrtc-remote-control/core)   |
+| [@webrtc-remote-control/react](./packages/react#readme) | [![npm](https://img.shields.io/npm/v/@webrtc-remote-control/react?color=blue)](https://www.npmjs.com/package/@webrtc-remote-control/react) |
+| [@webrtc-remote-control/vue](./packages/vue#readme)     | [![npm](https://img.shields.io/npm/v/@webrtc-remote-control/vue?color=blue)](https://www.npmjs.com/package/@webrtc-remote-control/vue)     |
+
 - [Demo](./demo#readme)
 - [CONTRIBUTING](CONTRIBUTING.md)
 
