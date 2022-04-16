@@ -39,7 +39,12 @@
     "test:e2e:start-server-and-test:peer-server": "npm-run-all --parallel --race peer-server test:e2e:start-server-and-test",
     "prepare": "husky install; npm run bootstrap",
     "check:dotenv": "dotenv -c -- node -e 'console.log(process.env.FOO_BAR)'",
-    "publish": "HUSKY=0 lerna publish"
+    "lerna:diff": "lerna diff",
+    "lerna:version": "HUSKY=0 lerna version --conventional-commits",
+    "lerna:version:yes": "HUSKY=0 lerna version --conventional-commits --yes",
+    "lerna:changed": "lerna changed",
+    "lerna:publish": "HUSKY=0 lerna publish --conventional-commits",
+    "lerna:publish:yes": "HUSKY=0 lerna publish --conventional-commits --yes"
   },
   "keywords": [
     "webrtc",
