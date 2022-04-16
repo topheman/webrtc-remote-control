@@ -26,6 +26,12 @@ This package relies on [@webrtc-remote-control/core](https://github.com/topheman
 
 Checkout the [source code of the demo in react](https://github.com/topheman/webrtc-remote-control/tree/master/demo/counter-react).
 
+Add the peerjs library as a script tag in your html page. You'll have access to `Peer` constructor.
+
+```html
+<script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
+```
+
 ## TypeScript
 
 TypeScript types are shipped with the package.
