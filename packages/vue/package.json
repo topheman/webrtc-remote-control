@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/topheman/webrtc-remote-control.git"
   },
-  "homepage": "https://github.com/topheman/webrtc-remote-control",
+  "homepage": "http://webrtc-remote-control.vercel.app/",
   "bugs": "https://github.com/topheman/webrtc-remote-control/issues",
   "description": "Thin abstraction layer above peerjs that will let you be more productive at making WebRTC data channels based apps.",
   "keywords": [
