@@ -28,6 +28,10 @@ h1.title a {
   text-decoration: none;
 }
 
+h1.title a:hover {
+  text-decoration: underline;
+}
+
 @media only screen and (max-width: 410px) {
   .title {
     font-size: 120%;
