@@ -8,29 +8,23 @@ Imagine you could simply control a web page opened in a browser (master) from an
 
 webrtc-remote-control lets you do that (based on [PeerJS](https://peerjs.com)) and handles the disconnections / reconnections, providing a simple API.
 
-Check the [demos](https://github.com/topheman/webrtc-remote-control/tree/master/demo#readme) to have a better understanding.
-
-[More infos on topheman/webrtc-remote-control](https://github.com/topheman/webrtc-remote-control#readme).
-
 ## Installation
 
 ```sh
 npm install peerjs @webrtc-remote-control/core
 ```
 
-## Usage
-
 This package is the core one. Implementations for popular frameworks such as react or vue are available [here](https://github.com/topheman/webrtc-remote-control/tree/master/packages).
 
-## Example code
-
-More examples in [demo](https://github.com/topheman/webrtc-remote-control/tree/master/demo).
+## Usage
 
 Add the peerjs library as a script tag in your html page. You'll have access to `Peer` constructor.
 
 ```html
 <script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
 ```
+
+Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-vanilla/master.html) source code: [master.js](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vanilla/js/master.js) / [remote.js](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vanilla/js/remote.js)
 
 ### master
 
