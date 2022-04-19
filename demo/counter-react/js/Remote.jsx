@@ -7,7 +7,7 @@ import RemoteNameControl from "./RemoteNameControl";
 import ConsoleDisplay from "./ConsoleDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
-import { useLogger, useSessionStorage } from "./common";
+import { useLogger, useSessionStorage } from "../../shared/js/react-common";
 
 export default function Remote() {
   const { logs, logger } = useLogger([]);
