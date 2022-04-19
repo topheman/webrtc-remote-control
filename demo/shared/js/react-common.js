@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 
-import { makeLogger } from "../../shared/js/common";
+import { makeLogger } from "./common";
 
 export function useLogger() {
   const loggerRef = useRef(makeLogger());

@@ -17,7 +17,7 @@ import {
   counterReducer,
   globalCount,
 } from "../../shared/js/counter.master.logic";
-import { useLogger } from "./common";
+import { useLogger } from "../../shared/js/react-common";
 
 function makeRemotePeerUrl(peerId) {
   return `${
