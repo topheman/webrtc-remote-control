@@ -1,0 +1,19 @@
+.request-permission-button-wrapper {
+  text-align: center;
+}
+.request-permission-button {
+  padding: 8px;
+  font-size: 100%;
+  border-radius: 8px;
+  background-color: #900000;
+  border: 1px solid #900000;
+  color: white;
+  cursor: pointer;
+}
+.request-permission-button:hover {
+  background-color: white;
+  color: #900000;
+}
+.deviceorientation-error {
+  color: red;
+}

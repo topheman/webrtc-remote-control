@@ -5,6 +5,7 @@ import ErrorsDisplay from "./ErrorsDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import { useSessionStorage } from "../../shared/js/react-common";
+import { useDeviceOrientation } from "../../shared/js/react-useDeviceOrientation";
 
 export default function Remote() {
   // eslint-disable-next-line no-unused-vars
@@ -16,6 +17,12 @@ export default function Remote() {
   const [errors, setErrors] = useState(null);
 
   const { ready, api, peer, humanizeError } = usePeer();
+
+  const {
+    orientation,
+    requestAccess: requestDeviceOrientationAccess,
+    permissionState,
+  } = useDeviceOrientation();
 
   const onRemoteDisconnect = (payload) => {
     console.log({ event: "remote.disconnect", payload });
@@ -77,10 +84,29 @@ export default function Remote() {
   return (
     <>
       <ErrorsDisplay data={errors} />
-      <p>
-        Check the counter updating in real-time on the original page, thanks to
-        WebRTC.
-      </p>
+      {!orientation ? (
+        <p className="request-permission-button-wrapper">
+          <button
+            className="request-permission-button"
+            onClick={() => requestDeviceOrientationAccess()}
+          >
+            Click here to start
+          </button>
+        </p>
+      ) : null}
+      {permissionState === "denied" ? (
+        <p className="deviceorientation-error">
+          Request to access the device orientation was rejected, please grant it
+          by clicking yes on the prompt.
+        </p>
+      ) : null}
+      {orientation ? (
+        <ul>
+          <li>alpha: {orientation.alpha}</li>
+          <li>beta: {orientation.beta}</li>
+          <li>gamma: {orientation.gamma}</li>
+        </ul>
+      ) : null}
       <DirectLinkToSourceCode mode="remote" />
     </>
   );
