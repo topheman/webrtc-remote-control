@@ -1,19 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
 
+import RemotesList from "./RemotesList";
 import ErrorsDisplay from "./ErrorsDisplay";
 import QrcodeDisplay from "./QrcodeDisplay";
 import OpenRemote from "./OpenRemote";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
-import {
-  persistCountersToStorage,
-  getCountersFromStorage,
-} from "../../shared/js/counter.master.persistance";
-import {
-  counterReducer,
-  // globalCount,
-} from "../../shared/js/counter.master.logic";
+import { remotesListReducer } from "./master.logic";
 
 function makeRemotePeerUrl(peerId) {
   return `${
@@ -35,25 +29,23 @@ export default function Master() {
   const { ready, api, peer, humanizeError } = usePeer();
 
   const onRemoteConnect = ({ id }) => {
-    const countersFromStorage = getCountersFromStorage();
     console.log({ event: "remote.connect", payload: { id } });
-    setRemotesList((counters) => [
-      ...counters,
-      { counter: countersFromStorage?.[id] ?? 0, peerId: id },
+    setRemotesList((remotes) => [
+      ...remotes,
+      { alpha: 0, beta: 0, gamma: 0, peerId: id },
     ]);
   };
   const onRemoteDisconnect = ({ id }) => {
     console.log({ event: "remote.disconnect", payload: { id } });
-    setRemotesList((counters) =>
+    setRemotesList((remotes) =>
       // eslint-disable-next-line no-shadow
-      counters.filter(({ peerId }) => peerId !== id)
+      remotes.filter(({ peerId }) => peerId !== id)
     );
   };
   const onData = ({ id }, data) => {
     console.log({ event: "data", data, id });
-    setRemotesList((counters) => {
-      const state = counterReducer(counters, { data, id });
-      persistCountersToStorage(state);
+    setRemotesList((remotes) => {
+      const state = remotesListReducer(remotes, { data, id });
       return state;
     });
   };
@@ -102,6 +94,7 @@ export default function Master() {
       <ErrorsDisplay data={errors} />
       {peerId ? <QrcodeDisplay data={makeRemotePeerUrl(peerId)} /> : null}
       <OpenRemote peerId={peerId} />
+      <RemotesList list={remotesList} />
       <DirectLinkToSourceCode mode="master" />
     </>
   );
