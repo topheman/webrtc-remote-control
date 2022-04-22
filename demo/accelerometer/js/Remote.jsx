@@ -81,6 +81,13 @@ export default function Remote() {
       }
     };
   }, [ready]);
+
+  useEffect(() => {
+    if (ready) {
+      api.send({ type: "ORIENTATION", orientation });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orientation]);
   return (
     <>
       <ErrorsDisplay data={errors} />
