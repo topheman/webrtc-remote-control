@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 
 import { WebRTCRemoteControlProvider } from "@webrtc-remote-control/react";
 
+import { getPeerjsConfig } from "../../shared/js/common-peerjs";
+
 import Master from "./Master";
 import Remote from "./Remote";
 import FooterDisplay from "./Footer";
@@ -22,13 +24,7 @@ export default function App() {
             new Peer(
               getPeerId(),
               // line bellow is optional - you can rely on the signaling server exposed by peerjs
-              import.meta.env.VITE_USE_LOCAL_PEER_SERVER
-                ? {
-                    host: "localhost",
-                    port: 9000,
-                    path: "/myapp",
-                  }
-                : undefined
+              getPeerjsConfig()
             )
           }
           masterPeerId={

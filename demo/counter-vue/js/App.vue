@@ -11,6 +11,8 @@ import { onBeforeMount, ref } from "vue";
 
 import { provideWebTCRemoteControl } from "@webrtc-remote-control/vue";
 
+import { getPeerjsConfig } from "../../shared/js/common-peerjs";
+
 import "../../shared/js/components/footer-display";
 
 import Master from "./Master.vue";
@@ -27,13 +29,7 @@ export default {
           new Peer(
             getPeerId(),
             // line bellow is optional - you can rely on the signaling server exposed by peerjs
-            import.meta.env.VITE_USE_LOCAL_PEER_SERVER
-              ? {
-                  host: "localhost",
-                  port: 9000,
-                  path: "/myapp",
-                }
-              : undefined
+            getPeerjsConfig()
           ),
         mode.value,
         {

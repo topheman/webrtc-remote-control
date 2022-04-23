@@ -1,5 +1,6 @@
 import prepare, { prepareUtils } from "@webrtc-remote-control/core/master";
 
+import { getPeerjsConfig } from "../../shared/js/common-peerjs";
 import { makeLogger } from "../../shared/js/common";
 import "../../shared/js/animate"; // todo
 import {
@@ -32,13 +33,7 @@ async function init() {
   const peer = new Peer(
     getPeerId(),
     // line bellow is optional - you can rely on the signaling server exposed by peerjs
-    import.meta.env.VITE_USE_LOCAL_PEER_SERVER
-      ? {
-          host: "localhost",
-          port: 9000,
-          path: "/myapp",
-        }
-      : undefined
+    getPeerjsConfig()
   );
   peer.on("open", (peerId) => {
     setPeerId(peerId);
