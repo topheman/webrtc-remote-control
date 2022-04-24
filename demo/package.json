@@ -36,8 +36,8 @@
     "@webrtc-remote-control/react": "^0.1.0",
     "@webrtc-remote-control/vue": "^0.1.0",
     "prop-types": "^15.8.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
     "vue": "^3.2.31"
   }
 }

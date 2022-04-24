@@ -1,11 +1,6 @@
-import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import App from "./App";
 import "../../shared/js/animate"; // todo
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById("content")
-);
+const root = createRoot(document.getElementById("content"));
+root.render(<App />);
