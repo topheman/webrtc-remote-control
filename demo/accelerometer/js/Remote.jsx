@@ -3,6 +3,7 @@ import { usePeer } from "@webrtc-remote-control/react";
 
 import ErrorsDisplay from "./ErrorsDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
+import Phone3D from "./Phone3D";
 
 import { useSessionStorage } from "../../shared/js/react-common";
 import { useDeviceOrientation } from "../../shared/js/react-useDeviceOrientation";
@@ -91,6 +92,7 @@ export default function Remote() {
   return (
     <>
       <ErrorsDisplay data={errors} />
+      <Phone3D />
       {!orientation ? (
         <p className="request-permission-button-wrapper">
           <button
