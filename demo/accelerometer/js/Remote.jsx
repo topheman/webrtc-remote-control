@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, lazy, Suspense } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
 
 import ErrorsDisplay from "./ErrorsDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
-import Phone3D from "./Phone3D";
 
 import { useSessionStorage } from "../../shared/js/react-common";
 import { useDeviceOrientation } from "../../shared/js/react-useDeviceOrientation";
+
+const Phone3D = lazy(() => import("./Phone3D"));
 
 export default function Remote() {
   // eslint-disable-next-line no-unused-vars
@@ -92,7 +93,9 @@ export default function Remote() {
   return (
     <>
       <ErrorsDisplay data={errors} />
-      <Phone3D />
+      <Suspense fallback={<div>Loading 3D model ...</div>}>
+        <Phone3D />
+      </Suspense>
       {!orientation ? (
         <p className="request-permission-button-wrapper">
           <button
