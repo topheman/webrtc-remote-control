@@ -105,7 +105,11 @@ export default function Remote() {
     <>
       <ErrorsDisplay data={errors} />
       <Suspense fallback={<div>Loading 3D model ...</div>}>
-        <Phone3D rotation={orientationToRotation(orientation)} />
+        <Phone3D
+          rotation={orientationToRotation(orientation)}
+          width="100%"
+          height={400}
+        />
       </Suspense>
       {!orientation ? (
         <p className="request-permission-button-wrapper">
