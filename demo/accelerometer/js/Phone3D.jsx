@@ -15,14 +15,14 @@ function Box(props) {
 }
 
 export default function Phone3D({ width, height, rotation }) {
-  console.log(rotation);
+  const [, y, z] = rotation;
   return (
     <div style={{ position: "relative", width, height }}>
       <Canvas>
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
         <pointLight position={[-10, -10, -10]} />
-        <Box position={[0, 0, 0]} rotation={rotation} />
+        <Box position={[0, 0, 0]} rotation={[-y, -z, 0]} />
       </Canvas>
     </div>
   );
