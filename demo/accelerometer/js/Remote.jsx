@@ -20,6 +20,17 @@ export default function Remote() {
 
   const { ready, api, peer, humanizeError } = usePeer();
 
+  const orientationToRotation = (orientation) => {
+    if (orientation) {
+      return [
+        orientation.alpha / 360,
+        orientation.beta / 180,
+        orientation.gamma / 90,
+      ];
+    }
+    return [0, 0, 0];
+  };
+
   const {
     orientation,
     requestAccess: requestDeviceOrientationAccess,
@@ -94,7 +105,7 @@ export default function Remote() {
     <>
       <ErrorsDisplay data={errors} />
       <Suspense fallback={<div>Loading 3D model ...</div>}>
-        <Phone3D />
+        <Phone3D rotation={orientationToRotation(orientation)} />
       </Suspense>
       {!orientation ? (
         <p className="request-permission-button-wrapper">
