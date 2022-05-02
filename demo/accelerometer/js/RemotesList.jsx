@@ -1,5 +1,9 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import PropTypes from "prop-types";
+
+import { orientationToRotation } from "./accelerometer.helpers";
+
+const Phone3D = lazy(() => import("./Phone3D"));
 
 export default function RemotesList({ list }) {
   if (list && list.length) {
@@ -8,11 +12,20 @@ export default function RemotesList({ list }) {
         {list.map(({ peerId, alpha, beta, gamma }) => (
           <li key={peerId}>
             <span>{peerId}</span>
-            <ul>
-              <li>alpha: {alpha}</li>
-              <li>beta: {beta}</li>
-              <li>gamma: {gamma}</li>
-            </ul>
+            <div style={{ display: "flex" }}>
+              <Suspense fallback={<div>Loading 3D model ...</div>}>
+                <Phone3D
+                  rotation={orientationToRotation({ alpha, beta, gamma })}
+                  width={150}
+                  height={150}
+                />
+              </Suspense>
+              <ul>
+                <li>alpha: {alpha}</li>
+                <li>beta: {beta}</li>
+                <li>gamma: {gamma}</li>
+              </ul>
+            </div>
           </li>
         ))}
       </ul>
