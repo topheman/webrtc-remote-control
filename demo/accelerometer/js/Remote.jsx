@@ -6,6 +6,7 @@ import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import { useSessionStorage } from "../../shared/js/react-common";
 import { useDeviceOrientation } from "../../shared/js/react-useDeviceOrientation";
+import { orientationToRotation } from "./accelerometer.helpers";
 
 const Phone3D = lazy(() => import("./Phone3D"));
 
@@ -19,17 +20,6 @@ export default function Remote() {
   const [errors, setErrors] = useState(null);
 
   const { ready, api, peer, humanizeError } = usePeer();
-
-  const orientationToRotation = (orientation) => {
-    if (orientation) {
-      return [
-        orientation.alpha / 360,
-        orientation.beta / 180,
-        orientation.gamma / 90,
-      ];
-    }
-    return [0, 0, 0];
-  };
 
   const {
     orientation,
@@ -106,9 +96,9 @@ export default function Remote() {
       <ErrorsDisplay data={errors} />
       <Suspense fallback={<div>Loading 3D model ...</div>}>
         <Phone3D
-          rotation={orientationToRotation(orientation)}
+          rotation={orientationToRotation(orientation, -1)}
           width="100%"
-          height={400}
+          height={300}
         />
       </Suspense>
       {!orientation ? (

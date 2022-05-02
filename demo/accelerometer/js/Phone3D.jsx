@@ -22,7 +22,7 @@ export default function Phone3D({ width, height, rotation }) {
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
         <pointLight position={[-10, -10, -10]} />
-        <Box position={[0, 0, 0]} rotation={[-y, -z, 0]} />
+        <Box position={[0, 0, 0]} rotation={[y, z, 0]} />
       </Canvas>
     </div>
   );
