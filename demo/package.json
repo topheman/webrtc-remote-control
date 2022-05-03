@@ -36,6 +36,7 @@
     "@webrtc-remote-control/core": "^0.1.0",
     "@webrtc-remote-control/react": "^0.1.0",
     "@webrtc-remote-control/vue": "^0.1.0",
+    "lodash": "^4.17.21",
     "prop-types": "^15.8.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",

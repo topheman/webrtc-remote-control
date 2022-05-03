@@ -1,18 +1,19 @@
 // inspired by https://trekhleb.dev/blog/2021/gyro-web/
 import { useCallback, useEffect, useState } from "react";
+import lodashThrottle from "lodash/throttle";
 
-export const useDeviceOrientation = () => {
+export const useDeviceOrientation = ({ precision, throttle = 0 } = {}) => {
   const [error, setError] = useState(null);
   const [orientation, setOrientation] = useState(null);
   const [permissionState, setPermissionState] = useState(null);
 
-  const onDeviceOrientation = (event) => {
+  const onDeviceOrientation = lodashThrottle((event) => {
     setOrientation({
-      alpha: event.alpha,
-      beta: event.beta,
-      gamma: event.gamma,
+      alpha: precision ? Number(event.alpha.toFixed(precision)) : event.alpha,
+      beta: precision ? Number(event.beta.toFixed(precision)) : event.beta,
+      gamma: precision ? Number(event.gamma.toFixed(precision)) : event.gamma,
     });
-  };
+  }, throttle);
 
   const revokeAccessAsync = async () => {
     window.removeEventListener("deviceorientation", onDeviceOrientation);

@@ -43,7 +43,6 @@ export default function Master() {
     );
   };
   const onData = ({ id }, data) => {
-    console.log({ event: "data", data, id });
     setRemotesList((remotes) => {
       const state = remotesListReducer(remotes, { data, id });
       return state;
