@@ -25,7 +25,7 @@ export default function Remote() {
     orientation,
     requestAccess: requestDeviceOrientationAccess,
     permissionState,
-  } = useDeviceOrientation();
+  } = useDeviceOrientation({ precision: 2, throttle: 16 });
 
   const onRemoteDisconnect = (payload) => {
     console.log({ event: "remote.disconnect", payload });
