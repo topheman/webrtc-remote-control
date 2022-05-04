@@ -9,7 +9,7 @@ export default function RemotesList({ list }) {
   if (list && list.length) {
     return (
       <ul>
-        {list.map(({ peerId, alpha, beta, gamma }) => (
+        {list.map(({ peerId, alpha, beta, gamma, scale, color }) => (
           <li key={peerId}>
             <span>{peerId}</span>
             <div style={{ display: "flex" }}>
@@ -18,6 +18,8 @@ export default function RemotesList({ list }) {
                   rotation={orientationToRotation({ alpha, beta, gamma })}
                   width={150}
                   height={150}
+                  scale={scale}
+                  color={color}
                 />
               </Suspense>
               <ul>
