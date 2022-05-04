@@ -53,6 +53,7 @@ class QRCodeDisplay extends HTMLElement {
         text: this.getAttribute("data"),
         width: parseInt(this.getAttribute("width")) || 200,
         height: parseInt(this.getAttribute("height")) || 200,
+        colorDark: "#900000",
       });
       /* eslint-enable */
       const img = this.shadowRoot.querySelector(".build img");
