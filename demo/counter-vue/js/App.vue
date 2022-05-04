@@ -1,7 +1,7 @@
 <template>
   <div>
-    <master v-if="mode === 'master'" key="master" />
-    <remote v-if="mode === 'remote'" key="remote" />
+    <Master v-if="mode === 'master'" key="master" />
+    <Remote v-if="mode === 'remote'" key="remote" />
     <footer-display from="2022" :to="new Date().getFullYear()" />
   </div>
 </template>

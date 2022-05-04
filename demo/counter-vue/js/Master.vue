@@ -4,7 +4,7 @@
     <qrcode-display
       width="160"
       height="160"
-      :data="`makeRemotePeerUrl(peerId)`"
+      :data="makeRemotePeerUrl(peerId)"
       v-if="peerId"
     ></qrcode-display>
     <OpenRemote :peerId="peerId" />
