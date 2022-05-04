@@ -10,6 +10,20 @@ export function remotesListReducer(state, { data, id }) {
             gamma: data.gamma,
           });
           break;
+        case "PING_DOWN":
+          acc.push({
+            ...cur,
+            scale: 1.1,
+            color: "pink",
+          });
+          break;
+        case "PING_UP":
+          acc.push({
+            ...cur,
+            scale: 1,
+            color: "#900000",
+          });
+          break;
         case "REMOTE_SET_NAME":
           acc.push({
             ...cur,

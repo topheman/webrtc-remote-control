@@ -18,6 +18,7 @@ export default function Remote() {
     // setName
   ] = useSessionStorage("remote-name", "");
   const [errors, setErrors] = useState(null);
+  const [phoneScale, setPhoneScale] = useState(1);
 
   const { ready, api, peer, humanizeError } = usePeer();
 
@@ -99,6 +100,26 @@ export default function Remote() {
           rotation={orientationToRotation(orientation, -1)}
           width="100%"
           height={300}
+          colorHover="pink"
+          scale={phoneScale}
+          onPointerDown={() => {
+            setPhoneScale(1.3);
+            if (ready) {
+              api.send({ type: "PING_DOWN" });
+            }
+          }}
+          onPointerUp={() => {
+            setPhoneScale(1);
+            if (ready) {
+              api.send({ type: "PING_UP" });
+            }
+          }}
+          onPointerLeave={() => {
+            setPhoneScale(1);
+            if (ready) {
+              api.send({ type: "PING_UP" });
+            }
+          }}
         />
       </Suspense>
       {!orientation ? (
