@@ -17,6 +17,7 @@
     </p>
     <remotes-list :data="remotesList"></remotes-list>
     <console-display :data="reversedLogs" />
+    <DirectLinkToSource mode="master" />
   </div>
 </template>
 
@@ -31,6 +32,7 @@ import "../../shared/js/components/remotes-list";
 import "../../shared/js/components/console-display";
 
 import OpenRemote from "./OpenRemote.vue";
+import DirectLinkToSource from "./DirectLinkToSource.vue";
 
 import {
   persistCountersToStorage,
@@ -54,7 +56,7 @@ function makeRemotePeerUrl(peerId) {
 }
 
 export default {
-  components: { OpenRemote },
+  components: { OpenRemote, DirectLinkToSource },
   setup() {
     const { logs, logger } = useLogger([]);
     const peerId = ref(null);

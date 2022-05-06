@@ -17,6 +17,7 @@
       WebRTC.
     </p>
     <console-display :data="reversedLogs" />
+    <DirectLinkToSource mode="remote" />
   </div>
 </template>
 
@@ -30,11 +31,12 @@ import "../../shared/js/components/console-display";
 
 import RemoteCountControl from "./RemoteCountControl.vue";
 import RemoteNameControl from "./RemoteNameControl.vue";
+import DirectLinkToSource from "./DirectLinkToSource.vue";
 
 import { useLogger } from "./common";
 
 export default {
-  components: { RemoteCountControl, RemoteNameControl },
+  components: { RemoteCountControl, RemoteNameControl, DirectLinkToSource },
   setup() {
     const { logs, logger } = useLogger([]);
     const peerId = ref(null);
