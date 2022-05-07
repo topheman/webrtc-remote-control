@@ -64,3 +64,42 @@ npx lerna add react vue --scope=@webrtc-remote-control/demo
 You can pass environment variables at build time **before publish** via microbundle - [see docs](https://github.com/developit/microbundle#defining-build-time-constants).
 
 This is currently used to create production (minified) and development (unminified) versions of the UMD builds.
+
+## https
+
+WebRTC (and other APIs like the accelerometer) only work on secure origins (localhost is considered secure). The app will work in development if you test it on `localhost` (which is considered secure by browsers), on multiple tabs.
+
+However, if you try to access the app from your local ip (like 192.168.1.1) from your laptop or your mobile, it won't work, since the domain will be recognized as unsecure.
+
+So to test on multiple devices, you'll need to tunnel the app with a utility like [localhost.run](https://localhost.run/) that will open an ssh tunnel and forward traffic on https.
+
+Some tasks are available:
+
+- `npm run dev:forward`: same as `npm run dev` with forwarding
+- `npm run preview:forward`: same as `npm run preview` with forwarding (you have to build before)
+- `npm run demo:forward`: will forward `localhost:3000`
+
+The public https temporary address will be outputted on your terminal (keep in mind you won't access your website through your local network but through the internet, which can take longer - use that only to test WebRTC on mobile devices).
+
+## e2e tests
+
+In the [demo](demo#readme), you'll find a version of the counter app for each implementation of webrtc-remote-control (vanilla, react, vue). The UI relies on the same web-components.
+
+The exact same [test suite](demo/__integration__/) runs on each counter app. If you want to contribute and add support for your framework of choice:
+
+- add the implementation of webrtc-remote-control for your framework
+- make a counter app (using the existing web-components)
+- ensure the tests pass
+
+## PeerJS
+
+[PeerJS](https://peerjs.com/) is a wrapper around the WebRTC browser's APIs. It provides a signaling server for free (which means you don't have to setup any backend server).
+
+Thanks to PeerJS, you don't have to bother directly about:
+
+- the **signaling server** - you already have one for free which relies on websocket
+- issue and exchange **offers** and **answers** (<abbr title="Session Description Protocol format">SDP</abbr> session description)
+- exchange <abbr title="Interactive Connectivity Establishment">ICE</abbr> candidates through the signaling server
+
+> ICE stands for Interactive Connectivity Establishment , its a techniques used in NAT( network address translator ) for establishing communication for VOIP, peer-peer, instant-messaging, and other kind of interactive media.
+> Typically ice candidate provides the information about the ipaddress and port from where the data is going to be exchanged.
