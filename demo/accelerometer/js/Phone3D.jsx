@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import PropTypes from "prop-types";
 
+import { usePhoneColor } from "./color";
+
 function Box({ color, ...props }) {
   // This reference gives us direct access to the THREE.Mesh object
   const ref = useRef();
@@ -26,7 +28,7 @@ export default function Phone3D({
   width,
   height,
   rotation,
-  color,
+  peerId,
   colorHover,
   scale,
   onPointerEnter,
@@ -36,6 +38,7 @@ export default function Phone3D({
 }) {
   const [, y, z] = rotation;
   const [hover, setHover] = useState(false);
+  const phoneColor = usePhoneColor(peerId);
   return (
     <div
       style={{
@@ -55,7 +58,7 @@ export default function Phone3D({
         <Box
           position={[0, 0, 0]}
           rotation={[y, z, 0]}
-          color={hover ? colorHover : color}
+          color={hover ? colorHover : phoneColor}
           scale={scale}
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
@@ -86,7 +89,7 @@ Phone3D.propTypes = {
   width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   rotation: PropTypes.arrayOf(PropTypes.number),
-  color: PropTypes.string,
+  peerId: PropTypes.string,
   colorHover: PropTypes.string,
   scale: PropTypes.number,
   onPointerEnter: PropTypes.func,

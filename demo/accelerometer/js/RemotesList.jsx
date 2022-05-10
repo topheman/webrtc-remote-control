@@ -18,6 +18,7 @@ export default function RemotesList({ list }) {
                   rotation={orientationToRotation({ alpha, beta, gamma })}
                   width={150}
                   height={150}
+                  peerId={peerId}
                   scale={scale}
                   color={color}
                 />

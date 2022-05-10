@@ -100,6 +100,7 @@ export default function Remote() {
           rotation={orientationToRotation(orientation, -1)}
           width="100%"
           height={300}
+          peerId={peerId}
           colorHover="pink"
           scale={phoneScale}
           onPointerDown={() => {
