@@ -1,3 +1,7 @@
+// eslint-disable-next-line no-underscore-dangle
+export const __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__ =
+  "__HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__";
+
 export function makeStoreAccessor(
   sessionStorageKey = "webrtc-remote-control-peer-id"
 ) {

@@ -1,9 +1,27 @@
 /* eslint-disable import/no-relative-packages,import/no-extraneous-dependencies */
 import EventEmitter from "eventemitter3";
 
-import { makeConnectionFilterUtilities } from "../../shared/common";
+import {
+  makeConnectionFilterUtilities,
+  __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__,
+} from "../../shared/common";
 
 export { prepareUtils } from "../../shared/common";
+
+function startLongPolling(conn, pingInterval = 1000) {
+  const timer = setInterval(() => {
+    console.log(new Date(), conn.peer);
+    if (conn) {
+      conn.send({
+        type: __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__,
+        time: new Date(),
+      });
+    }
+  }, pingInterval);
+  return function cancelLongPolling() {
+    clearInterval(timer);
+  };
+}
 
 function makePeerConnection(peer, masterPeerId, ee, onConnectionOpened) {
   const { connMetadata } = makeConnectionFilterUtilities();
@@ -52,7 +70,9 @@ export default function prepare({
         ) => {
           conn = null;
           conn = makePeerConnection(peer, masterPeerId, ee, onConnectionOpened);
+          const cancelLongPolling = startLongPolling(conn);
           conn.on("close", () => {
+            cancelLongPolling();
             ee.emit("remote.disconnect", { id: peer.id });
             createPeerConnectionWithReconnectOnClose(() => {
               ee.emit("remote.reconnect", { id: peer.id });
