@@ -3,12 +3,13 @@ import EventEmitter from "eventemitter3";
 
 import {
   makeConnectionFilterUtilities,
+  PING_INTERVAL,
   __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__,
 } from "../../shared/common";
 
 export { prepareUtils } from "../../shared/common";
 
-function startLongPolling(conn, pingInterval = 1000) {
+function startLongPolling(conn, pingInterval = PING_INTERVAL) {
   const timer = setInterval(() => {
     console.log(new Date(), conn.peer);
     if (conn) {
@@ -93,6 +94,16 @@ export default function prepare({
             }
           };
           window.addEventListener("beforeunload", onBeforeUnloadPeerDisconnect);
+          // todo refactor 👇
+          window.addEventListener("visibilitychange", () => {
+            if (conn) {
+              conn.send({
+                type: "VISIBILITY_CHANGE",
+                "document.hidden": document.hidden,
+              });
+              // todo should send a "PAUSE" message
+            }
+          });
         });
       });
     },

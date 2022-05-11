@@ -2,6 +2,8 @@
 export const __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__ =
   "__HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__";
 
+export const PING_INTERVAL = 1000;
+
 export function makeStoreAccessor(
   sessionStorageKey = "webrtc-remote-control-peer-id"
 ) {

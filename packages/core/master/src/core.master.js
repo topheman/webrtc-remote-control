@@ -1,6 +1,8 @@
 /* eslint-disable import/no-relative-packages,import/no-extraneous-dependencies */
 import EventEmitter from "eventemitter3";
 
+import { __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__ } from "../../shared/common";
+
 export { prepareUtils } from "../../shared/common";
 
 export default function prepare({
@@ -17,6 +19,8 @@ export default function prepare({
       return new Promise((res) => {
         const ee = new EventEmitter();
         const connections = [];
+        const pollingData = new Map();
+        window.pollingData = pollingData; // todo remove
         const wrcMaster = {
           sendTo(id, payload) {
             const conn = connections.find(
@@ -53,11 +57,19 @@ export default function prepare({
           } else {
             connections.push(conn);
           }
+          // use peer as key and array as a reference we can mutate
+          pollingData.set(conn.peer, []);
           console.log("connections", connections);
           conn.on("open", () => {
+            pollingData.get(conn.peer).push(new Date());
             ee.emit("remote.connect", { id: conn.peer });
           });
           conn.on("data", (data) => {
+            if (data?.type === __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__) {
+              // console.log("POLLING", data.time);
+              pollingData.get(conn.peer).push(new Date(data.time));
+              return;
+            }
             ee.emit("data", { id: conn.peer, from: "remote" }, data);
           });
           conn.on("close", () => {
