@@ -1,16 +1,20 @@
 /* eslint-disable no-plusplus */
 // import { processPollingData } from "./core.master.utils";
 
-function timeSeries(nb = 0) {
+function timeSeries(nb = 0, startIndex = 0) {
   const originalTime = new Date("2022-05-08T10:00:00.000Z");
   const result = [];
-  for (let i = 0; i < nb; i++) {
+  for (let i = startIndex; i < startIndex + nb; i++) {
     result.push(new Date(originalTime.getTime() + 1000 * i));
   }
   return result;
 }
 
-function mockData({ connNb = 1, pollingNb = 1, disconnect } = {}) {
+function mockData(
+  connNb = 1,
+  pollingData = timeSeries(1),
+  { disconnect } = {}
+) {
   const connections = new Array(connNb).fill(0).map((_, index) => ({
     peer: index,
     disconnect: () => {
@@ -20,7 +24,7 @@ function mockData({ connNb = 1, pollingNb = 1, disconnect } = {}) {
   }));
   const pollingDataPrepared = connections.map(({ peer }) => [
     peer,
-    timeSeries(pollingNb),
+    pollingData,
   ]);
   return {
     connections,
@@ -44,7 +48,7 @@ describe("core.master.utils", () => {
           connections: [{ peer: 0, disconnect: expect.any(Function) }],
           pollingData: new Map([[0, [new Date("2022-05-08T10:00:00.000Z")]]]),
         });
-        expect(mockData({ connNb: 2, pollingNb: 3 })).toMatchObject({
+        expect(mockData(2, timeSeries(3))).toMatchObject({
           connections: [
             { peer: 0, disconnect: expect.any(Function) },
             { peer: 1, disconnect: expect.any(Function) },
@@ -68,12 +72,36 @@ describe("core.master.utils", () => {
             ],
           ]),
         });
+        expect(
+          mockData(1, [
+            ...timeSeries(2),
+            "PAUSE",
+            ...timeSeries(2, 2),
+            "RESUME",
+            ...timeSeries(2, 4),
+          ])
+        ).toMatchObject({
+          connections: [{ peer: 0, disconnect: expect.any(Function) }],
+          pollingData: new Map([
+            [
+              0,
+              [
+                new Date("2022-05-08T10:00:00.000Z"),
+                new Date("2022-05-08T10:00:01.000Z"),
+                "PAUSE",
+                new Date("2022-05-08T10:00:02.000Z"),
+                new Date("2022-05-08T10:00:03.000Z"),
+                "RESUME",
+                new Date("2022-05-08T10:00:04.000Z"),
+                new Date("2022-05-08T10:00:05.000Z"),
+              ],
+            ],
+          ]),
+        });
       });
       it("check mockData with mocked disconnect", () => {
         const disconnect = jest.fn();
-        const { connections } = mockData({
-          connNb: 2,
-          pollingNb: 3,
+        const { connections } = mockData(2, timeSeries(3), {
           disconnect,
         });
         connections[1].disconnect();
