@@ -7,10 +7,12 @@ export function usePollingData() {
     initPollingData: (peerId) => pollingData.set(peerId, []),
     pushPollingData: (peerId, data) => {
       const date = new Date(data?.payload);
-      // todo make it safe if get(peerId) does not exists
-      pollingData
-        .get(peerId)
-        .push(Number.isNaN(date.getTime()) ? data.payload : date);
+      const result = Number.isNaN(date.getTime()) ? data.payload : date;
+      if (pollingData.has(peerId)) {
+        pollingData.get(peerId).push(result);
+      } else {
+        pollingData.set(peerId, [result]);
+      }
     },
     pollingData, // todo expose processed data
   };

@@ -71,7 +71,7 @@ export default function prepare({
             if (isMessagePrivate(data)) {
               if (data.action === "POLLING") {
                 pushPollingData(conn.peer, data);
-                console.log(data.payload, conn.peer);
+                // console.log(data.payload, conn.peer);
               }
               return;
             }
