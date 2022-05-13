@@ -1,7 +1,7 @@
 /* eslint-disable import/no-relative-packages,import/no-extraneous-dependencies */
 import EventEmitter from "eventemitter3";
 
-import { __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__ } from "../../shared/common";
+import { isMessagePrivate } from "../../shared/common";
 
 import { usePollingData } from "./core.master.utils";
 
@@ -68,7 +68,7 @@ export default function prepare({
             ee.emit("remote.connect", { id: conn.peer });
           });
           conn.on("data", (data) => {
-            if (data?.type === __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__) {
+            if (isMessagePrivate(data)) {
               if (data.action === "POLLING") {
                 pushPollingData(conn.peer, data);
                 console.log(data.payload, conn.peer);
