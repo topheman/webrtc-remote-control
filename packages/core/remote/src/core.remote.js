@@ -1,28 +1,11 @@
 /* eslint-disable import/no-relative-packages,import/no-extraneous-dependencies */
 import EventEmitter from "eventemitter3";
 
-import {
-  makeConnectionFilterUtilities,
-  PING_INTERVAL,
-  __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__,
-} from "../../shared/common";
+import { makeConnectionFilterUtilities } from "../../shared/common";
+
+import { startLongPolling } from "./core.remote.utils";
 
 export { prepareUtils } from "../../shared/common";
-
-function startLongPolling(conn, pingInterval = PING_INTERVAL) {
-  const timer = setInterval(() => {
-    console.log(new Date(), conn.peer);
-    if (conn) {
-      conn.send({
-        type: __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__,
-        time: new Date(),
-      });
-    }
-  }, pingInterval);
-  return function cancelLongPolling() {
-    clearInterval(timer);
-  };
-}
 
 function makePeerConnection(peer, masterPeerId, ee, onConnectionOpened) {
   const { connMetadata } = makeConnectionFilterUtilities();
@@ -46,6 +29,7 @@ export default function prepare({
   humanizeError,
   getPeerId,
   setPeerIdToSessionStorage,
+  // todo accept polling = POLLING_ENABLED = true (handle polling=true in master when false on remote)
 }) {
   return {
     humanizeError,

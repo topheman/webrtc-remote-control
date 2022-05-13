@@ -1,7 +1,7 @@
 /* eslint-disable import/no-relative-packages,import/no-extraneous-dependencies */
 import EventEmitter from "eventemitter3";
 
-import { __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__ } from "../../shared/common";
+import { __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__ } from "../../shared/common";
 
 export { prepareUtils } from "../../shared/common";
 
@@ -65,9 +65,11 @@ export default function prepare({
             ee.emit("remote.connect", { id: conn.peer });
           });
           conn.on("data", (data) => {
-            if (data?.type === __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__) {
+            if (data?.type === __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__) {
               // console.log("POLLING", data.time);
-              pollingData.get(conn.peer).push(new Date(data.time));
+              if (data?.action === "POLLING") {
+                pollingData.get(conn.peer).push(new Date(data.payload));
+              }
               return;
             }
             ee.emit("data", { id: conn.peer, from: "remote" }, data);

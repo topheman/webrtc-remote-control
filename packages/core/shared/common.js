@@ -1,8 +1,9 @@
 // eslint-disable-next-line no-underscore-dangle
-export const __HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__ =
-  "__HEARTBEAT_DO_NOT_CHANGE_THIS_VARIABLE__";
+export const __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__ =
+  "__WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__";
 
 export const PING_INTERVAL = 1000;
+export const CONN_TIMEOUT = 45000;
 
 export function makeStoreAccessor(
   sessionStorageKey = "webrtc-remote-control-peer-id"
