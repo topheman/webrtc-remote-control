@@ -1,7 +1,10 @@
 /* eslint-disable import/no-relative-packages,import/no-extraneous-dependencies */
 import EventEmitter from "eventemitter3";
 
-import { makeConnectionFilterUtilities } from "../../shared/common";
+import {
+  makeConnectionFilterUtilities,
+  __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__,
+} from "../../shared/common";
 
 import { startLongPolling } from "./core.remote.utils";
 
@@ -78,16 +81,18 @@ export default function prepare({
             }
           };
           window.addEventListener("beforeunload", onBeforeUnloadPeerDisconnect);
-          // todo refactor 👇
-          window.addEventListener("visibilitychange", () => {
-            if (conn) {
-              conn.send({
-                type: "VISIBILITY_CHANGE",
-                "document.hidden": document.hidden,
-              });
-              // todo should send a "PAUSE" message
+          window.addEventListener(
+            "visibilitychange",
+            function onVisibilityChange() {
+              if (conn) {
+                conn.send({
+                  type: __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__,
+                  action: "POLLING",
+                  payload: document.hidden ? "PAUSE" : "RESUME",
+                });
+              }
             }
-          });
+          );
         });
       });
     },

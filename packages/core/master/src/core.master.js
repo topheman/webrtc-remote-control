@@ -3,6 +3,8 @@ import EventEmitter from "eventemitter3";
 
 import { __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__ } from "../../shared/common";
 
+import { usePollingData } from "./core.master.utils";
+
 export { prepareUtils } from "../../shared/common";
 
 export default function prepare({
@@ -19,7 +21,8 @@ export default function prepare({
       return new Promise((res) => {
         const ee = new EventEmitter();
         const connections = [];
-        const pollingData = new Map();
+        const { initPollingData, pushPollingData, pollingData } =
+          usePollingData();
         window.pollingData = pollingData; // todo remove
         const wrcMaster = {
           sendTo(id, payload) {
@@ -58,17 +61,17 @@ export default function prepare({
             connections.push(conn);
           }
           // use peer as key and array as a reference we can mutate
-          pollingData.set(conn.peer, []);
+          initPollingData(conn.peer);
           console.log("connections", connections);
           conn.on("open", () => {
-            pollingData.get(conn.peer).push(new Date());
+            pushPollingData(conn.peer, { payload: new Date() });
             ee.emit("remote.connect", { id: conn.peer });
           });
           conn.on("data", (data) => {
             if (data?.type === __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__) {
-              // console.log("POLLING", data.time);
-              if (data?.action === "POLLING") {
-                pollingData.get(conn.peer).push(new Date(data.payload));
+              if (data.action === "POLLING") {
+                pushPollingData(conn.peer, data);
+                console.log(data.payload);
               }
               return;
             }

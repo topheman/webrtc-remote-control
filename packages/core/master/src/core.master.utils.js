@@ -1,6 +1,20 @@
 // eslint-disable-next-line import/no-relative-packages
 import { PING_INTERVAL } from "../../shared/common";
 
+export function usePollingData() {
+  const pollingData = new Map();
+  return {
+    initPollingData: (peerId) => pollingData.set(peerId, []),
+    pushPollingData: (peerId, data) => {
+      const date = new Date(data?.payload);
+      pollingData
+        .get(peerId)
+        .push(Number.isNaN(date.getTime()) ? data.payload : date);
+    },
+    pollingData, // todo expose processed data
+  };
+}
+
 export function processPollingData(
   pollingData,
   connections,
