@@ -1,12 +1,9 @@
 /* eslint-disable import/no-relative-packages,import/no-extraneous-dependencies */
 import EventEmitter from "eventemitter3";
 
-import {
-  makeConnectionFilterUtilities,
-  __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__,
-} from "../../shared/common";
+import { makeConnectionFilterUtilities } from "../../shared/common";
 
-import { startLongPolling } from "./core.remote.utils";
+import { startLongPolling, onVisibilityChange } from "./core.remote.utils";
 
 export { prepareUtils } from "../../shared/common";
 
@@ -81,17 +78,8 @@ export default function prepare({
             }
           };
           window.addEventListener("beforeunload", onBeforeUnloadPeerDisconnect);
-          window.addEventListener(
-            "visibilitychange",
-            function onVisibilityChange() {
-              if (conn) {
-                conn.send({
-                  type: __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__,
-                  action: "POLLING",
-                  payload: document.hidden ? "PAUSE" : "RESUME",
-                });
-              }
-            }
+          window.addEventListener("visibilitychange", () =>
+            onVisibilityChange(conn)
           );
         });
       });

@@ -4,7 +4,6 @@ import {
   __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__,
 } from "../../shared/common";
 
-// todo makeStartLongPolling
 export function startLongPolling(conn, pingInterval = PING_INTERVAL) {
   const timer = setInterval(() => {
     console.log(new Date(), conn.peer);
@@ -19,4 +18,14 @@ export function startLongPolling(conn, pingInterval = PING_INTERVAL) {
   return function cancelLongPolling() {
     clearInterval(timer);
   };
+}
+
+export function onVisibilityChange(conn) {
+  if (conn) {
+    conn.send({
+      type: __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__,
+      action: "POLLING",
+      payload: document.hidden ? "PAUSE" : "RESUME",
+    });
+  }
 }

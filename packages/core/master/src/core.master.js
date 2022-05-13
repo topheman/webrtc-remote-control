@@ -71,7 +71,7 @@ export default function prepare({
             if (data?.type === __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__) {
               if (data.action === "POLLING") {
                 pushPollingData(conn.peer, data);
-                console.log(data.payload);
+                console.log(data.payload, conn.peer);
               }
               return;
             }
