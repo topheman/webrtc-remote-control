@@ -1,5 +1,5 @@
 /* eslint-disable no-plusplus */
-// import { processPollingData } from "./core.master.utils";
+import { processPollingData } from "./core.master.utils";
 
 function timeSeries(nb = 0, startIndex = 0) {
   const originalTime = new Date("2022-05-08T10:00:00.000Z");
@@ -13,7 +13,7 @@ function timeSeries(nb = 0, startIndex = 0) {
 function mockData(
   connNb = 1,
   pollingData = timeSeries(1),
-  { disconnect } = {}
+  { disconnect = () => {} } = {}
 ) {
   const connections = new Array(connNb).fill(0).map((_, index) => ({
     peer: index,
@@ -106,6 +106,64 @@ describe("core.master.utils", () => {
         });
         connections[1].disconnect();
         expect(disconnect).toHaveBeenCalledWith(1);
+      });
+    });
+    describe("reduceData", () => {
+      it("should remove any Date() below PAUSE if no RESUME above (and at least one Date above)", () => {
+        const { pollingData } = mockData(1, [
+          ...timeSeries(2),
+          "PAUSE",
+          ...timeSeries(2, 2),
+        ]);
+        processPollingData(pollingData);
+        expect(pollingData).toMatchObject(
+          new Map([
+            [
+              0,
+              [
+                "PAUSE",
+                new Date("2022-05-08T10:00:02.000Z"),
+                new Date("2022-05-08T10:00:03.000Z"),
+              ],
+            ],
+          ])
+        );
+      });
+      it("should not remove any Date() below RESUME if no PAUSE above (and at least one Date above)", () => {
+        const { pollingData } = mockData(1, [
+          ...timeSeries(2),
+          "RESUME",
+          ...timeSeries(2, 2),
+        ]);
+        processPollingData(pollingData);
+        expect(pollingData).toMatchObject(
+          new Map([
+            [
+              0,
+              [
+                "RESUME",
+                new Date("2022-05-08T10:00:02.000Z"),
+                new Date("2022-05-08T10:00:03.000Z"),
+              ],
+            ],
+          ])
+        );
+      });
+      it("should remove first entries and leave the last 3", () => {
+        const { pollingData } = mockData(1, [...timeSeries(10)]);
+        processPollingData(pollingData);
+        expect(pollingData).toMatchObject(
+          new Map([
+            [
+              0,
+              [
+                new Date("2022-05-08T10:00:07.000Z"),
+                new Date("2022-05-08T10:00:08.000Z"),
+                new Date("2022-05-08T10:00:09.000Z"),
+              ],
+            ],
+          ])
+        );
       });
     });
   });
