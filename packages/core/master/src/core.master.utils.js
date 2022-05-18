@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-relative-packages
-import { PING_INTERVAL, CONN_TIMEOUT } from "../../shared/common";
+import { CONN_TIMEOUT } from "../../shared/common";
 
 function dateOrString(string) {
   const date = new Date(string);
@@ -50,12 +50,44 @@ function reduceData(data = []) {
   return reducedData;
 }
 
+function shouldDisconnect(
+  data = [],
+  { connTimeout = CONN_TIMEOUT, now = new Date() } = {}
+) {
+  const result = data.reduce(
+    (acc, cur) => {
+      switch (cur) {
+        case "PAUSE":
+          acc.pause = true;
+          delete acc.date;
+          break;
+        case "RESUME":
+          acc.pause = false;
+          delete acc.date;
+          break;
+        default:
+          acc.date = cur;
+      }
+      return acc;
+    },
+    {
+      pause: false,
+      date: undefined,
+    }
+  );
+  if (result.pause || !result.date) {
+    return false;
+  }
+  if (new Date(result.date.getTime() + connTimeout) < now) {
+    return true;
+  }
+  return false;
+}
+
 export function processPollingData(
   pollingData,
   connections,
   {
-    // eslint-disable-next-line no-unused-vars
-    pingInterval = PING_INTERVAL,
     // eslint-disable-next-line no-unused-vars
     connTimeout = CONN_TIMEOUT,
     // eslint-disable-next-line no-unused-vars
@@ -67,10 +99,14 @@ export function processPollingData(
     // avoid having large object in memory
     console.log(pollingData.get(peerId));
     const reducedData = reduceData(pollingData.get(peerId));
-    pollingData.set(peerId, reducedData);
+    if (shouldDisconnect(reducedData, { connTimeout, now })) {
+      const conn = connections.find(
+        (currentConn) => currentConn.peer === peerId
+      );
+      conn.disconnect();
+      pollingData.delete(peerId);
+    } else {
+      pollingData.set(peerId, reducedData);
+    }
   });
-  // todo next
-  // if remote idle to long conn.disconnect + make sure to stop tracking the connection
-  // remove the entry in pollingData
-  // pollingData.get(peerId) should also get removed when the conn is disconnected any other way
 }

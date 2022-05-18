@@ -1,11 +1,16 @@
 /* eslint-disable no-plusplus */
 import { processPollingData } from "./core.master.utils";
 
+const ORIGINAL_TIME = new Date("2022-05-08T10:00:00.000Z");
+
+function getNow(ms = 0) {
+  return new Date(ORIGINAL_TIME.getTime() + ms);
+}
+
 function timeSeries(nb = 0, startIndex = 0) {
-  const originalTime = new Date("2022-05-08T10:00:00.000Z");
   const result = [];
   for (let i = startIndex; i < startIndex + nb; i++) {
-    result.push(new Date(originalTime.getTime() + 1000 * i));
+    result.push(new Date(ORIGINAL_TIME.getTime() + 1000 * i));
   }
   return result;
 }
@@ -109,13 +114,15 @@ describe("core.master.utils", () => {
       });
     });
     describe("reduceData", () => {
+      const connTimeout = 45000;
+      const now = getNow(15000); // wont timeout
       it("should remove any Date() below PAUSE if no RESUME above (and at least one Date above)", () => {
-        const { pollingData } = mockData(1, [
+        const { pollingData, connections } = mockData(1, [
           ...timeSeries(2),
           "PAUSE",
           ...timeSeries(2, 2),
         ]);
-        processPollingData(pollingData);
+        processPollingData(pollingData, connections, { now, connTimeout });
         expect(pollingData).toMatchObject(
           new Map([
             [
@@ -130,12 +137,12 @@ describe("core.master.utils", () => {
         );
       });
       it("should not remove any Date() below RESUME if no PAUSE above (and at least one Date above)", () => {
-        const { pollingData } = mockData(1, [
+        const { pollingData, connections } = mockData(1, [
           ...timeSeries(2),
           "RESUME",
           ...timeSeries(2, 2),
         ]);
-        processPollingData(pollingData);
+        processPollingData(pollingData, connections, { now, connTimeout });
         expect(pollingData).toMatchObject(
           new Map([
             [
@@ -150,8 +157,8 @@ describe("core.master.utils", () => {
         );
       });
       it("should remove first entries and leave the last 3", () => {
-        const { pollingData } = mockData(1, [...timeSeries(10)]);
-        processPollingData(pollingData);
+        const { pollingData, connections } = mockData(1, [...timeSeries(10)]);
+        processPollingData(pollingData, connections, { now, connTimeout });
         expect(pollingData).toMatchObject(
           new Map([
             [
@@ -164,6 +171,99 @@ describe("core.master.utils", () => {
             ],
           ])
         );
+      });
+    });
+    describe("disconnect", () => {
+      const connTimeout = 45000;
+      const now = getNow(60000); // will timeout
+      it("should disconnect if last entry is older than `connTimeout` without PAUSE or RESUME", () => {
+        const disconnect = jest.fn();
+        const { pollingData, connections } = mockData(1, timeSeries(3), {
+          disconnect,
+        });
+        processPollingData(pollingData, connections, { now, connTimeout });
+        expect(disconnect).toHaveBeenCalledTimes(1);
+        expect(disconnect).toHaveBeenCalledWith(0);
+        expect(pollingData.has(0)).toBeFalsy();
+      });
+      it("should NOT disconnect if last entry is RESUME", () => {
+        const disconnect = jest.fn();
+        const { pollingData, connections } = mockData(
+          1,
+          [...timeSeries(2), "RESUME"],
+          {
+            disconnect,
+          }
+        );
+        processPollingData(pollingData, connections, { now, connTimeout });
+        expect(disconnect).toHaveBeenCalledTimes(0);
+        expect(pollingData.has(0)).toBeTruthy();
+      });
+      it("should NOT disconnect if last entry is RESUME (should work with any previous entries)", () => {
+        const disconnect = jest.fn();
+        const { pollingData, connections } = mockData(
+          1,
+          [...timeSeries(1), "PAUSE", ...timeSeries(1, 1), "RESUME"],
+          {
+            disconnect,
+          }
+        );
+        processPollingData(pollingData, connections, { now, connTimeout });
+        expect(disconnect).toHaveBeenCalledTimes(0);
+        expect(pollingData.has(0)).toBeTruthy();
+      });
+      it("should NOT disconnect if last entry is PAUSE", () => {
+        const disconnect = jest.fn();
+        const { pollingData, connections } = mockData(
+          1,
+          [...timeSeries(2), "PAUSE"],
+          {
+            disconnect,
+          }
+        );
+        processPollingData(pollingData, connections, { now, connTimeout });
+        expect(disconnect).toHaveBeenCalledTimes(0);
+        expect(pollingData.has(0)).toBeTruthy();
+      });
+      it("should NOT disconnect if last entry is PAUSE (should work with any previous entries)", () => {
+        const disconnect = jest.fn();
+        const { pollingData, connections } = mockData(
+          1,
+          [...timeSeries(1), "RESUME", ...timeSeries(1, 1), "PAUSE"],
+          {
+            disconnect,
+          }
+        );
+        processPollingData(pollingData, connections, { now, connTimeout });
+        expect(disconnect).toHaveBeenCalledTimes(0);
+        expect(pollingData.has(0)).toBeTruthy();
+      });
+      it("should NOT disconnect if PAUSE is followed by entries older than `connTimeout` (without RESUME)", () => {
+        const disconnect = jest.fn();
+        const { pollingData, connections } = mockData(
+          1,
+          ["PAUSE", ...timeSeries(2)],
+          {
+            disconnect,
+          }
+        );
+        processPollingData(pollingData, connections, { now, connTimeout });
+        expect(disconnect).toHaveBeenCalledTimes(0);
+        expect(pollingData.has(0)).toBeTruthy();
+      });
+      it("should disconnect if RESUME if followed by entries older than `connTimeout` (without PAUSE)", () => {
+        const disconnect = jest.fn();
+        const { pollingData, connections } = mockData(
+          1,
+          ["RESUME", ...timeSeries(2)],
+          {
+            disconnect,
+          }
+        );
+        processPollingData(pollingData, connections, { now, connTimeout });
+        expect(disconnect).toHaveBeenCalledTimes(1);
+        expect(disconnect).toHaveBeenCalledWith(0);
+        expect(pollingData.has(0)).toBeFalsy();
       });
     });
   });

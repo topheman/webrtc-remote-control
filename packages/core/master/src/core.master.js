@@ -78,6 +78,7 @@ export default function prepare({
             ee.emit("data", { id: conn.peer, from: "remote" }, data);
           });
           conn.on("close", () => {
+            // todo remote conn from connections array ?
             ee.emit("remote.disconnect", { id: conn.peer });
           });
         });
