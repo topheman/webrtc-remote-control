@@ -6,16 +6,16 @@ function dateOrString(string) {
   return Number.isNaN(date.getTime()) ? string : date;
 }
 
+// todo refactor rename
 export function usePollingData() {
   const pollingData = new Map();
   return {
-    initPollingData: (peerId) => pollingData.set(peerId, []),
     pushPollingData: (peerId, data) => {
       const result = dateOrString(data?.payload);
       if (pollingData.has(peerId)) {
         pollingData.get(peerId).push(result);
       } else {
-        pollingData.set(peerId, [result]);
+        pollingData.set(peerId, result ? [result] : []);
       }
     },
     pollingData, // todo expose processed data

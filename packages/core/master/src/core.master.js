@@ -21,8 +21,7 @@ export default function prepare({
       return new Promise((res) => {
         const ee = new EventEmitter();
         const connections = [];
-        const { initPollingData, pushPollingData, pollingData } =
-          usePollingData();
+        const { pushPollingData, pollingData } = usePollingData();
         window.pollingData = pollingData; // todo remove
         const wrcMaster = {
           sendTo(id, payload) {
@@ -61,7 +60,7 @@ export default function prepare({
             connections.push(conn);
           }
           // use peer as key and array as a reference we can mutate
-          initPollingData(conn.peer);
+          pushPollingData(conn.peer);
           console.log("connections", connections);
           conn.on("open", () => {
             pushPollingData(conn.peer, { payload: new Date() });
