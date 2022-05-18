@@ -21,7 +21,9 @@ export default function prepare({
       return new Promise((res) => {
         const ee = new EventEmitter();
         const connections = [];
-        const { pushPollingData, pollingData } = usePollingData();
+        const { pushPollingData, startHandlePollingData, pollingData } =
+          usePollingData();
+        startHandlePollingData();
         window.pollingData = pollingData; // todo remove
         const wrcMaster = {
           sendTo(id, payload) {

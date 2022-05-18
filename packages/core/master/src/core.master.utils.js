@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-relative-packages
-import { CONN_TIMEOUT } from "../../shared/common";
+import { CONN_TIMEOUT, PING_INTERVAL } from "../../shared/common";
 
 function dateOrString(string) {
   const date = new Date(string);
@@ -7,7 +7,7 @@ function dateOrString(string) {
 }
 
 // todo refactor rename
-export function usePollingData() {
+export function usePollingData(connections) {
   const pollingData = new Map();
   return {
     pushPollingData: (peerId, data) => {
@@ -17,6 +17,11 @@ export function usePollingData() {
       } else {
         pollingData.set(peerId, result ? [result] : []);
       }
+    },
+    startHandlePollingData: () => {
+      setInterval(() => {
+        processPollingData(pollingData, connections);
+      }, PING_INTERVAL * 2);
     },
     pollingData, // todo expose processed data
   };
@@ -97,7 +102,7 @@ export function processPollingData(
   // cleanup stale data (to avoid very long arrays)
   [...pollingData.keys()].forEach((peerId) => {
     // avoid having large object in memory
-    console.log(pollingData.get(peerId));
+    console.dir(pollingData.get(peerId));
     const reducedData = reduceData(pollingData.get(peerId));
     if (shouldDisconnect(reducedData, { connTimeout, now })) {
       const conn = connections.find(
