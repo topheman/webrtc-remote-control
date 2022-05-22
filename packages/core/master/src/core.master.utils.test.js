@@ -120,7 +120,18 @@ describe("core.master.utils", () => {
         const { pollingData, connections } = mockData(1, [
           ...timeSeries(2),
           "PAUSE",
-          ...timeSeries(2, 2),
+          ...timeSeries(1, 2),
+        ]);
+        processPollingData(pollingData, connections, { now, connTimeout });
+        expect(pollingData).toMatchObject(
+          new Map([[0, ["PAUSE", new Date("2022-05-08T10:00:02.000Z")]]])
+        );
+      });
+      it("should remove any Date() below PAUSE if no RESUME above (and at least one Date above) and only keep the last 2 dates above", () => {
+        const { pollingData, connections } = mockData(1, [
+          ...timeSeries(2),
+          "PAUSE",
+          ...timeSeries(10, 2),
         ]);
         processPollingData(pollingData, connections, { now, connTimeout });
         expect(pollingData).toMatchObject(
@@ -129,8 +140,8 @@ describe("core.master.utils", () => {
               0,
               [
                 "PAUSE",
-                new Date("2022-05-08T10:00:02.000Z"),
-                new Date("2022-05-08T10:00:03.000Z"),
+                new Date("2022-05-08T10:00:10.000Z"),
+                new Date("2022-05-08T10:00:11.000Z"),
               ],
             ],
           ])
@@ -140,7 +151,18 @@ describe("core.master.utils", () => {
         const { pollingData, connections } = mockData(1, [
           ...timeSeries(2),
           "RESUME",
-          ...timeSeries(2, 2),
+          ...timeSeries(1, 2),
+        ]);
+        processPollingData(pollingData, connections, { now, connTimeout });
+        expect(pollingData).toMatchObject(
+          new Map([[0, ["RESUME", new Date("2022-05-08T10:00:02.000Z")]]])
+        );
+      });
+      it("should remove any Date() below RESUME if no PAUSE above (and at least one Date above) and only keep the last 2 dates above", () => {
+        const { pollingData, connections } = mockData(1, [
+          ...timeSeries(2),
+          "RESUME",
+          ...timeSeries(10, 2),
         ]);
         processPollingData(pollingData, connections, { now, connTimeout });
         expect(pollingData).toMatchObject(
@@ -149,8 +171,8 @@ describe("core.master.utils", () => {
               0,
               [
                 "RESUME",
-                new Date("2022-05-08T10:00:02.000Z"),
-                new Date("2022-05-08T10:00:03.000Z"),
+                new Date("2022-05-08T10:00:10.000Z"),
+                new Date("2022-05-08T10:00:11.000Z"),
               ],
             ],
           ])

@@ -3,7 +3,7 @@ export const __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__ =
   "__WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__";
 
 export const PING_INTERVAL = 1000;
-export const CONN_TIMEOUT = 45000;
+export const CONN_TIMEOUT = 10000;
 
 export function isMessagePrivate(data) {
   return data?.type === __WEBRTC_REMOTE_CONTROL_PRIVATE_DATACHANNEL__;

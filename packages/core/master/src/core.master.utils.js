@@ -37,7 +37,8 @@ function reduceData(data = []) {
     pauseIndex > resumeIndex &&
     reducedData.length > pauseIndex + 1
   ) {
-    reducedData = reducedData.slice(pauseIndex);
+    reducedData = reducedData.slice(pauseIndex + 1);
+    reducedData = ["PAUSE", ...reducedData.slice(-2)];
     return reducedData;
   }
   if (
@@ -45,7 +46,8 @@ function reduceData(data = []) {
     resumeIndex > pauseIndex &&
     reducedData.length > resumeIndex + 1
   ) {
-    reducedData = reducedData.slice(resumeIndex);
+    reducedData = reducedData.slice(resumeIndex + 1);
+    reducedData = ["RESUME", ...reducedData.slice(-2)];
     return reducedData;
   }
   // only keep 3 entries at all times
@@ -102,7 +104,7 @@ export function processPollingData(
   // cleanup stale data (to avoid very long arrays)
   [...pollingData.keys()].forEach((peerId) => {
     // avoid having large object in memory
-    console.dir(pollingData.get(peerId));
+    // console.dir(pollingData.get(peerId));
     const reducedData = reduceData(pollingData.get(peerId));
     if (shouldDisconnect(reducedData, { connTimeout, now })) {
       const conn = connections.find(
