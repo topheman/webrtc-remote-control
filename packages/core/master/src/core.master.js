@@ -16,19 +16,17 @@ export default function prepare({
     bindConnection(peer) {
       return new Promise((res) => {
         const ee = new EventEmitter();
-        const connections = [];
+        const connections = new Map();
         const wrcMaster = {
           sendTo(id, payload) {
-            const conn = connections.find(
-              (currentConn) => currentConn.peer === id
-            );
+            const conn = connections.get(id);
             if (conn) {
               return conn.send(payload);
             }
             return null;
           },
           sendAll(payload) {
-            connections.forEach((conn) => {
+            [...connections.values()].forEach((conn) => {
               conn.send(payload);
             });
           },
@@ -45,23 +43,18 @@ export default function prepare({
             return;
           }
           // if this is a reconnect from the same peer, replace connection with the latest one
-          if (connections.findIndex(({ peer: id }) => id === conn.peer) > -1) {
-            const index = connections.findIndex(
-              ({ peer: id }) => id === conn.peer
-            );
-            connections[index] = conn;
-          } else {
-            connections.push(conn);
-          }
-          console.log("connections", connections);
+          connections.set(conn.peer, conn);
           conn.on("open", () => {
             ee.emit("remote.connect", { id: conn.peer });
+            console.log("connections", connections);
           });
           conn.on("data", (data) => {
             ee.emit("data", { id: conn.peer, from: "remote" }, data);
           });
           conn.on("close", () => {
+            connections.delete(conn.peer);
             ee.emit("remote.disconnect", { id: conn.peer });
+            console.log("connections", connections);
           });
         });
       });
