@@ -36,6 +36,7 @@ export default {
           masterPeerId:
             (window.location.hash && window.location.hash.replace("#", "")) ||
             null,
+          sessionStorageKey: "webrtc-remote-control-peer-id-vue",
         }
       );
     });

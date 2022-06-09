@@ -181,31 +181,50 @@ export function givenICloseEveryPages(given, { getAllRemotes, getMasterPage }) {
 
 export function givenIResetSessionStorage(
   given,
+  mode,
   { getAllRemotes, getMasterPage, getMasterPeerId }
 ) {
   given("I reset the sessionStorage of every pages", async () => {
     // remote pages
     for (const getCurrentRemote of getAllRemotes()) {
-      const peerIdInStorage = await getCurrentRemote().page.evaluate(() => {
-        return sessionStorage.getItem("webrtc-remote-control-peer-id");
-      });
+      await getCurrentRemote().page.exposeFunction(
+        "fromPuppeteerGetSessionStorageKey",
+        () => `webrtc-remote-control-peer-id-${mode}`
+      );
+      const peerIdInStorage = await getCurrentRemote().page.evaluate(
+        async () => {
+          const sessionStorageKey =
+            await window.fromPuppeteerGetSessionStorageKey();
+          return sessionStorage.getItem(sessionStorageKey);
+        }
+      );
       // check the correct peerId was stored in sessionStorage
-      expect(peerIdInStorage).toBe(getCurrentRemote().peerId);
+      expect(peerIdInStorage).toContain(getCurrentRemote().peerId);
       // cleanup
-      await getCurrentRemote().page.evaluate(() => {
-        return sessionStorage.removeItem("webrtc-remote-control-peer-id");
+      await getCurrentRemote().page.evaluate(async () => {
+        const sessionStorageKey =
+          await window.fromPuppeteerGetSessionStorageKey();
+        return sessionStorage.removeItem(sessionStorageKey);
       });
     }
 
     // master pages
-    const masterPeerIdInStorage = await getMasterPage().evaluate(() => {
-      return sessionStorage.getItem("webrtc-remote-control-peer-id");
+    await getMasterPage().exposeFunction(
+      "fromPuppeteerGetSessionStorageKey",
+      () => `webrtc-remote-control-peer-id-${mode}`
+    );
+    const masterPeerIdInStorage = await getMasterPage().evaluate(async () => {
+      const sessionStorageKey =
+        await window.fromPuppeteerGetSessionStorageKey();
+      return sessionStorage.getItem(sessionStorageKey);
     });
     // check the correct peerId was stored in sessionStorage
     expect(masterPeerIdInStorage).toBe(getMasterPeerId());
     // cleanup
-    await getMasterPage().evaluate(() => {
-      return sessionStorage.removeItem("webrtc-remote-control-peer-id");
+    await getMasterPage().evaluate(async () => {
+      const sessionStorageKey =
+        await window.fromPuppeteerGetSessionStorageKey();
+      return sessionStorage.removeItem(sessionStorageKey);
     });
   });
 }

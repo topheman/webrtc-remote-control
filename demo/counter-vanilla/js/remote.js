@@ -16,7 +16,9 @@ export function setRemoteNameToSessionStorage(remoteName) {
 }
 
 async function init() {
-  const { bindConnection, getPeerId, humanizeError } = prepare(prepareUtils());
+  const { bindConnection, getPeerId, humanizeError } = prepare(
+    prepareUtils({ sessionStorageKey: "webrtc-remote-control-peer-id-vanilla" })
+  );
 
   const initialName = getRemoteNameFromSessionStorage();
   const { showLoader, setConnected, setEvents, setConsoleDisplay, setErrors } =

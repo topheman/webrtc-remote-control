@@ -33,7 +33,7 @@ describe.each(getModes())("[%s]", (mode) => {
     jest.retryTimes(3);
     test("Basic", ({ given }) => {
       const api = setupBackground(given, mode);
-      givenIResetSessionStorage(given, api);
+      givenIResetSessionStorage(given, mode, api);
       givenICloseEveryPages(given, api);
     });
     test("Send events", async ({ given }) => {
@@ -42,14 +42,14 @@ describe.each(getModes())("[%s]", (mode) => {
       giventIClickTimesOnRemote(given, api);
       giventIClickTimesOnRemote(given, api);
       givenRemoteListShouldContain(given, api);
-      givenIResetSessionStorage(given, api);
+      givenIResetSessionStorage(given, mode, api);
       givenICloseEveryPages(given, api);
     });
     test("Reconnection", async ({ given }) => {
       const api = setupBackground(given, mode);
       givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(given, api);
       givenIReloadMasterThenRemotesShouldReconnect(given, api);
-      givenIResetSessionStorage(given, api);
+      givenIResetSessionStorage(given, mode, api);
       givenICloseEveryPages(given, api);
     });
   });

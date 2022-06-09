@@ -31,6 +31,7 @@ export default function App() {
             (window.location.hash && window.location.hash.replace("#", "")) ||
             null
           }
+          sessionStorageKey="webrtc-remote-control-peer-id-accelerometer"
         >
           {mode === "remote" ? <Remote /> : <Master />}
         </WebRTCRemoteControlProvider>

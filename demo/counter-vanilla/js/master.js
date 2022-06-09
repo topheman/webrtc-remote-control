@@ -14,7 +14,9 @@ import {
 import { render } from "./master.view";
 
 async function init() {
-  const { bindConnection, getPeerId, humanizeError } = prepare(prepareUtils());
+  const { bindConnection, getPeerId, humanizeError } = prepare(
+    prepareUtils({ sessionStorageKey: "webrtc-remote-control-peer-id-vanilla" })
+  );
 
   const {
     showLoader,
