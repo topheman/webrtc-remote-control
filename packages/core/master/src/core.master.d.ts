@@ -7,6 +7,8 @@ import {
   SetPeerIdToSessionStorageType,
 } from "../../shared/common";
 
+export { prepareUtils } from "../../shared/common";
+
 export default function ({
   humanizeError,
   isConnectionFromRemote,
