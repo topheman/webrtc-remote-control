@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.1](https://github.com/topheman/webrtc-remote-control/compare/@webrtc-remote-control/react@0.1.0...@webrtc-remote-control/react@0.1.1) (2022-06-13)
+
+**Note:** Version bump only for package @webrtc-remote-control/react
+
+
+
+
+
 # [0.1.0](https://github.com/topheman/webrtc-remote-control/compare/@webrtc-remote-control/react@0.0.1...@webrtc-remote-control/react@0.1.0) (2022-04-16)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "@webrtc-remote-control/demo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "private": true,
   "main": "index.js",
@@ -33,9 +33,9 @@
   "dependencies": {
     "@react-three/fiber": "^8.0.12",
     "@vueuse/core": "^8.0.1",
-    "@webrtc-remote-control/core": "^0.1.0",
-    "@webrtc-remote-control/react": "^0.1.0",
-    "@webrtc-remote-control/vue": "^0.1.0",
+    "@webrtc-remote-control/core": "^0.1.1",
+    "@webrtc-remote-control/react": "^0.1.1",
+    "@webrtc-remote-control/vue": "^0.1.1",
     "lodash": "^4.17.21",
     "prop-types": "^15.8.1",
     "react": "^18.0.0",
