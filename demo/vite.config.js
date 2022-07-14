@@ -22,6 +22,10 @@ module.exports = defineConfig({
         counterReact: resolve(__dirname, "counter-react/index.html"),
         counterVue: resolve(__dirname, "counter-vue/index.html"),
         "accelerometer-3d": resolve(__dirname, "accelerometer-3d/index.html"),
+        "accelerometer-graph": resolve(
+          __dirname,
+          "accelerometer-graph/index.html"
+        ),
       },
     },
   },

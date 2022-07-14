@@ -7,12 +7,12 @@ export default function DirectLinkToSourceCode({ mode }) {
     <p>
       Direct link to source code:{" "}
       <a
-        href={`https://github.com/topheman/webrtc-remote-control/blob/master/demo/accelerometer-3d/js/${target}.jsx`}
+        href={`https://github.com/topheman/webrtc-remote-control/blob/master/demo/accelerometer-graph/js/${target}.jsx`}
       >
         {target}.jsx
       </a>
       {" / "}
-      <a href="https://github.com/topheman/webrtc-remote-control/blob/master/demo/accelerometer-3d/js/App.jsx">
+      <a href="https://github.com/topheman/webrtc-remote-control/blob/master/demo/accelerometer-graph/js/App.jsx">
         App.jsx
       </a>
     </p>
