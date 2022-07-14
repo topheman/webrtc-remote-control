@@ -7,7 +7,7 @@ import { getPeerjsConfig } from "../../shared/js/common-peerjs";
 
 import Master from "./Master";
 import Remote from "./Remote";
-import FooterDisplay from "./Footer";
+import FooterDisplay from "../../shared/js/components/Footer";
 
 export default function App() {
   console.log("App render");

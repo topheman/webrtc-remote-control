@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import "../../shared/js/components/counter-display";
+import "./counter-display";
 
 export default function CounterDisplay({ count }) {
   return (

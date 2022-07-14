@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import "../../shared/js/components/footer-display";
+import "./footer-display";
 
 export default function FooterDisplay({ from, to }) {
   return <footer-display from={from} to={to}></footer-display>;

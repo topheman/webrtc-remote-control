@@ -17,8 +17,8 @@ export default function OpenRemote({ peerId }) {
         click here
       </a>{" "}
       to open an{" "}
-      <strong>other window from where you will control the counters</strong> on{" "}
-      this page (like with a remote).
+      <strong>other window from where you will control this page</strong> (like
+      with a remote).
     </p>
   );
 }
