@@ -21,7 +21,7 @@ module.exports = defineConfig({
         counterVanillaRemote: resolve(__dirname, "counter-vanilla/remote.html"),
         counterReact: resolve(__dirname, "counter-react/index.html"),
         counterVue: resolve(__dirname, "counter-vue/index.html"),
-        accelerometer: resolve(__dirname, "accelerometer/index.html"),
+        "accelerometer-3d": resolve(__dirname, "accelerometer-3d/index.html"),
       },
     },
   },
