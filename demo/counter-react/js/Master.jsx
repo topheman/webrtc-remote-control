@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
 
-import ErrorsDisplay from "./ErrorsDisplay";
-import QrcodeDisplay from "./QrcodeDisplay";
+import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
+import QrcodeDisplay from "../../shared/js/components/QrcodeDisplay";
 import OpenRemote from "./OpenRemote";
-import CounterDisplay from "./CounterDisplay";
+import CounterDisplay from "../../shared/js/components/CounterDisplay";
 import RemotesList from "./RemotesList";
-import ConsoleDisplay from "./ConsoleDisplay";
+import ConsoleDisplay from "../../shared/js/components/ConsoleDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import {

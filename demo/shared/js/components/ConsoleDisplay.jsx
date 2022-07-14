@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import "../../shared/js/components/console-display";
+import "./console-display";
 
 export default function ConsoleDisplay({ data }) {
   return <console-display data={JSON.stringify(data)}></console-display>;

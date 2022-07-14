@@ -1,7 +1,7 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
 
-import ErrorsDisplay from "./ErrorsDisplay";
+import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import { useSessionStorage } from "../../shared/js/react-common";

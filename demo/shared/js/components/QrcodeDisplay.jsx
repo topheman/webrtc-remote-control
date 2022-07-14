@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import "../../shared/js/components/qrcode-display";
+import "./qrcode-display";
 
 export default function QrcodeDisplay({ data }) {
   return (

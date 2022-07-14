@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
 
-import ErrorsDisplay from "./ErrorsDisplay";
+import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
 import RemoteCountControl from "./RemoteCountControl";
 import RemoteNameControl from "./RemoteNameControl";
-import ConsoleDisplay from "./ConsoleDisplay";
+import ConsoleDisplay from "../../shared/js/components/ConsoleDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import { useLogger, useSessionStorage } from "../../shared/js/react-common";
