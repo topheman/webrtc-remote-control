@@ -8,7 +8,7 @@ const NEXT_TICK = 20;
  * - `CI=true`
  * - `WEBRTC_CONNECTION_TIMEOUT=1000`
  */
-const DEFAULT_WEBRTC_CONNECTION_TIMEOUT = process.env.CI ? 3000 : 300;
+const DEFAULT_WEBRTC_CONNECTION_TIMEOUT = process.env.CI ? 3000 : 600;
 const WEBRTC_CONNECTION_TIMEOUT = Number.isNaN(
   Number(process.env.WEBRTC_CONNECTION_TIMEOUT)
 )
@@ -81,7 +81,7 @@ export function givenMasterPeerOpenEventIsTriggered(given, { getMasterPage }) {
       expect(logs.length).toBeGreaterThan(0);
     } catch (e) {
       throw new Error(
-        `No events detected in console-display, check your connection / add a sleep before the assertion.`
+        `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000`
       );
     }
     expect(logs[0].payload.event).toBe("open");
@@ -121,7 +121,7 @@ export function givenIOpenANewRemote(given, { getMasterPage }) {
         expect(remoteLogs.length).toBeGreaterThan(0);
       } catch (e) {
         throw new Error(
-          `No events detected in console-display, check your connection / add a sleep before the assertion.`
+          `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`
         );
       }
       expect(remoteLogs[0].payload.event).toBe("open");
@@ -156,7 +156,7 @@ export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
       expect(masterLogs.length).toBeGreaterThan(0);
     } catch (e) {
       throw new Error(
-        `No events detected in console-display, check your connection / add a sleep before the assertion.`
+        `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`
       );
     }
     expect(masterLogs[0].payload).toEqual({
@@ -329,7 +329,7 @@ export function givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(
         expect(remoteLogs.length).toBeGreaterThan(0);
       } catch (e) {
         throw new Error(
-          `No events detected in console-display, check your connection / add a sleep before the assertion.`
+          `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`
         );
       }
       // remote should re-open and re-use the same id
@@ -389,7 +389,7 @@ export function givenIReloadMasterThenRemotesShouldReconnect(
         expect(masterLogs.length).toBeGreaterThan(0);
       } catch (e) {
         throw new Error(
-          `No events detected in console-display, check your connection / add a sleep before the assertion.`
+          `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`
         );
       }
       const received = masterLogs
@@ -410,7 +410,7 @@ export function givenIReloadMasterThenRemotesShouldReconnect(
           expect(remoteLogs.length).toBeGreaterThan(0);
         } catch (e) {
           throw new Error(
-            `No events detected in console-display, check your connection / add a sleep before the assertion.`
+            `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`
           );
         }
         expect(remoteLogs[1].payload).toEqual({
