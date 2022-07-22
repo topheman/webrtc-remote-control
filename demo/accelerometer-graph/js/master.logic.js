@@ -9,6 +9,7 @@ export function remotesListReducer(state, { data, id }) {
             accelerationIncludingGravity: data.accelerationIncludingGravity,
             rotationRate: data.rotationRate,
             interval: data.interval,
+            timeStamp: data.timeStamp,
           });
           break;
         case "PING_DOWN":

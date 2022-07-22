@@ -17,6 +17,7 @@ export default function RemotesList({ list }) {
                 </li>
                 <li>rotationRate: {JSON.stringify(motion.rotationRate)}</li>
                 <li>interval: {JSON.stringify(motion.interval)}</li>
+                <li>timeStamp: {JSON.stringify(motion.timeStamp)}</li>
               </ul>
             </div>
           </li>

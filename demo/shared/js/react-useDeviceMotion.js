@@ -13,6 +13,7 @@ export const useDeviceMotion = ({ throttle = 0 } = {}) => {
       accelerationIncludingGravity: event.accelerationIncludingGravity,
       rotationRate: event.rotationRate,
       interval: event.interval,
+      timeStamp: event.timeStamp,
     });
   }, throttle);
 
