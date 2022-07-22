@@ -2,53 +2,52 @@
 import { useCallback, useEffect, useState } from "react";
 import lodashThrottle from "lodash/throttle";
 
-export const useDeviceOrientation = ({ precision, throttle = 0 } = {}) => {
+export const useDeviceMotion = ({ throttle = 0 } = {}) => {
   const [error, setError] = useState(null);
-  const [orientation, setOrientation] = useState(null);
+  const [motion, setMotion] = useState(null);
   const [permissionState, setPermissionState] = useState(null);
 
-  const onDeviceOrientation = lodashThrottle((event) => {
-    setOrientation({
-      alpha: precision ? Number(event.alpha.toFixed(precision)) : event.alpha,
-      beta: precision ? Number(event.beta.toFixed(precision)) : event.beta,
-      gamma: precision ? Number(event.gamma.toFixed(precision)) : event.gamma,
+  const onDeviceMotion = lodashThrottle((event) => {
+    setMotion({
+      acceleration: event.acceleration,
+      accelerationIncludingGravity: event.accelerationIncludingGravity,
+      rotationRate: event.rotationRate,
+      interval: event.interval,
     });
   }, throttle);
 
   const revokeAccessAsync = async () => {
-    window.removeEventListener("deviceorientation", onDeviceOrientation);
-    setOrientation(null);
+    window.removeEventListener("devicemotion", onDeviceMotion);
+    setMotion(null);
   };
 
   const requestAccessAsync = async () => {
-    if (typeof DeviceOrientationEvent === "undefined") {
+    if (typeof DeviceMotionEvent === "undefined") {
       setError(
-        new Error("Device orientation event is not supported by your browser")
+        new Error("Device motion event is not supported by your browser")
       );
       return false;
     }
 
     if (
-      DeviceOrientationEvent.requestPermission &&
+      DeviceMotionEvent.requestPermission &&
       typeof DeviceMotionEvent.requestPermission === "function"
     ) {
       let permission;
       try {
-        permission = await DeviceOrientationEvent.requestPermission();
+        permission = await DeviceMotionEvent.requestPermission();
         setPermissionState(permission);
       } catch (err) {
         setError(err);
         return false;
       }
       if (permission !== "granted") {
-        setError(
-          new Error("Request to access the device orientation was rejected")
-        );
+        setError(new Error("Request to access the device motion was rejected"));
         return false;
       }
     }
 
-    window.addEventListener("deviceorientation", onDeviceOrientation);
+    window.addEventListener("devicemotion", onDeviceMotion);
 
     return true;
   };
@@ -63,7 +62,7 @@ export const useDeviceOrientation = ({ precision, throttle = 0 } = {}) => {
   }, [revokeAccess]);
 
   return {
-    orientation,
+    motion,
     error,
     permissionState, // null/denied/granted
     requestAccess,

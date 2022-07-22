@@ -5,7 +5,7 @@ import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import { useSessionStorage } from "../../shared/js/react-common";
-import { useDeviceOrientation } from "../../shared/js/react-useDeviceOrientation";
+import { useDeviceMotion } from "../../shared/js/react-useDeviceMotion";
 
 export default function Remote() {
   // eslint-disable-next-line no-unused-vars
@@ -19,10 +19,10 @@ export default function Remote() {
   const { ready, api, peer, humanizeError } = usePeer();
 
   const {
-    orientation,
-    requestAccess: requestDeviceOrientationAccess,
+    motion,
+    requestAccess: requestDeviceMotionAccess,
     permissionState,
-  } = useDeviceOrientation({ precision: 2, throttle: 16 });
+  } = useDeviceMotion({ throttle: 16 });
 
   const onRemoteDisconnect = (payload) => {
     console.log({ event: "remote.disconnect", payload });
@@ -84,34 +84,38 @@ export default function Remote() {
 
   useEffect(() => {
     if (ready) {
-      api.send({ type: "ORIENTATION", ...orientation });
+      api.send({ type: "MOTION", ...motion });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orientation]);
+  }, [motion]);
   return (
     <>
       <ErrorsDisplay data={errors} />
-      {!orientation ? (
+      {!motion ? (
         <p className="request-permission-button-wrapper">
           <button
             className="request-permission-button"
-            onClick={() => requestDeviceOrientationAccess()}
+            onClick={() => requestDeviceMotionAccess()}
           >
             Click here to start
           </button>
         </p>
       ) : null}
       {permissionState === "denied" ? (
-        <p className="deviceorientation-error">
-          Request to access the device orientation was rejected, please grant it
-          by clicking yes on the prompt.
+        <p className="devicemotion-error">
+          Request to access the device motion was rejected, please grant it by
+          clicking yes on the prompt.
         </p>
       ) : null}
-      {orientation ? (
+      {motion ? (
         <ul>
-          <li>alpha: {orientation.alpha}</li>
-          <li>beta: {orientation.beta}</li>
-          <li>gamma: {orientation.gamma}</li>
+          <li>acceleration: {JSON.stringify(motion.acceleration)}</li>
+          <li>
+            accelerationIncludingGravity:{" "}
+            {JSON.stringify(motion.accelerationIncludingGravity)}
+          </li>
+          <li>rotationRate: {JSON.stringify(motion.rotationRate)}</li>
+          <li>interval: {JSON.stringify(motion.interval)}</li>
         </ul>
       ) : null}
       <DirectLinkToSourceCode mode="remote" />

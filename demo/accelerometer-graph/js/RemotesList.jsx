@@ -5,14 +5,18 @@ export default function RemotesList({ list }) {
   if (list && list.length) {
     return (
       <ul>
-        {list.map(({ peerId, alpha, beta, gamma }) => (
+        {list.map(({ peerId, ...motion }) => (
           <li key={peerId}>
             <span>{peerId}</span>
             <div style={{ display: "flex" }}>
               <ul>
-                <li>alpha: {alpha}</li>
-                <li>beta: {beta}</li>
-                <li>gamma: {gamma}</li>
+                <li>acceleration: {JSON.stringify(motion.acceleration)}</li>
+                <li>
+                  accelerationIncludingGravity:{" "}
+                  {JSON.stringify(motion.accelerationIncludingGravity)}
+                </li>
+                <li>rotationRate: {JSON.stringify(motion.rotationRate)}</li>
+                <li>interval: {JSON.stringify(motion.interval)}</li>
               </ul>
             </div>
           </li>

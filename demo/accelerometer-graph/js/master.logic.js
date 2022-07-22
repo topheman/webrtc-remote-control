@@ -2,12 +2,13 @@ export function remotesListReducer(state, { data, id }) {
   return state.reduce((acc, cur) => {
     if (cur.peerId === id) {
       switch (data.type) {
-        case "ORIENTATION":
+        case "MOTION":
           acc.push({
             ...cur,
-            alpha: data.alpha,
-            beta: data.beta,
-            gamma: data.gamma,
+            acceleration: data.acceleration,
+            accelerationIncludingGravity: data.accelerationIncludingGravity,
+            rotationRate: data.rotationRate,
+            interval: data.interval,
           });
           break;
         case "PING_DOWN":
