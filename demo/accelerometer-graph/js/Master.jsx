@@ -9,9 +9,9 @@ import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import { remotesListReducer } from "./master.logic";
 
-function makeRemotePeerUrl(peerId) {
+function makeRemotePeerUrl(peerId, locationOriginOverride) {
   return `${
-    window.location.origin +
+    (locationOriginOverride || window.location.origin) +
     window.location.pathname
       .replace(/\/$/, "")
       .split("/")
@@ -91,7 +91,17 @@ export default function Master() {
   return (
     <>
       <ErrorsDisplay data={errors} />
-      {peerId ? <QrcodeDisplay data={makeRemotePeerUrl(peerId)} /> : null}
+      <div style={{ display: "flex" }}>
+        {peerId ? <QrcodeDisplay data={makeRemotePeerUrl(peerId)} /> : null}
+        {peerId && import.meta.env.VITE_FORWARD_DOMAIN ? (
+          <QrcodeDisplay
+            data={makeRemotePeerUrl(
+              peerId,
+              import.meta.env.VITE_FORWARD_DOMAIN
+            )}
+          />
+        ) : null}
+      </div>
       <OpenRemote peerId={peerId} />
       <RemotesList list={remotesList} />
       <DirectLinkToSourceCode mode="master" />

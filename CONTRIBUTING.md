@@ -81,6 +81,25 @@ Some tasks are available:
 
 The public https temporary address will be outputted on your terminal (keep in mind you won't access your website through your local network but through the internet, which can take longer - use that only to test WebRTC on mobile devices).
 
+### Optimizations
+
+Doing that means you access your webserver through the internet (not from your local network any more), which will slow down your feedback loop (ctrl+save and see the result) as a developer.
+
+To improve that, on accelerometer-graph:
+
+- `npm run forward` and copy the temp address of your tunnel (like https://b6eeff711b00d5.lhrtunnel.link)
+- then run `VITE_FORWARD_DOMAIN=THE_ADDRESS_YOU_JUST_COPIED npm run dev:demo`
+- on your laptop, access the master page on http://localhost:3000
+  - you will be presented 2 QRCode
+  - with your mobile, snap the QRCode which points to lhrtunnel.link
+
+That way you access the website in dev-server mode :
+
+- on your laptop from your local network
+- on your mobile from internet (you need https so that WebRTC and accelerometer will work - localhost doesn't exist on the mobile)
+- the WebRTC invite is correctly shared
+- and the refreses on the master pages are instant (they are done from local network)
+
 ## e2e tests
 
 In the [demo](demo#readme), you'll find a version of the counter app for each implementation of webrtc-remote-control (vanilla, react, vue). The UI relies on the same web-components.
