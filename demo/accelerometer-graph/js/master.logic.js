@@ -1,44 +1,32 @@
-export function remotesListReducer(state, { data, id }) {
-  return state.reduce((acc, cur) => {
-    if (cur.peerId === id) {
-      switch (data.type) {
-        case "MOTION":
-          acc.push({
-            ...cur,
-            acceleration: data.acceleration,
-            accelerationIncludingGravity: data.accelerationIncludingGravity,
-            rotationRate: data.rotationRate,
-            interval: data.interval,
-            timeStamp: data.timeStamp,
-          });
-          break;
-        case "PING_DOWN":
-          acc.push({
-            ...cur,
-            scale: 1.1,
-            color: "pink",
-          });
-          break;
-        case "PING_UP":
-          acc.push({
-            ...cur,
-            scale: 1,
-            color: "#900000",
-          });
-          break;
-        case "REMOTE_SET_NAME":
-          acc.push({
-            ...cur,
-            name: data.name,
-          });
-          break;
-        default:
-          acc.push(cur);
-          break;
+export function makeRemoteListReducer({ duration = 10000 } = {}) {
+  return function remotesListReducer(state, { data, id, type }) {
+    switch (type) {
+      case "CONNECT":
+        return new Map(state.set(id, { motionInfos: [] }));
+      case "DISCONNECT": {
+        state.delete(id);
+        return new Map(state);
       }
-    } else {
-      acc.push(cur);
+      case "MOTION": {
+        const newState = new Map(state.entries());
+        const currentRemoteOldestFrame = newState.get(id)?.motionInfos[0];
+        let newMotionInfos;
+        const currentMotionInfos = newState.get(id)?.motionInfos || [];
+        if (
+          currentRemoteOldestFrame &&
+          data.timeStamp - currentRemoteOldestFrame.timeStamp > duration
+        ) {
+          newMotionInfos = [...currentMotionInfos.slice(1), data];
+        } else {
+          newMotionInfos = [...currentMotionInfos, data];
+        }
+        if (newState.get(id)) {
+          newState.get(id).motionInfos = newMotionInfos;
+        }
+        return newState;
+      }
+      default:
+        return state;
     }
-    return acc;
-  }, []);
+  };
 }

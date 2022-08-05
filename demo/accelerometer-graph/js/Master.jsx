@@ -7,7 +7,7 @@ import QrcodeDisplay from "../../shared/js/components/QrcodeDisplay";
 import OpenRemote from "./OpenRemote";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
-import { remotesListReducer } from "./master.logic";
+import { makeRemoteListReducer } from "./master.logic";
 
 function makeRemotePeerUrl(peerId, locationOriginOverride) {
   return `${
@@ -20,33 +20,32 @@ function makeRemotePeerUrl(peerId, locationOriginOverride) {
   }/index.html#${peerId}`;
 }
 
+const remotesListReducer = makeRemoteListReducer();
+
 export default function Master() {
   const [peerId, setPeerId] = useState(null);
-  // eslint-disable-next-line no-unused-vars
-  const [remotesList, setRemotesList] = useState([]);
+  const [remotesList, setRemotesList] = useState(new Map());
+  // const { data, addData, currentFrame } = useData();
   const [errors, setErrors] = useState(null);
 
   const { ready, api, peer, humanizeError } = usePeer();
 
   const onRemoteConnect = ({ id }) => {
     console.log({ event: "remote.connect", payload: { id } });
-    setRemotesList((remotes) => [
-      ...remotes,
-      { alpha: 0, beta: 0, gamma: 0, peerId: id },
-    ]);
+    setRemotesList((remotes) =>
+      remotesListReducer(remotes, { type: "CONNECT", id })
+    );
   };
   const onRemoteDisconnect = ({ id }) => {
     console.log({ event: "remote.disconnect", payload: { id } });
     setRemotesList((remotes) =>
-      // eslint-disable-next-line no-shadow
-      remotes.filter(({ peerId }) => peerId !== id)
+      remotesListReducer(remotes, { type: "DISCONNECT", id })
     );
   };
   const onData = ({ id }, data) => {
-    setRemotesList((remotes) => {
-      const state = remotesListReducer(remotes, { data, id });
-      return state;
-    });
+    setRemotesList((remotes) =>
+      remotesListReducer(remotes, { type: "MOTION", id, data })
+    );
   };
   const onPeerError = (error) => {
     setPeerId(null);
