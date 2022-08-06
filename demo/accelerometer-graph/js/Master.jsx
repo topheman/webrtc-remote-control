@@ -102,6 +102,7 @@ export default function Master() {
       <RemotesList
         list={state.remotes}
         onRemoteClick={(id) => dispatch({ type: "CURRENT_REMOTE", id })}
+        showMotionInfos
       />
       <DirectLinkToSourceCode mode="master" />
     </>
