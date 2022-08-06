@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useReducer } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
 
 import RemotesList from "./RemotesList";
@@ -7,6 +7,7 @@ import QrcodeDisplay from "../../shared/js/components/QrcodeDisplay";
 import OpenRemote from "./OpenRemote";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
+// todo selectors / currentRemote / lastFrame
 import { makeRemoteListReducer } from "./master.logic";
 
 function makeRemotePeerUrl(peerId, locationOriginOverride) {
@@ -24,28 +25,24 @@ const remotesListReducer = makeRemoteListReducer();
 
 export default function Master() {
   const [peerId, setPeerId] = useState(null);
-  const [remotesList, setRemotesList] = useState(new Map());
-  // const { data, addData, currentFrame } = useData();
+  const [remotesList, updateRemotesList] = useReducer(
+    remotesListReducer,
+    new Map()
+  );
   const [errors, setErrors] = useState(null);
 
   const { ready, api, peer, humanizeError } = usePeer();
 
   const onRemoteConnect = ({ id }) => {
     console.log({ event: "remote.connect", payload: { id } });
-    setRemotesList((remotes) =>
-      remotesListReducer(remotes, { type: "CONNECT", id })
-    );
+    updateRemotesList({ type: "CONNECT", id });
   };
   const onRemoteDisconnect = ({ id }) => {
     console.log({ event: "remote.disconnect", payload: { id } });
-    setRemotesList((remotes) =>
-      remotesListReducer(remotes, { type: "DISCONNECT", id })
-    );
+    updateRemotesList({ type: "DISCONNECT", id });
   };
   const onData = ({ id }, data) => {
-    setRemotesList((remotes) =>
-      remotesListReducer(remotes, { type: "MOTION", id, data })
-    );
+    updateRemotesList({ type: "MOTION", id, data });
   };
   const onPeerError = (error) => {
     setPeerId(null);
