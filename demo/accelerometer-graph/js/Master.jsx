@@ -25,24 +25,24 @@ const remotesListReducer = makeRemoteListReducer();
 
 export default function Master() {
   const [peerId, setPeerId] = useState(null);
-  const [remotesList, updateRemotesList] = useReducer(
-    remotesListReducer,
-    new Map()
-  );
+  const [state, dispatch] = useReducer(remotesListReducer, {
+    remotes: new Map(),
+    currentRemote: null,
+  });
   const [errors, setErrors] = useState(null);
 
   const { ready, api, peer, humanizeError } = usePeer();
 
   const onRemoteConnect = ({ id }) => {
     console.log({ event: "remote.connect", payload: { id } });
-    updateRemotesList({ type: "CONNECT", id });
+    dispatch({ type: "CONNECT", id });
   };
   const onRemoteDisconnect = ({ id }) => {
     console.log({ event: "remote.disconnect", payload: { id } });
-    updateRemotesList({ type: "DISCONNECT", id });
+    dispatch({ type: "DISCONNECT", id });
   };
   const onData = ({ id }, data) => {
-    updateRemotesList({ type: "MOTION", id, data });
+    dispatch({ type: "MOTION", id, data });
   };
   const onPeerError = (error) => {
     setPeerId(null);
@@ -99,7 +99,10 @@ export default function Master() {
         ) : null}
       </div>
       <OpenRemote peerId={peerId} />
-      <RemotesList list={remotesList} />
+      <RemotesList
+        list={state.remotes}
+        onRemoteClick={(id) => dispatch({ type: "CURRENT_REMOTE", id })}
+      />
       <DirectLinkToSourceCode mode="master" />
     </>
   );

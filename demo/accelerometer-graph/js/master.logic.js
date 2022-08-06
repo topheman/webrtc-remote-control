@@ -1,17 +1,38 @@
+function setCurrentRemote(state, id) {
+  if (state.remotes.size === 1) {
+    // eslint-disable-next-line no-param-reassign
+    state.currentRemote = id;
+  } else if (state.remotes.size === 0) {
+    // eslint-disable-next-line no-param-reassign
+    state.currentRemote = null;
+  }
+}
+
 export function makeRemoteListReducer({ duration = 10000 } = {}) {
   return function remotesListReducer(state, { data, id, type }) {
     switch (type) {
-      case "CONNECT":
-        return new Map(state.set(id, { motionInfos: [] }));
+      case "CONNECT": {
+        const newState = {
+          ...state,
+          remotes: new Map(state.remotes.set(id, { motionInfos: [] })),
+        };
+        setCurrentRemote(newState, id);
+        return newState;
+      }
       case "DISCONNECT": {
-        state.delete(id);
-        return new Map(state);
+        state.remotes.delete(id);
+        const newState = {
+          ...state,
+          remotes: new Map(state.remotes),
+        };
+        setCurrentRemote(newState, id);
+        return newState;
       }
       case "MOTION": {
-        const newState = new Map(state.entries());
-        const currentRemoteOldestFrame = newState.get(id)?.motionInfos[0];
+        const newRemotes = new Map(state.remotes.entries());
+        const currentRemoteOldestFrame = newRemotes.get(id)?.motionInfos[0];
         let newMotionInfos;
-        const currentMotionInfos = newState.get(id)?.motionInfos || [];
+        const currentMotionInfos = newRemotes.get(id)?.motionInfos || [];
         if (
           currentRemoteOldestFrame &&
           data.timeStamp - currentRemoteOldestFrame.timeStamp > duration
@@ -20,10 +41,22 @@ export function makeRemoteListReducer({ duration = 10000 } = {}) {
         } else {
           newMotionInfos = [...currentMotionInfos, data];
         }
-        if (newState.get(id)) {
-          newState.get(id).motionInfos = newMotionInfos;
+        if (newRemotes.get(id)) {
+          newRemotes.get(id).motionInfos = newMotionInfos;
         }
-        return newState;
+        return {
+          ...state,
+          remotes: newRemotes,
+        };
+      }
+      case "CURRENT_REMOTE": {
+        if (state.remotes.has(id)) {
+          return {
+            ...state,
+            currentRemote: id,
+          };
+        }
+        return state;
       }
       default:
         return state;
