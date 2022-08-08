@@ -6,8 +6,14 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
+    "dev:record": "VITE_DEVICE_MOTION_MOCK_MODE=RECORD npm-run-all --parallel dev dev-api:nodemon",
+    "dev:replay": "VITE_DEVICE_MOTION_MOCK_MODE=REPLAY npm-run-all --parallel dev dev-api:nodemon",
     "build": "vite build",
+    "build:record": "VITE_DEVICE_MOTION_MOCK_MODE=RECORD vite build",
+    "build:replay": "VITE_DEVICE_MOTION_MOCK_MODE=REPLAY vite build",
     "preview": "vite preview",
+    "preview:record": "VITE_DEVICE_MOTION_MOCK_MODE=RECORD npm-run-all --parallel preview dev-api:node",
+    "preview:replay": "VITE_DEVICE_MOTION_MOCK_MODE=RECORD npm-run-all --parallel preview dev-api:node",
     "forward": "ssh -R 80:localhost:3000 localhost.run",
     "test": "jest",
     "test:precommit": "jest --bail --findRelatedTests",
@@ -15,7 +21,9 @@
     "test:e2e": "jest --config ./jest.e2e.config.js",
     "test:e2e:watch": "jest --config ./jest.e2e.config.js --watch -o",
     "test:e2e:headless-false": "HEADLESS=false jest --config ./jest.e2e.config.js",
-    "test:e2e:start-server-and-test": "PORT=3001 npx start-server-and-test preview :3001 test:e2e"
+    "test:e2e:start-server-and-test": "PORT=3001 npx start-server-and-test preview :3001 test:e2e",
+    "dev-api:nodemon": "nodemon ./dev-api-server.js",
+    "dev-api:node": "node ./dev-api-server.js"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "MIT",

@@ -32,6 +32,13 @@ module.exports = defineConfig({
   server: {
     host: "0.0.0.0",
     port: process.env.PORT || 3000,
+    proxy: {
+      "/dev-api": {
+        target: `http://localhost:${process.env.API_PORT || 8080}`,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/dev-api/, ""),
+      },
+    },
   },
   preview: {
     port: process.env.PORT || 3000,
