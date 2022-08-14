@@ -5,7 +5,14 @@ import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import { useSessionStorage } from "../../shared/js/react-common";
-import { useDeviceMotion } from "../../shared/js/react-useDeviceMotion";
+import {
+  useDeviceMotion,
+  decorate,
+} from "../../shared/js/react-useDeviceMotion";
+
+const useDeviceMotionWithMockCapabilities = decorate(useDeviceMotion, {
+  mode: import.meta.env.VITE_DEVICE_MOTION_MOCK_MODE,
+});
 
 export default function Remote() {
   // eslint-disable-next-line no-unused-vars
@@ -22,7 +29,7 @@ export default function Remote() {
     motion,
     requestAccess: requestDeviceMotionAccess,
     permissionState,
-  } = useDeviceMotion({ throttle: 16 });
+  } = useDeviceMotionWithMockCapabilities({ throttle: 16 });
 
   const onRemoteDisconnect = (payload) => {
     console.log({ event: "remote.disconnect", payload });

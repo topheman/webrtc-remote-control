@@ -7,7 +7,7 @@ import QrcodeDisplay from "../../shared/js/components/QrcodeDisplay";
 import OpenRemote from "./OpenRemote";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
-// todo selectors / currentRemote / lastFrame
+// todo record/play x seconds (directly from useDeviceMotion hook - compose it ?) / proxy api to write on fs ? through tunnel ?
 import { makeRemoteListReducer } from "./master.logic";
 
 function makeRemotePeerUrl(peerId, locationOriginOverride) {
