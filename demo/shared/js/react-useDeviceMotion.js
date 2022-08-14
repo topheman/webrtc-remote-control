@@ -71,10 +71,82 @@ export const useDeviceMotion = ({ throttle = 0 } = {}) => {
   };
 };
 
-export const decorate = (hook, { mode, duration = 4000 } = {}) => {
+async function defaultOnRecordStop(payload, dispatch) {
+  try {
+    let result = await fetch(
+      `http://localhost:3000/dev-api/device-motion-mock`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    result = await result.json();
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
+    dispatch("record.saved", null, dispatch);
+  } catch (e) {
+    dispatch("record.saved.error", e.message, dispatch);
+    throw new Error(e.message);
+  }
+}
+
+function makeEventHandler(cb) {
+  const dispatch = cb({ onRecordStop: defaultOnRecordStop });
+  return (event, payload) => {
+    dispatch(event, payload, dispatch);
+  };
+}
+
+/**
+ * This is a higer order function that adds highly customisable record/replay
+ * capabilities to the useDeviceMotion hook
+ *
+ * @param {typeof useDeviceMotion} hook useDeviceMotion to be decorated
+ * @param {{mode: "RECORD" | "REPLAY", duration?: number, prepareDispatch?: ({onRecordStop?: ((payload: any, dispatch: Function)}) => void) => (event: string, payload: any, dispatch: Function) => void}} [options={}]
+ * @returns
+ *
+ * Example of overrides:
+ *
+```js
+decorate(useDeviceMotion, {
+  mode: "RECORD",
+  duration: 5000,
+  prepareDispatch: ({onRecordStop}) => (event, payload, dispatch) => {
+    if (event === "record.stop") {
+      onRecordStop(payload, dispatch)
+    }
+    else if (event === "record.saved") {
+      console.log("saved!")
+      setTimeout(() => {
+        dispatch("record.saved.1000", null)
+      }, 1000)
+    }
+    else if (event === "record.saved.1000") {
+      console.log("1000 ms after saved")
+    }
+  }
+})
+```
+ */
+export const decorate = (
+  hook,
+  {
+    mode,
+    duration = 4000,
+    prepareDispatch = ({ onRecordStop }) =>
+      (event, payload, dispatch) => {
+        if (event === "record.stop") {
+          onRecordStop(payload, dispatch);
+        }
+      },
+  } = {}
+) => {
   if (!mode) {
     return hook;
   }
+  // eslint-disable-next-line no-unused-vars
+  const dispatch = makeEventHandler(prepareDispatch);
   if (mode === "RECORD") {
     return (...args) => {
       const ref = useRef([]);
@@ -97,6 +169,7 @@ export const decorate = (hook, { mode, duration = 4000 } = {}) => {
       }
       useEffect(() => {
         if (recordIsFinished) {
+          // TODO use dispatch
           console.log("useEffect record is finished", ref.current.length);
         } else {
           console.log("useEffect !record is finished", ref.current.length);
