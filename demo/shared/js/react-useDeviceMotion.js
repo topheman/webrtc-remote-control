@@ -71,31 +71,46 @@ export const useDeviceMotion = ({ throttle = 0 } = {}) => {
   };
 };
 
-async function defaultOnRecordStop(payload, dispatch) {
+async function defaultOnRecordStop(payload, { recordEndpoint }, dispatch) {
   try {
-    let result = await fetch(
-      `http://localhost:3000/dev-api/device-motion-mock`,
-      {
-        method: "POST",
-        body: JSON.stringify(payload),
-      }
-    );
+    let result = await fetch(recordEndpoint, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
     result = await result.json();
     if (!result.ok) {
       throw new Error(result.error);
     }
-    dispatch("record.saved", null, dispatch);
+    dispatch("record.saved", null);
   } catch (e) {
-    dispatch("record.saved.error", e.message, dispatch);
+    dispatch("record.saved.error", e.message);
     throw new Error(e.message);
   }
 }
 
-function makeEventHandler(cb) {
-  const dispatch = cb({ onRecordStop: defaultOnRecordStop });
-  return (event, payload) => {
-    dispatch(event, payload, dispatch);
+function makeEventHandler(
+  cb,
+  { recordEndpoint = "/dev-api/device-motion-mock" } = {}
+) {
+  const defaultDispatcher = async (event, payload) => {
+    switch (event) {
+      case "record.stop": {
+        defaultOnRecordStop(payload, { recordEndpoint }, dispatch);
+        break;
+      }
+      case "replay.idle": {
+        // TODO
+        console.log("replay.idle");
+        break;
+      }
+      default:
+      // do nothing
+    }
   };
+  // eslint-disable-next-line no-underscore-dangle
+  const _dispatch = cb({ defaultDispatcher }); // (event, payload, dispatch) => void
+  const dispatch = (event, payload) => _dispatch(event, payload, _dispatch);
+  return dispatch;
 }
 
 /**
@@ -112,9 +127,9 @@ function makeEventHandler(cb) {
 decorate(useDeviceMotion, {
   mode: "RECORD",
   duration: 5000,
-  prepareDispatch: ({onRecordStop}) => (event, payload, dispatch) => {
+  prepareDispatch: ({defaultDispatcher}) => (event, payload, dispatch) => {
     if (event === "record.stop") {
-      onRecordStop(payload, dispatch)
+      // do something
     }
     else if (event === "record.saved") {
       console.log("saved!")
@@ -125,6 +140,7 @@ decorate(useDeviceMotion, {
     else if (event === "record.saved.1000") {
       console.log("1000 ms after saved")
     }
+    return defaultDispatcher(event, payload); // comment that if you don't want default actions
   }
 })
 ```
@@ -134,11 +150,9 @@ export const decorate = (
   {
     mode,
     duration = 4000,
-    prepareDispatch = ({ onRecordStop }) =>
-      (event, payload, dispatch) => {
-        if (event === "record.stop") {
-          onRecordStop(payload, dispatch);
-        }
+    prepareDispatch = ({ defaultDispatcher }) =>
+      (event, payload) => {
+        defaultDispatcher(event, payload);
       },
   } = {}
 ) => {
