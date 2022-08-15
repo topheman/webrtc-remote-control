@@ -75,7 +75,9 @@ async function defaultOnRecordStop(payload, { recordEndpoint }, dispatch) {
   try {
     let result = await fetch(recordEndpoint, {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        data: payload,
+      }),
     });
     result = await result.json();
     if (!result.ok) {
@@ -185,6 +187,7 @@ export const decorate = (
         if (recordIsFinished) {
           // TODO use dispatch
           console.log("useEffect record is finished", ref.current.length);
+          dispatch("record.stop", ref.current);
         } else {
           console.log("useEffect !record is finished", ref.current.length);
         }
