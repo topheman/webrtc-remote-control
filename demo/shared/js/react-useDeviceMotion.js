@@ -90,10 +90,7 @@ async function defaultOnRecordStop(payload, { recordEndpoint }, dispatch) {
   }
 }
 
-function makeEventHandler(
-  cb,
-  { recordEndpoint = "/dev-api/device-motion-mock" } = {}
-) {
+function makeEventHandler(cb, { recordEndpoint } = {}) {
   const defaultDispatcher = async (event, payload) => {
     switch (event) {
       case "record.stop": {
@@ -156,13 +153,15 @@ export const decorate = (
       (event, payload) => {
         defaultDispatcher(event, payload);
       },
+    recordEndpoint = "/dev-api/device-motion-mock",
+    replayEndpoint = "/device-motion-events.json",
   } = {}
 ) => {
   if (!mode) {
     return hook;
   }
   // eslint-disable-next-line no-unused-vars
-  const dispatch = makeEventHandler(prepareDispatch);
+  const dispatch = makeEventHandler(prepareDispatch, { recordEndpoint });
   if (mode === "RECORD") {
     return (...args) => {
       const ref = useRef([]);
@@ -177,7 +176,6 @@ export const decorate = (
           const first = ref.current[0];
           const [last] = ref.current.slice(-1);
           const computedDuration = last.timeStamp - first.timeStamp;
-          console.log(computedDuration);
           if (recordIsFinished === false && computedDuration > duration) {
             setRecordIsFinished(true);
           }
@@ -199,8 +197,56 @@ export const decorate = (
     };
   }
   if (mode === "REPLAY") {
-    // todo
-    return hook;
+    return () => {
+      const [mocks, setMocks] = useState(null);
+      const [currentMockIndex, setCurrentMockIndex] = useState(0);
+      const [permissionState, setPermissionState] = useState(null);
+      const requestAccess = async () => {
+        setPermissionState("granted");
+      };
+      const [error, setError] = useState(null);
+      // load mocks when the hook is ready to make network calls
+      useEffect(() => {
+        fetch(replayEndpoint)
+          .then(async (result) => {
+            const loadedMocks = await result.json();
+            setMocks(loadedMocks);
+            dispatch("replay.mocksLoaded", loadedMocks);
+            setTimeout(() => {
+              requestAccess();
+            }, 200);
+          })
+          .catch((e) => {
+            setError(e.message);
+            dispatch("replay.mocksLoaded.error", e.message);
+          });
+      }, []);
+      // update mocks
+      useEffect(() => {
+        if (permissionState === "granted" && mocks !== null) {
+          setTimeout(() => {
+            let nextMockIndex;
+            if (currentMockIndex >= mocks.length - 1) {
+              nextMockIndex = 0;
+              dispatch("replay.loop");
+            } else {
+              nextMockIndex = currentMockIndex + 1;
+            }
+            setCurrentMockIndex(nextMockIndex);
+          }, 16);
+        }
+      }, [permissionState, mocks, currentMockIndex]);
+      return {
+        motion:
+          mocks && mocks[currentMockIndex]
+            ? { ...mocks[currentMockIndex], timeStamp: new Date().getTime() }
+            : null,
+        error,
+        permissionState, // null/denied/granted
+        requestAccess,
+        revokeAccess: () => {},
+      };
+    };
   }
   throw new Error(
     `Incorrect mode passed to withMock: "${mode}" - only accept undefined, RECORD or REPLAY`

@@ -30,16 +30,13 @@ export function makeRemoteListReducer({ duration = 10000 } = {}) {
       }
       case "MOTION": {
         const newRemotes = new Map(state.remotes.entries());
-        const currentRemoteOldestFrame = newRemotes.get(id)?.motionInfos[0];
-        let newMotionInfos;
         const currentMotionInfos = newRemotes.get(id)?.motionInfos || [];
+        const newMotionInfos = [...currentMotionInfos, data];
         if (
-          currentRemoteOldestFrame &&
-          data.timeStamp - currentRemoteOldestFrame.timeStamp > duration
+          newMotionInfos.at(-1).timeStamp - newMotionInfos.at(0).timeStamp >
+          duration
         ) {
-          newMotionInfos = [...currentMotionInfos.slice(1), data];
-        } else {
-          newMotionInfos = [...currentMotionInfos, data];
+          newMotionInfos.shift();
         }
         if (newRemotes.get(id)) {
           newRemotes.get(id).motionInfos = newMotionInfos;
