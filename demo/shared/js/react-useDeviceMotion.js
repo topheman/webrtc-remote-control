@@ -198,6 +198,7 @@ export const decorate = (
   }
   if (mode === "REPLAY") {
     return () => {
+      const [playing, setPlaying] = useState(true);
       const [mocks, setMocks] = useState(null);
       const [currentMockIndex, setCurrentMockIndex] = useState(0);
       const [permissionState, setPermissionState] = useState(null);
@@ -207,6 +208,8 @@ export const decorate = (
       const [error, setError] = useState(null);
       // load mocks when the hook is ready to make network calls
       useEffect(() => {
+        window.togglePlay = () => setPlaying((isPlaying) => !isPlaying);
+        console.log("Use `togglePlay()` to play/pause the deviceMotionEvents");
         fetch(replayEndpoint)
           .then(async (result) => {
             const loadedMocks = await result.json();
@@ -223,7 +226,7 @@ export const decorate = (
       }, []);
       // update mocks
       useEffect(() => {
-        if (permissionState === "granted" && mocks !== null) {
+        if (permissionState === "granted" && mocks !== null && playing) {
           setTimeout(() => {
             let nextMockIndex;
             if (currentMockIndex >= mocks.length - 1) {
@@ -235,7 +238,7 @@ export const decorate = (
             setCurrentMockIndex(nextMockIndex);
           }, 16);
         }
-      }, [permissionState, mocks, currentMockIndex]);
+      }, [permissionState, mocks, currentMockIndex, playing]);
       return {
         motion:
           mocks && mocks[currentMockIndex]
