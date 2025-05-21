@@ -1,7 +1,7 @@
 {
   "name": "@webrtc-remote-control/vue",
   "amdName": "webrtcRemoteControlVue",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/topheman/webrtc-remote-control.git"
@@ -43,7 +43,7 @@
     "vue": ">=3.0.0"
   },
   "dependencies": {
-    "@webrtc-remote-control/core": "^0.1.1"
+    "@webrtc-remote-control/core": "^0.1.2"
   },
   "publishConfig": {
     "access": "public"

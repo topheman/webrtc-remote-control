@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/topheman/webrtc-remote-control/compare/@webrtc-remote-control/demo@0.2.0...@webrtc-remote-control/demo@0.2.1) (2025-05-21)
+
+
+### Bug Fixes
+
+* **puppeteer:** increase WEBRTC_CONNECTION_TIMEOUT cause of failing test + add warning message ([d5184d4](https://github.com/topheman/webrtc-remote-control/commit/d5184d445c28e2ac4a4d97beaed76277b14eccb8))
+
+
+### Features
+
+* **peerjs:** upgrade peerjs on demos from 1.3.2 to 1.4.6 ([4b89d7a](https://github.com/topheman/webrtc-remote-control/commit/4b89d7ad7993a6b3bf7f31e034ed9b4ac19f3b74))
+* share reused components ([4dea24c](https://github.com/topheman/webrtc-remote-control/commit/4dea24ccf41d322bd1cd5fa5f9c82a28d429b0b7))
+
+
+
+
+
 # [0.2.0](https://github.com/topheman/webrtc-remote-control/compare/@webrtc-remote-control/demo@0.1.0...@webrtc-remote-control/demo@0.2.0) (2022-06-13)
 
 
