@@ -20,9 +20,18 @@
   "unpkg": "./dist/index.umd.js",
   "source": "./src/core.index.js",
   "exports": {
-    ".": "./dist/index.modern.js",
-    "./master": "./master/dist/master.modern.js",
-    "./remote": "./remote/dist/remote.modern.js"
+    ".": {
+      "import": "./dist/index.modern.js",
+      "types": "./src/core.index.d.ts"
+    },
+    "./master": {
+      "import": "./master/dist/master.modern.js",
+      "types": "./master/src/core.master.d.ts"
+    },
+    "./remote": {
+      "import": "./remote/dist/remote.modern.js",
+      "types": "./remote/src/core.remote.d.ts"
+    }
   },
   "scripts": {
     "build": "npm-run-all --parallel build:*",
