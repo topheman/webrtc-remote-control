@@ -48,7 +48,8 @@
     "master",
     "master/dist",
     "remote",
-    "remote/dist"
+    "remote/dist",
+    "shared"
   ],
   "devDependencies": {
     "jest": "^27.5.1",
