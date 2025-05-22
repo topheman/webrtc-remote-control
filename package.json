@@ -44,7 +44,8 @@
     "lerna:version:yes": "HUSKY=0 lerna version --conventional-commits --yes",
     "lerna:changed": "lerna changed",
     "lerna:publish": "HUSKY=0 lerna publish --conventional-commits",
-    "lerna:publish:yes": "HUSKY=0 lerna publish --conventional-commits --yes"
+    "lerna:publish:yes": "HUSKY=0 lerna publish --conventional-commits --yes",
+    "clean:install": "find . -name \"node_modules\" -exec rm -rf '{}' +"
   },
   "keywords": [
     "webrtc",
