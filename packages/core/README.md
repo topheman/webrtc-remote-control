@@ -21,7 +21,7 @@ This package is the core one. Implementations for popular frameworks such as rea
 Add the peerjs library as a script tag in your html page. You'll have access to `Peer` constructor.
 
 ```html
-<script src="https://unpkg.com/peerjs@1.4.6/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 ```
 
 Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-vanilla/master.html) source code: [master.js](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vanilla/js/master.js) / [remote.js](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vanilla/js/remote.js)

@@ -21,7 +21,7 @@ This package relies on [@webrtc-remote-control/core](https://github.com/topheman
 Add the peerjs library as a script tag in your html page. You'll have access to `Peer` constructor.
 
 ```html
-<script src="https://unpkg.com/peerjs@1.4.6/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 ```
 
 Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-vue/index.html) source code: [App.vue](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vue/js/App.vue) / [Master.vue](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vue/js/Master.vue) / [Remote.vue](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vue/js/Remote.vue)
