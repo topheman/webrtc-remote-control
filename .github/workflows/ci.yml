@@ -2,7 +2,7 @@ name: ci
 on: [push, pull_request]
 jobs:
   main:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Setup Node 🥣
         uses: actions/setup-node@v2
