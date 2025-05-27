@@ -20,7 +20,13 @@
   "module": "./dist/react.module.js",
   "unpkg": "./dist/react.umd.js",
   "source": "./src/react.jsx",
-  "exports": "./dist/react.modern.js",
+  "exports": {
+    ".": {
+      "types": "./src/react.d.ts",
+      "import": "./dist/react.modern.js",
+      "require": "./dist/react.cjs"
+    }
+  },
   "scripts": {
     "build": "npm-run-all --parallel build:*",
     "build:modules": "microbundle --generateTypes false --no-compress --jsx React.createElement",
