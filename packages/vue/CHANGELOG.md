@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.3](https://github.com/topheman/webrtc-remote-control/compare/@webrtc-remote-control/vue@0.1.2...@webrtc-remote-control/vue@0.1.3) (2025-05-27)
+
+
+### Bug Fixes
+
+* correct nested type declaration ([af5194e](https://github.com/topheman/webrtc-remote-control/commit/af5194e696693440c27cd002cc104681722b3b29))
+
+
+
+
+
 ## [0.1.2](https://github.com/topheman/webrtc-remote-control/compare/@webrtc-remote-control/vue@0.1.1...@webrtc-remote-control/vue@0.1.2) (2025-05-21)
 
 

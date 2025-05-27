@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.3](https://github.com/topheman/webrtc-remote-control/compare/@webrtc-remote-control/core@0.1.2...@webrtc-remote-control/core@0.1.3) (2025-05-27)
+
+**Note:** Version bump only for package @webrtc-remote-control/core
+
+
+
+
+
 ## [0.1.2](https://github.com/topheman/webrtc-remote-control/compare/@webrtc-remote-control/core@0.1.1...@webrtc-remote-control/core@0.1.2) (2025-05-21)
 
 
