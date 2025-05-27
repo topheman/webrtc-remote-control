@@ -20,7 +20,13 @@
   "module": "./dist/vue.module.js",
   "unpkg": "./dist/vue.umd.js",
   "source": "./src/vue.js",
-  "exports": "./dist/vue.modern.js",
+  "exports": {
+    ".": {
+      "types": "./src/vue.d.ts",
+      "import": "./dist/vue.modern.js",
+      "require": "./dist/vue.cjs"
+    }
+  },
   "scripts": {
     "build": "npm-run-all --parallel build:*",
     "build:modules": "microbundle --generateTypes false --no-compress",
