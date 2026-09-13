@@ -26,10 +26,16 @@
     "preview": "lerna run --stream --scope @webrtc-remote-control/demo preview",
     "preview:peer-server": "npm-run-all --parallel preview peer-server",
     "preview:forward": "npm-run-all --parallel preview demo:forward",
-    "test": "npm run test:core && npm run test:demo",
+    "test": "npm run test:core && npm run test:react && npm run test:vue && npm run test:demo",
     "test:core": "npm run --prefix packages/core test",
     "test:core:precommit": "npm run --prefix packages/core test:precommit",
     "test:core:watch": "npm run --prefix packages/core test:watch",
+    "test:react": "npm run --prefix packages/react test",
+    "test:react:precommit": "npm run --prefix packages/react test:precommit",
+    "test:react:watch": "npm run --prefix packages/react test:watch",
+    "test:vue": "npm run --prefix packages/vue test",
+    "test:vue:precommit": "npm run --prefix packages/vue test:precommit",
+    "test:vue:watch": "npm run --prefix packages/vue test:watch",
     "test:demo": "npm run --prefix demo test",
     "test:demo:precommit": "npm run --prefix demo test:precommit",
     "test:demo:watch": "npm run --prefix demo test:watch",
@@ -78,6 +84,12 @@
     ],
     "packages/core/**/*.js": [
       "npm run test:core:precommit"
+    ],
+    "packages/react/**/*.{js,jsx}": [
+      "npm run test:react:precommit"
+    ],
+    "packages/vue/**/*.js": [
+      "npm run test:vue:precommit"
     ],
     "demo/**/*.{js,jsx}": [
       "npm run test:demo:precommit"
