@@ -32,3 +32,7 @@ yarn-error.log*
 .env.production.local
 
 *.local
+
+# AI tooling
+.claude/*
+!.claude/skills/
