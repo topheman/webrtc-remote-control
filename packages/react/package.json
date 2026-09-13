@@ -32,7 +32,10 @@
     "build:modules": "microbundle --generateTypes false --no-compress --jsx React.createElement",
     "build:umd-dev": "microbundle build --generateTypes false --globals react=React --jsx React.createElement --raw --external react --define process.env.NODE_ENV='development' --no-pkg-main -o dist/webrtc-remote-control-react.umd.dev.js -f umd  --no-compress",
     "build:umd-prod": "microbundle build --generateTypes false --globals react=React --jsx React.createElement --raw --external react --define process.env.NODE_ENV='production' --no-pkg-main -o dist/webrtc-remote-control-react.umd.prod.js -f umd",
-    "dev": "microbundle watch --generateTypes false --no-compress --jsx React.createElement"
+    "dev": "microbundle watch --generateTypes false --no-compress --jsx React.createElement",
+    "test": "jest",
+    "test:precommit": "jest --bail --findRelatedTests",
+    "test:watch": "jest --watch -o"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "types": "src/react.d.ts",
@@ -42,8 +45,15 @@
     "dist"
   ],
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/preset-react": "^7.29.7",
+    "@testing-library/react": "^13.4.0",
+    "jest": "^27.5.1",
     "microbundle": "^0.14.2",
-    "npm-run-all": "^4.1.5"
+    "npm-run-all": "^4.1.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "peerDependencies": {
     "react": ">=16.8.0"

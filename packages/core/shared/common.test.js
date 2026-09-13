@@ -3,6 +3,7 @@ import {
   makeStoreAccessor,
   makeConnectionFilterUtilities,
   makeHumanizeError,
+  prepareUtils,
 } from "./common";
 
 let sessionStorage = null;
@@ -43,6 +44,17 @@ describe("shared/common", () => {
       expect(
         isConnectionFromRemote({ metadata: "from-webrtc-remote-control" })
       ).toBe(true);
+    });
+    it("isConnectionFromRemote should return false for a connection the user opened", () => {
+      const { isConnectionFromRemote } = makeConnectionFilterUtilities();
+      expect(isConnectionFromRemote({ metadata: undefined })).toBe(false);
+      expect(isConnectionFromRemote({ metadata: "something-else" })).toBe(
+        false
+      );
+    });
+    it("should expose the metadata it filters on", () => {
+      const { connMetadata } = makeConnectionFilterUtilities();
+      expect(connMetadata).toBe("from-webrtc-remote-control");
     });
   });
   describe("makeHumanizeError", () => {
@@ -87,6 +99,77 @@ describe("shared/common", () => {
           message: "Lost connection to server.",
         })
       ).toBe("It seems you're experimenting some network problems.");
+    });
+    it("should drop error.message for unmapped errors too when withTechicalErrorMessage = false", () => {
+      const humanizeError = makeHumanizeError({
+        withTechicalErrorMessage: false,
+      });
+      expect(
+        humanizeError({ type: "some-unsupported-error", message: "Boom." })
+      ).toBe("An error occured - type: some-unsupported-error");
+    });
+    it("should accept a function as the `default` mapping", () => {
+      const humanizeError = makeHumanizeError({
+        mapping: {
+          default: (error) => `Custom fallback for "${error.type}"`,
+        },
+      });
+      expect(humanizeError({ type: "some-unsupported-error" })).toBe(
+        'Custom fallback for "some-unsupported-error"'
+      );
+    });
+    it("should accept a plain string as the `default` mapping", () => {
+      const humanizeError = makeHumanizeError({
+        mapping: { default: "Something went wrong." },
+      });
+      expect(humanizeError({ type: "some-unsupported-error" })).toBe(
+        "Something went wrong."
+      );
+    });
+    it("should append error.message to a function-valued default", () => {
+      const humanizeError = makeHumanizeError({
+        mapping: { default: (error) => `Custom fallback for "${error.type}"` },
+        withTechicalErrorMessage: true,
+      });
+      expect(
+        humanizeError({ type: "some-unsupported-error", message: "Boom." })
+      ).toBe('Custom fallback for "some-unsupported-error" (Boom.)');
+    });
+    it("should handle an error with no type at all", () => {
+      const humanizeError = makeHumanizeError();
+      expect(humanizeError({})).toBe("An error occured");
+    });
+  });
+  describe("prepareUtils", () => {
+    afterEach(() => {
+      sessionStorage.clear();
+    });
+    it("should expose the four utilities the master and remote sides need", () => {
+      expect(Object.keys(prepareUtils()).sort()).toEqual([
+        "getPeerId",
+        "humanizeError",
+        "isConnectionFromRemote",
+        "setPeerIdToSessionStorage",
+      ]);
+    });
+    it("should wire the store accessor to the default key", () => {
+      const { getPeerId, setPeerIdToSessionStorage } = prepareUtils();
+      setPeerIdToSessionStorage("foo");
+      expect(getPeerId()).toBe("foo");
+      expect(sessionStorage.getItem("webrtc-remote-control-peer-id")).toBe(
+        "foo"
+      );
+    });
+    it("should forward sessionStorageKey and humanErrors", () => {
+      const { getPeerId, setPeerIdToSessionStorage, humanizeError } =
+        prepareUtils({
+          sessionStorageKey: "my-key",
+          humanErrors: { mapping: { network: "My custom message" } },
+        });
+      setPeerIdToSessionStorage("bar");
+      expect(getPeerId()).toBe("bar");
+      expect(sessionStorage.getItem("my-key")).toBe("bar");
+      expect(humanizeError({ type: "network" })).toBe("My custom message");
     });
   });
 });
