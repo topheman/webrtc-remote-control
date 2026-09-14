@@ -1,6 +1,15 @@
 /* eslint-disable import/no-relative-packages */
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { h } from "vue";
-import { render, waitFor } from "@testing-library/vue";
+import { render, waitFor, cleanup } from "@testing-library/vue";
 
 import { provideWebTCRemoteControl, usePeer } from "./vue";
 import { disableConsole, makeFakePeer } from "../../core/test.helpers";
@@ -14,8 +23,8 @@ import { disableConsole, makeFakePeer } from "../../core/test.helpers";
 describe("vue", () => {
   let restoreConsole = null;
 
-  // Disabled for the whole file rather than per test: the provider logs from its
-  // cleanup, which runs in Testing Library's own `afterEach`, after this describe's.
+  // Disabled for the whole file rather than per test: the provider logs while it is
+  // being torn down, which happens in the `cleanup()` below.
   beforeAll(() => {
     restoreConsole = disableConsole();
   });
@@ -23,6 +32,9 @@ describe("vue", () => {
     restoreConsole();
   });
   afterEach(() => {
+    // Testing Library auto-cleans in a global `afterEach`, which only exists when
+    // Vitest injects test globals. This suite imports them, so cleanup is explicit.
+    cleanup();
     // The guard tests throw while mounting, so Testing Library never gets to track
     // their container and its own cleanup cannot remove it. Queries are scoped to
     // `document.body`, so a leftover container makes the next `getByTestId` ambiguous.
@@ -103,7 +115,7 @@ describe("vue", () => {
   describe("master mode", () => {
     it("should call `init` with the core utils and expose the resolved api", async () => {
       const peer = makeFakePeer({ id: "master-peer-id" });
-      const init = jest.fn(() => peer);
+      const init = vi.fn(() => peer);
 
       const { getByTestId } = render(makeRoot(init, "master"));
 
@@ -137,7 +149,7 @@ describe("vue", () => {
   describe("remote mode", () => {
     it("should connect to the master and expose the resolved api", async () => {
       const peer = makeFakePeer({ id: "remote-peer-id" });
-      const init = jest.fn(() => peer);
+      const init = vi.fn(() => peer);
 
       const { getByTestId } = render(
         makeRoot(init, "remote", { masterPeerId: "master-peer-id" })
@@ -163,7 +175,7 @@ describe("vue", () => {
 
   describe("options", () => {
     it("should forward sessionStorageKey and humanErrors to the core utils", () => {
-      const init = jest.fn(() => makeFakePeer());
+      const init = vi.fn(() => makeFakePeer());
 
       render(
         makeRoot(init, "master", {

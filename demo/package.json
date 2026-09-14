@@ -9,9 +9,6 @@
     "build": "vite build",
     "preview": "vite preview",
     "forward": "ssh -R 80:localhost:3000 localhost.run",
-    "test": "jest",
-    "test:precommit": "jest --bail --findRelatedTests",
-    "test:watch": "jest --watch -o",
     "test:e2e": "jest --config ./jest.e2e.config.js",
     "test:e2e:watch": "jest --config ./jest.e2e.config.js --watch -o",
     "test:e2e:headless-false": "HEADLESS=false jest --config ./jest.e2e.config.js",
@@ -29,7 +26,8 @@
     "jest-puppeteer": "^6.1.0",
     "puppeteer": "^13.4.0",
     "start-server-and-test": "^1.14.0",
-    "vite": "^2.8.3"
+    "vite": "^2.8.3",
+    "vitest": "catalog:"
   },
   "dependencies": {
     "@react-three/fiber": "^8.0.12",

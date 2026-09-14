@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import EventEmitter from "eventemitter3";
 
 /* eslint-disable no-console */
@@ -17,33 +18,6 @@ export function disableConsole(
       console[methodName] = method;
     });
   };
-}
-
-export function mockSessionStorage() {
-  class SessionStorageMock {
-    constructor() {
-      this.store = {};
-    }
-
-    clear() {
-      this.store = {};
-    }
-
-    getItem(key) {
-      return this.store[key] || null;
-    }
-
-    setItem(key, value) {
-      this.store[key] = String(value);
-    }
-
-    removeItem(key) {
-      delete this.store[key];
-    }
-  }
-
-  global.sessionStorage = new SessionStorageMock();
-  return global.sessionStorage;
 }
 
 /**
@@ -66,8 +40,8 @@ export function makeFakeConnection(options = {}) {
     metadata,
     on: ee.on.bind(ee),
     off: ee.off.bind(ee),
-    send: jest.fn(),
-    disconnect: jest.fn(),
+    send: vi.fn(),
+    disconnect: vi.fn(),
     emitOpen: () => ee.emit("open"),
     emitData: (data) => ee.emit("data", data),
     emitClose: () => ee.emit("close"),
@@ -89,11 +63,11 @@ export function makeFakePeer({ id = "local-peer-id", connect } = {}) {
     id,
     on: ee.on.bind(ee),
     off: ee.off.bind(ee),
-    disconnect: jest.fn(),
-    destroy: jest.fn(),
+    disconnect: vi.fn(),
+    destroy: vi.fn(),
     connect:
       connect ||
-      jest.fn((masterPeerId, options) => {
+      vi.fn((masterPeerId, options) => {
         const conn = makeFakeConnection({
           peer: id,
           metadata: options.metadata,

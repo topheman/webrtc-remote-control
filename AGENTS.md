@@ -40,15 +40,15 @@ packages/core/
   master/src/core.master.js  # the "./master" export
   remote/src/core.remote.js  # the "./remote" export
   shared/common.js           # shared utilities, not a public subpath
-  test.helpers.js            # fake peer/connection + console and sessionStorage mocks
+  test.helpers.js            # fake peer/connection + a console silencer
 ```
 
 The `.d.ts` files sitting next to each source file are **hand-written**, not build
 output. Editing a signature means editing its `.d.ts` by hand.
 
 The react and vue packages depend on `@webrtc-remote-control/core` with the `workspace:^`
-protocol, so pnpm symlinks it to `packages/core`. Their Jest configs map that specifier
-to the core **source**, so unit tests never need a build. At publish time
+protocol, so pnpm symlinks it to `packages/core`. The root `vitest.config.mts` aliases
+that specifier to the core **source**, so unit tests never need a build. At publish time
 `changeset publish` delegates to `pnpm publish`, which rewrites `workspace:^` into a
 real range in the tarball - publishing with `npm` directly would ship the literal
 `workspace:^` and break the package.
@@ -64,7 +64,8 @@ Run from the repo root unless noted.
 | `pnpm run dev`                                                 | watch mode for all four packages in parallel                    |
 | `pnpm run lint`                                                | ESLint over the whole repo                                      |
 | `pnpm test`                                                    | unit tests: core, react, vue, demo                              |
-| `pnpm run test:core` / `test:react` / `test:vue` / `test:demo` | one package's unit tests                                        |
+| `pnpm run test:watch`                                          | the same suite in watch mode                                    |
+| `pnpm run test:core` / `test:react` / `test:vue` / `test:demo` | one Vitest project, with a `:watch` variant each                |
 | `pnpm run test:e2e`                                            | Puppeteer + jest-cucumber suite, needs a server already running |
 | `pnpm run test:e2e:start-server-and-test`                      | builds nothing, previews the demo and runs e2e against it       |
 | `pnpm run peer-server`                                         | local peerjs signaling server on port 9000                      |
@@ -91,8 +92,16 @@ with `changesets/action/select-mode`, and publishes through npm trusted publishi
 The trusted publisher registered on npmjs.com names `release.yml`, so renaming that file
 breaks publishing until npmjs.com is updated to match.
 
-Unit tests are Jest 27 with Babel. End-to-end tests are jest-puppeteer driving Gherkin
-features in `demo/__integration__`.
+Unit tests are Vitest, driven by a single root `vitest.config.mts` that declares one
+project per package. There are no per-package test configs and no per-package `test`
+scripts: everything runs from the root. Test globals are **not** injected, so every test
+file imports `describe`, `it`, `expect` and `vi` from `vitest`, and suites using Testing
+Library call `cleanup()` themselves. The `vitest` version is pinned once in the
+`catalog:` block of `pnpm-workspace.yaml`.
+
+End-to-end tests are still Jest 27 with Babel - jest-puppeteer driving Gherkin features
+in `demo/__integration__`. That is the only remaining use of Jest in the repo, which is
+why `demo` keeps `jest`, `@babel/preset-env` and `demo/babel.config.js`.
 
 ## Things that are already broken by age
 
