@@ -78,6 +78,12 @@ The package manager is pnpm, pinned through `packageManager` in the root `packag
 Postinstall scripts are opt-in: `pnpm-workspace.yaml` has an `allowBuilds` block, and a
 new dependency that needs one has to be added there (`pnpm approve-builds` writes it).
 
+The demo deploys to Vercel, whose project settings live in the dashboard rather than in
+the repo. The one exception is `vercel.json`, which pins `installCommand` to pnpm: the
+dashboard still carried an `npm install` override from before the pnpm migration, and
+settings in `vercel.json` take precedence over the dashboard. npm cannot resolve the
+`catalog:` protocol, so a preview deploy installing with npm fails outright.
+
 Releases run on Changesets with independent versions, driven by
 `.github/workflows/release.yml`. That workflow picks between versioning and publishing
 with `changesets/action/select-mode`, and publishes through npm trusted publishing
