@@ -98,6 +98,11 @@ features in `demo/__integration__`.
 ## Conventions
 
 - Commits follow Conventional Commits; commitlint runs on the commit-msg hook.
+- Pull request titles follow Conventional Commits too. Pull requests are merged with
+  squash and merge, so the title becomes the commit subject on the target branch
+  (`chore: some subject (#20)`). Nothing validates it at merge time - the commit-msg hook
+  only sees local commits - so it has to be written correctly up front. Descriptive prose
+  belongs in the pull request body.
 - Prettier is enforced through ESLint (`plugin:prettier/recommended`), so
   `npx eslint --fix` is the formatter.
 - Tests sit next to the code they cover (`*.test.js`), not in a separate tree.
