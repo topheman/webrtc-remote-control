@@ -1,5 +1,10 @@
 name: ci
 on: [push, pull_request]
+env:
+  # The root `prepare` script installs the Git hook dispatcher. There is nothing
+  # to commit from CI, so skip it.
+  VP_GIT_HOOKS: 0
+
 jobs:
   main:
     runs-on: ubuntu-latest

@@ -12,6 +12,12 @@ concurrency:
 # Each job declares what it needs; nothing is granted by default.
 permissions: {}
 
+env:
+  # The root `prepare` script installs the Git hook dispatcher. The version job
+  # commits through changesets/action, whose "Version Packages" subject is not a
+  # Conventional Commit, so the commit-msg hook must not be in the way here.
+  VP_GIT_HOOKS: 0
+
 jobs:
   select-mode:
     name: Select mode

@@ -87,8 +87,10 @@ built on `start-server-and-test`, which waits for the signaling server to answer
 9000 before starting the thing that needs it, and tears it down afterwards.
 
 `vp` manages Node.js and the package manager itself; the versions come from
-`.node-version` and `packageManager` in the root `package.json`. Postinstall scripts are
-opt-in: `pnpm-workspace.yaml` has an `allowBuilds` block, and a new dependency that needs
+`.node-version` and `packageManager` in the root `package.json`. A global `vp` is not
+required: `vite-plus` is a normal dependency, so `pnpm install` links `node_modules/.bin/vp`
+and every `pnpm run` script resolves it from there. That is how Vercel and any contributor
+without the toolchain installed still build. Postinstall scripts are opt-in: `pnpm-workspace.yaml` has an `allowBuilds` block, and a new dependency that needs
 one has to be added there (`pnpm approve-builds` writes it).
 
 `.npmrc` sets `min-release-age=2`, so a dependency published less than two days ago is not
@@ -144,7 +146,10 @@ Git hooks go through the Vite+ dispatcher rather than husky. `.vite-hooks/pre-co
 Both are project-owned and committed; the generated dispatcher under `.vite-hooks/_`
 is gitignored and recreated by the `prepare` script (`vp config --no-agent`), which is
 what `husky install` used to do. `VP_GIT_HOOKS=0` skips hooks, the way `HUSKY=0` used to,
-and `vp hooks status` says whether they are actually wired up in this clone.
+and `vp hooks status` says whether they are actually wired up in this clone. CI, the
+release workflow and Vercel all set `VP_GIT_HOOKS=0`, because none of them should be
+installing hooks - and the release workflow in particular commits a changesets-generated
+"Version Packages" subject that commitlint would reject.
 
 `.vscode/` points the editor at the same thing: the Oxc extension formats and lints from
 the `fmt` and `lint` blocks above, so format-on-save and `vp check` cannot disagree. The
