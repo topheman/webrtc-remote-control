@@ -2,10 +2,17 @@ packages:
   - "packages/*"
   - "demo"
 
+# Dependencies declared by more than one workspace package. The catalog keeps
+# each one pinned to a single version in one place.
+#
 # Test files across every package import from "vitest", so each one declares it.
-# The catalog keeps that single version in one place.
+# Vite and its plugins are shared by the demo (which builds with them) and the
+# root Vitest config (which reuses the React plugin to transform JSX in tests).
 catalog:
   vitest: ^5.0.0
+  vite: ^8.3.0
+  "@vitejs/plugin-react": ^6.1.1
+  "@vitejs/plugin-vue": ^6.0.8
 
 # Postinstall scripts pnpm runs. esbuild and puppeteer fetch binaries, vue-demi
 # picks the Vue 2/3 shim, protobufjs runs a codegen check.

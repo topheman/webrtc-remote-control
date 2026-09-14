@@ -58,7 +58,7 @@
     "@changesets/cli": "^3.0.2",
     "@commitlint/cli": "^16.2.3",
     "@commitlint/config-conventional": "^16.2.1",
-    "@vitejs/plugin-react": "^6.1.1",
+    "@vitejs/plugin-react": "catalog:",
     "eslint": "^8.6.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^8.3.0",
