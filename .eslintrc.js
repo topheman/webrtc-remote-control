@@ -41,6 +41,16 @@ module.exports = {
     "react/jsx-uses-react": 1,
     "no-restricted-syntax": 0,
   },
+  overrides: [
+    {
+      // react-three-fiber renders three.js objects as JSX intrinsics, so every
+      // prop on them looks unknown to eslint-plugin-react
+      files: ["demo/accelerometer-3d/**/*.jsx"],
+      rules: {
+        "react/no-unknown-property": 0,
+      },
+    },
+  ],
   settings: {
     "import/resolver": {
       node: {
@@ -49,7 +59,7 @@ module.exports = {
     },
     react: {
       // to avoid "Warning: React version not specified in eslint-plugin-react settings." - https://github.com/yannickcr/eslint-plugin-react/issues/1955
-      version: "latest",
+      version: "detect",
     },
   },
 };

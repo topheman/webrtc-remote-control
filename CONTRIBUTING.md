@@ -4,31 +4,32 @@
 
 ## Prerequisites
 
-- Nodejs >=16
-- npm >=8
+- Nodejs >=24 (see [.nvmrc](.nvmrc))
+- pnpm >=12 - `corepack enable pnpm` picks up the version pinned in `packageManager`
 
 ## Setup
 
-This project is organized as a monorepo, with lerna. The following will install dependencies for every submodules and wire everything up (via `lerna bootstrap`).
+This project is organized as a monorepo, with [pnpm workspaces](https://pnpm.io/workspaces). The
+following installs dependencies for every workspace package and links them together.
 
 ```sh
-npm install
+pnpm install
 ```
 
 ## Commonly used scripts
 
-- `npm run build`: builds all the packages + demo (you can use some more specific scripts)
-  - `npm run build:peer-server`: same, preparing for using a local signaling server
-- `npm run dev`: build the packages + demo in watch mode and dev mode (you can use some more specific scripts)
-  - `npm run dev:peer-server`: same, using a local signaling server
-- `npm run preview`: launch the built version
-  - `npm run preview:peer-server`: same using a local signaling server
-- `npm run lint`: runs linter
-- `npm test`: runs unit tests (you can use some more specific scripts)
-- `npm run test:e2e`: run end-to-end test (you need to have your preview or dev server started)
-  - `npm run test:e2e:watch`: same in watch mode
-- `npm run test:e2e:start-server-and-test`: launches preview server and runs e2e tests (you need to have built the project before)
-  - `npm run test:e2e:start-server-and-test:peer-server`: same using a local signaling server
+- `pnpm run build`: builds all the packages + demo (you can use some more specific scripts)
+  - `pnpm run build:peer-server`: same, preparing for using a local signaling server
+- `pnpm run dev`: build the packages + demo in watch mode and dev mode (you can use some more specific scripts)
+  - `pnpm run dev:peer-server`: same, using a local signaling server
+- `pnpm run preview`: launch the built version
+  - `pnpm run preview:peer-server`: same using a local signaling server
+- `pnpm run lint`: runs linter
+- `pnpm test`: runs unit tests (you can use some more specific scripts)
+- `pnpm run test:e2e`: run end-to-end test (you need to have your preview or dev server started)
+  - `pnpm run test:e2e:watch`: same in watch mode
+- `pnpm run test:e2e:start-server-and-test`: launches preview server and runs e2e tests (you need to have built the project before)
+  - `pnpm run test:e2e:start-server-and-test:peer-server`: same using a local signaling server
 
 ## Using the local peer server
 
@@ -37,27 +38,73 @@ By default, you can use the signaling server of peerjs (no need to deploy your o
 For some reason, you may want to run your code against a local signaling server. You can launch a signaling server with the following command in a tab:
 
 ```sh
-npm run peer-server
+pnpm run peer-server
 ```
 
 Then on an other tab, set the env var `VITE_USE_LOCAL_PEER_SERVER=true`
 
 ```sh
-VITE_USE_LOCAL_PEER_SERVER=true npm run dev # also works with npm run build
+VITE_USE_LOCAL_PEER_SERVER=true pnpm run dev # also works with pnpm run build
 ```
 
 ## Adding dependencies
 
-If you need to add dependencies to one of the packages or the demo, dont use `npm` directly, use [@lerna/add](https://www.npmjs.com/package/@lerna/add).
+Add dependencies to a specific workspace package with `pnpm --filter`, run from the repo root.
 
 Examples:
 
 ```sh
-npx lerna add npm-run-all --scope=@webrtc-remote-control/react --dev
-npx lerna add prop-types --scope=@webrtc-remote-control/react
-npx lerna add react@>=16.8.0 --scope=@webrtc-remote-control/react --peer
-npx lerna add react vue --scope=@webrtc-remote-control/demo
+pnpm --filter @webrtc-remote-control/react add -D npm-run-all
+pnpm --filter @webrtc-remote-control/react add prop-types
+pnpm --filter @webrtc-remote-control/react add -P "react@>=16.8.0"
+pnpm --filter @webrtc-remote-control/demo add react vue
 ```
+
+Dependencies between the packages of this repo use the `workspace:^` protocol, so they resolve to
+the local sources. `changeset publish` detects the workspace tool and delegates to `pnpm publish`,
+which rewrites `workspace:^` into a real range in the published tarball.
+
+## Releasing
+
+Releases go through [Changesets](https://github.com/changesets/changesets), with independent
+versions per package.
+
+Every pull request that changes a published package should carry a changeset:
+
+```sh
+pnpm changeset
+```
+
+That writes a markdown file under `.changeset/` describing the bump and the changelog entry. Commit
+it alongside your changes.
+
+On `master`, the `release` workflow decides what to do from the repository state:
+
+- pending changesets exist → it opens (and keeps updated) a "version packages" pull request that
+  consumes them, bumps versions and updates the changelogs
+- no pending changesets, versions ahead of the registry → it builds and publishes to npm
+
+So merging the "version packages" pull request is what triggers a release.
+
+### npm authentication
+
+There is no `NPM_TOKEN` secret. Publishing uses [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/):
+the publish job mints a short-lived OIDC token (`id-token: write`) that npm exchanges for publish
+credentials, so no long-lived token is stored anywhere.
+
+This needs a one-time setup on npmjs.com, **for each of the three published packages**
+(`@webrtc-remote-control/core`, `/react`, `/vue`). Under the package's _Settings → Trusted publisher_,
+add a GitHub Actions publisher with:
+
+| Field             | Value                   |
+| ----------------- | ----------------------- |
+| Organization/user | `topheman`              |
+| Repository        | `webrtc-remote-control` |
+| Workflow filename | `release.yml`           |
+| Environment       | leave empty             |
+
+Until that is configured, the publish job will fail to authenticate. Versioning and the release pull
+request work regardless.
 
 ## Environment variables
 
@@ -75,9 +122,9 @@ So to test on multiple devices, you'll need to tunnel the app with a utility lik
 
 Some tasks are available:
 
-- `npm run dev:forward`: same as `npm run dev` with forwarding
-- `npm run preview:forward`: same as `npm run preview` with forwarding (you have to build before)
-- `npm run demo:forward`: will forward `localhost:3000`
+- `pnpm run dev:forward`: same as `pnpm run dev` with forwarding
+- `pnpm run preview:forward`: same as `pnpm run preview` with forwarding (you have to build before)
+- `pnpm run demo:forward`: will forward `localhost:3000`
 
 The public https temporary address will be outputted on your terminal (keep in mind you won't access your website through your local network but through the internet, which can take longer - use that only to test WebRTC on mobile devices).
 

@@ -15,7 +15,7 @@
     "test:e2e": "jest --config ./jest.e2e.config.js",
     "test:e2e:watch": "jest --config ./jest.e2e.config.js --watch -o",
     "test:e2e:headless-false": "HEADLESS=false jest --config ./jest.e2e.config.js",
-    "test:e2e:start-server-and-test": "PORT=3001 npx start-server-and-test preview :3001 test:e2e"
+    "test:e2e:start-server-and-test": "PORT=3001 start-server-and-test preview :3001 test:e2e"
   },
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "MIT",
@@ -23,6 +23,7 @@
     "@babel/preset-env": "^7.16.11",
     "@vitejs/plugin-react": "^1.2.0",
     "@vitejs/plugin-vue": "^2.2.4",
+    "chalk": "^4.1.2",
     "jest": "^27.5.1",
     "jest-cucumber": "^3.0.1",
     "jest-puppeteer": "^6.1.0",
@@ -33,9 +34,9 @@
   "dependencies": {
     "@react-three/fiber": "^8.0.12",
     "@vueuse/core": "^8.0.1",
-    "@webrtc-remote-control/core": "^0.1.3",
-    "@webrtc-remote-control/react": "^0.1.3",
-    "@webrtc-remote-control/vue": "^0.1.3",
+    "@webrtc-remote-control/core": "workspace:^",
+    "@webrtc-remote-control/react": "workspace:^",
+    "@webrtc-remote-control/vue": "workspace:^",
     "lodash": "^4.17.21",
     "prop-types": "^15.8.1",
     "react": "^18.0.0",

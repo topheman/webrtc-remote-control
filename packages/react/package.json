@@ -59,7 +59,7 @@
     "react": ">=16.8.0"
   },
   "dependencies": {
-    "@webrtc-remote-control/core": "^0.1.3",
+    "@webrtc-remote-control/core": "workspace:^",
     "prop-types": "^15.8.1"
   },
   "publishConfig": {

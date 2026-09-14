@@ -1,0 +1,11 @@
+packages:
+  - "packages/*"
+  - "demo"
+
+# Postinstall scripts pnpm runs. esbuild and puppeteer fetch binaries, vue-demi
+# picks the Vue 2/3 shim, protobufjs runs a codegen check.
+allowBuilds:
+  esbuild: true
+  protobufjs: true
+  puppeteer: true
+  vue-demi: true

@@ -4,31 +4,36 @@ jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Node 🥣
-        uses: actions/setup-node@v2
-        with:
-          node-version: 22
-      - run: node -v
-      - run: npm -v
-
       - name: Checkout 🛎
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Install NPM dependencies 📦
-        run: npm ci
+      - name: Setup pnpm 📦
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node 🥣
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: node -v
+      - run: pnpm -v
+
+      - name: Install dependencies 📦
+        run: pnpm install --frozen-lockfile
 
       - name: Build
-        # run: npm run build
+        # run: pnpm run build
         # Public peer server is down for the moment -> we use a local signaling server
-        run: npm run build:peer-server
+        run: pnpm run build:peer-server
 
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Unit tests
-        run: npm run test
+        run: pnpm run test
 
       - name: End2end tests
-        # run: JEST_TIMEOUT=30000 npm run test:e2e:start-server-and-test
+        # run: JEST_TIMEOUT=30000 pnpm run test:e2e:start-server-and-test
         # Public peer server is down for the moment -> we use a local signaling server
-        run: JEST_TIMEOUT=30000 npm run test:e2e:start-server-and-test:peer-server
+        run: JEST_TIMEOUT=30000 pnpm run test:e2e:start-server-and-test:peer-server

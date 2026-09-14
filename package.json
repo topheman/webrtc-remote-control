@@ -5,52 +5,48 @@
   "private": true,
   "main": "src/index.js",
   "scripts": {
-    "bootstrap": "lerna bootstrap",
-    "build": "npm run build:core && npm run build:react && npm run build:vue && npm run build:demo",
-    "build:core": "lerna run --stream --scope @webrtc-remote-control/core build",
-    "build:react": "lerna run --stream --scope @webrtc-remote-control/react build",
-    "build:vue": "lerna run --stream --scope @webrtc-remote-control/vue build",
-    "build:demo": "lerna run --stream --scope @webrtc-remote-control/demo build",
-    "build:peer-server": "VITE_USE_LOCAL_PEER_SERVER=true npm run build",
-    "dev": "lerna run --parallel --scope @webrtc-remote-control/core --scope @webrtc-remote-control/react --scope @webrtc-remote-control/vue --scope @webrtc-remote-control/demo dev",
+    "build": "pnpm run build:core && pnpm run build:react && pnpm run build:vue && pnpm run build:demo",
+    "build:core": "pnpm --filter @webrtc-remote-control/core run build",
+    "build:react": "pnpm --filter @webrtc-remote-control/react run build",
+    "build:vue": "pnpm --filter @webrtc-remote-control/vue run build",
+    "build:demo": "pnpm --filter @webrtc-remote-control/demo run build",
+    "build:peer-server": "VITE_USE_LOCAL_PEER_SERVER=true pnpm run build",
+    "dev": "pnpm --parallel --filter \"@webrtc-remote-control/*\" run dev",
     "dev:peer-server": "VITE_USE_LOCAL_PEER_SERVER=true npm-run-all --parallel dev peer-server",
     "dev:forward": "npm-run-all --parallel dev demo:forward",
-    "dev:core": "lerna run --stream --scope @webrtc-remote-control/core dev",
-    "dev:react": "lerna run --stream --scope @webrtc-remote-control/react dev",
-    "dev:vue": "lerna run --stream --scope @webrtc-remote-control/vue dev",
-    "dev:demo": "lerna run --stream --scope @webrtc-remote-control/demo dev",
-    "demo:forward": "npm run --prefix demo forward",
-    "diff": "lerna diff",
+    "dev:core": "pnpm --filter @webrtc-remote-control/core run dev",
+    "dev:react": "pnpm --filter @webrtc-remote-control/react run dev",
+    "dev:vue": "pnpm --filter @webrtc-remote-control/vue run dev",
+    "dev:demo": "pnpm --filter @webrtc-remote-control/demo run dev",
+    "demo:forward": "pnpm --filter @webrtc-remote-control/demo run forward",
     "lint": "eslint --ext .js,.jsx .",
-    "peer-server": "npx peerjs --port 9000 --key peerjs --path /myapp",
-    "preview": "lerna run --stream --scope @webrtc-remote-control/demo preview",
+    "peer-server": "peerjs --port 9000 --key peerjs --path /myapp",
+    "preview": "pnpm --filter @webrtc-remote-control/demo run preview",
     "preview:peer-server": "npm-run-all --parallel preview peer-server",
     "preview:forward": "npm-run-all --parallel preview demo:forward",
-    "test": "npm run test:core && npm run test:react && npm run test:vue && npm run test:demo",
-    "test:core": "npm run --prefix packages/core test",
-    "test:core:precommit": "npm run --prefix packages/core test:precommit",
-    "test:core:watch": "npm run --prefix packages/core test:watch",
-    "test:react": "npm run --prefix packages/react test",
-    "test:react:precommit": "npm run --prefix packages/react test:precommit",
-    "test:react:watch": "npm run --prefix packages/react test:watch",
-    "test:vue": "npm run --prefix packages/vue test",
-    "test:vue:precommit": "npm run --prefix packages/vue test:precommit",
-    "test:vue:watch": "npm run --prefix packages/vue test:watch",
-    "test:demo": "npm run --prefix demo test",
-    "test:demo:precommit": "npm run --prefix demo test:precommit",
-    "test:demo:watch": "npm run --prefix demo test:watch",
-    "test:e2e": "npm run --prefix demo test:e2e",
-    "test:e2e:watch": "npm run --prefix demo test:e2e:watch",
-    "test:e2e:start-server-and-test": "npm run --prefix demo test:e2e:start-server-and-test",
+    "test": "pnpm run test:core && pnpm run test:react && pnpm run test:vue && pnpm run test:demo",
+    "test:core": "pnpm --filter @webrtc-remote-control/core run test",
+    "test:core:precommit": "pnpm --filter @webrtc-remote-control/core run test:precommit",
+    "test:core:watch": "pnpm --filter @webrtc-remote-control/core run test:watch",
+    "test:react": "pnpm --filter @webrtc-remote-control/react run test",
+    "test:react:precommit": "pnpm --filter @webrtc-remote-control/react run test:precommit",
+    "test:react:watch": "pnpm --filter @webrtc-remote-control/react run test:watch",
+    "test:vue": "pnpm --filter @webrtc-remote-control/vue run test",
+    "test:vue:precommit": "pnpm --filter @webrtc-remote-control/vue run test:precommit",
+    "test:vue:watch": "pnpm --filter @webrtc-remote-control/vue run test:watch",
+    "test:demo": "pnpm --filter @webrtc-remote-control/demo run test",
+    "test:demo:precommit": "pnpm --filter @webrtc-remote-control/demo run test:precommit",
+    "test:demo:watch": "pnpm --filter @webrtc-remote-control/demo run test:watch",
+    "test:e2e": "pnpm --filter @webrtc-remote-control/demo run test:e2e",
+    "test:e2e:watch": "pnpm --filter @webrtc-remote-control/demo run test:e2e:watch",
+    "test:e2e:start-server-and-test": "pnpm --filter @webrtc-remote-control/demo run test:e2e:start-server-and-test",
     "test:e2e:start-server-and-test:peer-server": "npm-run-all --parallel --race peer-server test:e2e:start-server-and-test",
-    "prepare": "husky install; npm run bootstrap",
+    "prepare": "husky install",
     "check:dotenv": "dotenv -c -- node -e 'console.log(process.env.FOO_BAR)'",
-    "lerna:diff": "lerna diff",
-    "lerna:version": "HUSKY=0 lerna version --conventional-commits",
-    "lerna:version:yes": "HUSKY=0 lerna version --conventional-commits --yes",
-    "lerna:changed": "lerna changed",
-    "lerna:publish": "HUSKY=0 lerna publish --conventional-commits",
-    "lerna:publish:yes": "HUSKY=0 lerna publish --conventional-commits --yes",
+    "changeset": "changeset",
+    "changeset:version": "HUSKY=0 changeset version",
+    "changeset:status": "changeset status",
+    "release": "pnpm run build && HUSKY=0 changeset publish",
     "clean:install": "find . -name \"node_modules\" -exec rm -rf '{}' +"
   },
   "keywords": [
@@ -60,6 +56,8 @@
   "author": "Christophe Rosset <tophe@topheman.com> (http://labs.topheman.com/)",
   "license": "MIT",
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^3.0.2",
     "@commitlint/cli": "^16.2.3",
     "@commitlint/config-conventional": "^16.2.1",
     "@types/jest": "^27.4.0",
@@ -72,7 +70,6 @@
     "eslint-plugin-react": "^7.28.0",
     "eslint-plugin-react-hooks": "^4.3.0",
     "husky": "^7.0.4",
-    "lerna": "^4.0.0",
     "lint-staged": "^12.1.7",
     "npm-run-all": "^4.1.5",
     "peer": "^0.6.1",
@@ -83,19 +80,20 @@
       "eslint --cache --fix"
     ],
     "packages/core/**/*.js": [
-      "npm run test:core:precommit"
+      "pnpm run test:core:precommit"
     ],
     "packages/react/**/*.{js,jsx}": [
-      "npm run test:react:precommit"
+      "pnpm run test:react:precommit"
     ],
     "packages/vue/**/*.js": [
-      "npm run test:vue:precommit"
+      "pnpm run test:vue:precommit"
     ],
     "demo/**/*.{js,jsx}": [
-      "npm run test:demo:precommit"
+      "pnpm run test:demo:precommit"
     ],
     "*.{css,html,ts,tsx}": [
       "prettier --write"
     ]
-  }
+  },
+  "packageManager": "pnpm@12.4.1"
 }
