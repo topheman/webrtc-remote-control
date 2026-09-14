@@ -46,37 +46,50 @@ packages/core/
 The `.d.ts` files sitting next to each source file are **hand-written**, not build
 output. Editing a signature means editing its `.d.ts` by hand.
 
-The react and vue packages import the core through `@webrtc-remote-control/core`, which
-resolves to `packages/core` via a symlink created by `lerna bootstrap`. Their Jest configs
-map that specifier to the core **source**, so unit tests never need a build.
+The react and vue packages depend on `@webrtc-remote-control/core` with the `workspace:^`
+protocol, so pnpm symlinks it to `packages/core`. Their Jest configs map that specifier
+to the core **source**, so unit tests never need a build. At publish time
+`changeset publish` delegates to `pnpm publish`, which rewrites `workspace:^` into a
+real range in the tarball - publishing with `npm` directly would ship the literal
+`workspace:^` and break the package.
 
 ## Commands that work today
 
 Run from the repo root unless noted.
 
-| Command                                                       | What it does                                                    |
-| ------------------------------------------------------------- | --------------------------------------------------------------- |
-| `npm run bootstrap`                                           | `lerna bootstrap` - installs and links every package            |
-| `npm run build`                                               | builds core, react, vue (microbundle) then the demo (Vite)      |
-| `npm run dev`                                                 | watch mode for all four packages in parallel                    |
-| `npm run lint`                                                | ESLint over the whole repo                                      |
-| `npm test`                                                    | unit tests: core, react, vue, demo                              |
-| `npm run test:core` / `test:react` / `test:vue` / `test:demo` | one package's unit tests                                        |
-| `npm run test:e2e`                                            | Puppeteer + jest-cucumber suite, needs a server already running |
-| `npm run test:e2e:start-server-and-test`                      | builds nothing, previews the demo and runs e2e against it       |
-| `npm run peer-server`                                         | local peerjs signaling server on port 9000                      |
+| Command                                                        | What it does                                                    |
+| -------------------------------------------------------------- | --------------------------------------------------------------- |
+| `pnpm install`                                                 | installs and links every workspace package                      |
+| `pnpm run build`                                               | builds core, react, vue (microbundle) then the demo (Vite)      |
+| `pnpm run dev`                                                 | watch mode for all four packages in parallel                    |
+| `pnpm run lint`                                                | ESLint over the whole repo                                      |
+| `pnpm test`                                                    | unit tests: core, react, vue, demo                              |
+| `pnpm run test:core` / `test:react` / `test:vue` / `test:demo` | one package's unit tests                                        |
+| `pnpm run test:e2e`                                            | Puppeteer + jest-cucumber suite, needs a server already running |
+| `pnpm run test:e2e:start-server-and-test`                      | builds nothing, previews the demo and runs e2e against it       |
+| `pnpm run peer-server`                                         | local peerjs signaling server on port 9000                      |
+| `pnpm changeset`                                               | records a version bump for the next release                     |
 
 The public peerjs signaling server is unreliable, so CI builds with
-`npm run build:peer-server` and runs e2e against a local signaling server. The
+`pnpm run build:peer-server` and runs e2e against a local signaling server. The
 `:peer-server` variants of the dev, preview and e2e scripts do the same locally.
+
+The package manager is pnpm, pinned through `packageManager` in the root `package.json`.
+Postinstall scripts are opt-in: `pnpm-workspace.yaml` has an `allowBuilds` block, and a
+new dependency that needs one has to be added there (`pnpm approve-builds` writes it).
+
+Releases run on Changesets with independent versions, driven by
+`.github/workflows/release.yml`. That workflow picks between versioning and publishing
+with `changesets/action/select-mode`, and publishes through npm trusted publishing
+(OIDC), so there is no `NPM_TOKEN` secret - only the publish job gets `id-token: write`.
+The trusted publisher registered on npmjs.com names `release.yml`, so renaming that file
+breaks publishing until npmjs.com is updated to match.
 
 Unit tests are Jest 27 with Babel. End-to-end tests are jest-puppeteer driving Gherkin
 features in `demo/__integration__`.
 
 ## Things that are already broken by age
 
-- `lerna bootstrap` was removed in Lerna 7, so the install step cannot be upgraded in
-  place.
 - microbundle is effectively unmaintained.
 - There are `console.log` calls shipped in `core.master.js`, `core.remote.js`,
   `vue/hooks.js`, `vue/Provider.js` and `react/Provider.jsx`. ESLint reports them as
@@ -85,6 +98,12 @@ features in `demo/__integration__`.
 ## Conventions
 
 - Commits follow Conventional Commits; commitlint runs on the commit-msg hook.
+- Pull request titles follow Conventional Commits too. Pull requests are merged with
+  squash and merge, so the title becomes the commit subject on the target branch
+  (`chore: some subject (#20)`). Nothing validates it at merge time - the commit-msg hook
+  only sees local commits - so it has to be written correctly up front. Descriptive prose
+  belongs in the pull request body.
 - Prettier is enforced through ESLint (`plugin:prettier/recommended`), so
   `npx eslint --fix` is the formatter.
 - Tests sit next to the code they cover (`*.test.js`), not in a separate tree.
+- Pull requests that change a published package carry a changeset.

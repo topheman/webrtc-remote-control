@@ -1,0 +1,113 @@
+name: release
+
+on:
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+# Each job declares what it needs; nothing is granted by default.
+permissions: {}
+
+jobs:
+  select-mode:
+    name: Select mode
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      mode: ${{ steps.select-mode.outputs.mode }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm 📦
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node 🥣
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies 📦
+        run: pnpm install --frozen-lockfile
+
+      - name: Select mode
+        id: select-mode
+        uses: changesets/action/select-mode@v2.1.2
+
+  version:
+    name: Version
+    needs: select-mode
+    if: needs.select-mode.outputs.mode == 'version'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # to push the version commit
+      pull-requests: write # to open the "Version Packages" pull request
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm 📦
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node 🥣
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies 📦
+        run: pnpm install --frozen-lockfile
+
+      - name: Create or update the version pull request 🔖
+        uses: changesets/action/version@v2.1.2
+        with:
+          script: pnpm run changeset:version
+          commit-message: "chore: version packages"
+          pr-title: "chore: version packages"
+        env:
+          # @changesets/changelog-github reads this to resolve pull requests and authors
+          GITHUB_TOKEN: ${{ github.token }}
+
+  publish:
+    name: Publish
+    needs: select-mode
+    if: needs.select-mode.outputs.mode == 'publish'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write # to push git tags and create GitHub releases
+      id-token: write # to mint the OIDC token npm trusted publishing exchanges for credentials
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm 📦
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node 🥣
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies 📦
+        run: pnpm install --frozen-lockfile
+
+      - name: Publish to npm 🚀
+        uses: changesets/action/publish@v2.1.2
+        with:
+          script: pnpm run release

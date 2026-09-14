@@ -58,7 +58,7 @@
     "vue": ">=3.0.0"
   },
   "dependencies": {
-    "@webrtc-remote-control/core": "^0.1.3"
+    "@webrtc-remote-control/core": "workspace:^"
   },
   "publishConfig": {
     "access": "public"
