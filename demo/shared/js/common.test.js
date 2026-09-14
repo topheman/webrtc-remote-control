@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from "vitest";
 import { disableConsole } from "../../test.helpers";
 
 import { makeLogger } from "./common";
@@ -63,7 +64,7 @@ describe("common", () => {
     });
     it("onLog callback should be called on log", () => {
       const restoreConsole = disableConsole();
-      const onLog = jest.fn();
+      const onLog = vi.fn();
       const logger = makeLogger({ onLog });
       logger.log("foo");
       expect(onLog).toHaveBeenNthCalledWith(1, [

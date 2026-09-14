@@ -3,7 +3,6 @@ module.exports = {
   env: {
     browser: true,
     es2021: true,
-    jest: true,
   },
   globals: {
     Peer: true,
@@ -42,6 +41,29 @@ module.exports = {
     "no-restricted-syntax": 0,
   },
   overrides: [
+    {
+      // `packages/core/master` and `packages/core/remote` carry a package.json only
+      // to give microbundle a build root, so dependency lookups for the tests that
+      // live under them have to reach up to `packages/core` and the workspace root.
+      files: ["packages/core/{master,remote}/**/*.js"],
+      rules: {
+        "import/no-extraneous-dependencies": [
+          "error",
+          {
+            devDependencies: true,
+            optionalDependencies: false,
+            peerDependencies: false,
+            packageDir: ["./packages/core", "."],
+          },
+        ],
+      },
+    },
+    {
+      // The end-to-end suite is the only thing still on Jest, so it is the only
+      // thing that still needs Jest's globals. Unit tests import theirs from vitest.
+      files: ["demo/__integration__/**/*.js"],
+      env: { jest: true },
+    },
     {
       // react-three-fiber renders three.js objects as JSX intrinsics, so every
       // prop on them looks unknown to eslint-plugin-react

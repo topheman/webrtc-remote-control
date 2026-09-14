@@ -2,6 +2,11 @@ packages:
   - "packages/*"
   - "demo"
 
+# Test files across every package import from "vitest", so each one declares it.
+# The catalog keeps that single version in one place.
+catalog:
+  vitest: ^5.0.0
+
 # Postinstall scripts pnpm runs. esbuild and puppeteer fetch binaries, vue-demi
 # picks the Vue 2/3 shim, protobufjs runs a codegen check.
 allowBuilds:

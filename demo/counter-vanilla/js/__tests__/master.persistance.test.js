@@ -1,4 +1,4 @@
-import { mockSessionStorage } from "../../../test.helpers";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   persistCountersToStorage,
   getCountersFromStorage,
@@ -12,12 +12,7 @@ function makeState() {
   ];
 }
 
-let sessionStorage = null;
-
 describe("master.persistance", () => {
-  beforeAll(() => {
-    sessionStorage = mockSessionStorage();
-  });
   afterEach(() => {
     sessionStorage.clear();
   });

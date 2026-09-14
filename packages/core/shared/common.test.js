@@ -1,4 +1,4 @@
-import { mockSessionStorage } from "../test.helpers";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   makeStoreAccessor,
   makeConnectionFilterUtilities,
@@ -6,12 +6,7 @@ import {
   prepareUtils,
 } from "./common";
 
-let sessionStorage = null;
-
 describe("shared/common", () => {
-  beforeAll(() => {
-    sessionStorage = mockSessionStorage();
-  });
   describe("makeStoreAccessor", () => {
     afterEach(() => {
       sessionStorage.clear();

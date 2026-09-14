@@ -1,10 +1,10 @@
 /* eslint-disable import/no-relative-packages */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import prepare, { prepareUtils } from "./core.master";
 import {
   disableConsole,
   makeFakeConnection,
   makeFakePeer,
-  mockSessionStorage,
 } from "../../test.helpers";
 
 /**
@@ -15,11 +15,7 @@ import {
  */
 describe("master/core.master", () => {
   let restoreConsole = null;
-  let sessionStorage = null;
 
-  beforeAll(() => {
-    sessionStorage = mockSessionStorage();
-  });
   beforeEach(() => {
     restoreConsole = disableConsole();
   });
@@ -41,7 +37,7 @@ describe("master/core.master", () => {
 
   describe("bindConnection", () => {
     it("should not resolve until the peer emits `open`", async () => {
-      const setPeerIdToSessionStorage = jest.fn();
+      const setPeerIdToSessionStorage = vi.fn();
       const { peer, promise } = makeWrcMaster({ setPeerIdToSessionStorage });
       let resolved = false;
       promise.then(() => {
@@ -88,7 +84,7 @@ describe("master/core.master", () => {
       const { peer, promise } = makeWrcMaster();
       peer.emitOpen();
       const wrc = await promise;
-      const onConnect = jest.fn();
+      const onConnect = vi.fn();
       wrc.on("remote.connect", onConnect);
 
       // a connection the user opened directly with `peer.connect`, without our metadata
@@ -112,7 +108,7 @@ describe("master/core.master", () => {
       const { peer, promise } = makeWrcMaster();
       peer.emitOpen();
       const wrc = await promise;
-      const onConnect = jest.fn();
+      const onConnect = vi.fn();
       wrc.on("remote.connect", onConnect);
 
       const conn = makeFakeConnection({ peer: "remote-1" });
@@ -127,7 +123,7 @@ describe("master/core.master", () => {
       const { peer, promise } = makeWrcMaster();
       peer.emitOpen();
       const wrc = await promise;
-      const onData = jest.fn();
+      const onData = vi.fn();
       wrc.on("data", onData);
 
       const conn = makeFakeConnection({ peer: "remote-1" });
@@ -145,7 +141,7 @@ describe("master/core.master", () => {
       const { peer, promise } = makeWrcMaster();
       peer.emitOpen();
       const wrc = await promise;
-      const onDisconnect = jest.fn();
+      const onDisconnect = vi.fn();
       wrc.on("remote.disconnect", onDisconnect);
 
       const conn = makeFakeConnection({ peer: "remote-1" });
@@ -163,7 +159,7 @@ describe("master/core.master", () => {
       const { peer, promise } = makeWrcMaster();
       peer.emitOpen();
       const wrc = await promise;
-      const onConnect = jest.fn();
+      const onConnect = vi.fn();
       wrc.on("remote.connect", onConnect);
       wrc.off("remote.connect", onConnect);
 

@@ -24,19 +24,17 @@
     "preview": "pnpm --filter @webrtc-remote-control/demo run preview",
     "preview:peer-server": "npm-run-all --parallel preview peer-server",
     "preview:forward": "npm-run-all --parallel preview demo:forward",
-    "test": "pnpm run test:core && pnpm run test:react && pnpm run test:vue && pnpm run test:demo",
-    "test:core": "pnpm --filter @webrtc-remote-control/core run test",
-    "test:core:precommit": "pnpm --filter @webrtc-remote-control/core run test:precommit",
-    "test:core:watch": "pnpm --filter @webrtc-remote-control/core run test:watch",
-    "test:react": "pnpm --filter @webrtc-remote-control/react run test",
-    "test:react:precommit": "pnpm --filter @webrtc-remote-control/react run test:precommit",
-    "test:react:watch": "pnpm --filter @webrtc-remote-control/react run test:watch",
-    "test:vue": "pnpm --filter @webrtc-remote-control/vue run test",
-    "test:vue:precommit": "pnpm --filter @webrtc-remote-control/vue run test:precommit",
-    "test:vue:watch": "pnpm --filter @webrtc-remote-control/vue run test:watch",
-    "test:demo": "pnpm --filter @webrtc-remote-control/demo run test",
-    "test:demo:precommit": "pnpm --filter @webrtc-remote-control/demo run test:precommit",
-    "test:demo:watch": "pnpm --filter @webrtc-remote-control/demo run test:watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:precommit": "vitest related --run",
+    "test:core": "vitest run --project core",
+    "test:core:watch": "vitest --project core",
+    "test:react": "vitest run --project react",
+    "test:react:watch": "vitest --project react",
+    "test:vue": "vitest run --project vue",
+    "test:vue:watch": "vitest --project vue",
+    "test:demo": "vitest run --project demo",
+    "test:demo:watch": "vitest --project demo",
     "test:e2e": "pnpm --filter @webrtc-remote-control/demo run test:e2e",
     "test:e2e:watch": "pnpm --filter @webrtc-remote-control/demo run test:e2e:watch",
     "test:e2e:start-server-and-test": "pnpm --filter @webrtc-remote-control/demo run test:e2e:start-server-and-test",
@@ -60,7 +58,7 @@
     "@changesets/cli": "^3.0.2",
     "@commitlint/cli": "^16.2.3",
     "@commitlint/config-conventional": "^16.2.1",
-    "@types/jest": "^27.4.0",
+    "@vitejs/plugin-react": "^6.1.1",
     "eslint": "^8.6.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^8.3.0",
@@ -70,28 +68,19 @@
     "eslint-plugin-react": "^7.28.0",
     "eslint-plugin-react-hooks": "^4.3.0",
     "husky": "^7.0.4",
+    "jsdom": "^30.0.1",
     "lint-staged": "^12.1.7",
     "npm-run-all": "^4.1.5",
     "peer": "^0.6.1",
-    "prettier": "2.5.1"
+    "prettier": "2.5.1",
+    "vitest": "catalog:"
   },
   "lint-staged": {
     "*.{js,jsx}": [
-      "eslint --cache --fix"
+      "eslint --cache --fix",
+      "pnpm run test:precommit"
     ],
-    "packages/core/**/*.js": [
-      "pnpm run test:core:precommit"
-    ],
-    "packages/react/**/*.{js,jsx}": [
-      "pnpm run test:react:precommit"
-    ],
-    "packages/vue/**/*.js": [
-      "pnpm run test:vue:precommit"
-    ],
-    "demo/**/*.{js,jsx}": [
-      "pnpm run test:demo:precommit"
-    ],
-    "*.{css,html,ts,tsx}": [
+    "*.{css,html,ts,tsx,mts}": [
       "prettier --write"
     ]
   },

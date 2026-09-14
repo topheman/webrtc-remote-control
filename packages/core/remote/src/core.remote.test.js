@@ -1,10 +1,7 @@
 /* eslint-disable import/no-relative-packages */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import prepare, { prepareUtils } from "./core.remote";
-import {
-  disableConsole,
-  makeFakePeer,
-  mockSessionStorage,
-} from "../../test.helpers";
+import { disableConsole, makeFakePeer } from "../../test.helpers";
 
 /**
  * Behavioral baseline for the remote side of the connection.
@@ -14,11 +11,7 @@ import {
  */
 describe("remote/core.remote", () => {
   let restoreConsole = null;
-  let sessionStorage = null;
 
-  beforeAll(() => {
-    sessionStorage = mockSessionStorage();
-  });
   beforeEach(() => {
     restoreConsole = disableConsole();
   });
@@ -75,7 +68,7 @@ describe("remote/core.remote", () => {
     });
 
     it("should write the peer id to sessionStorage when the peer opens", async () => {
-      const setPeerIdToSessionStorage = jest.fn();
+      const setPeerIdToSessionStorage = vi.fn();
       const { peer } = makeWrcRemote({
         utilsOverrides: { setPeerIdToSessionStorage },
       });
@@ -96,7 +89,7 @@ describe("remote/core.remote", () => {
   describe("data", () => {
     it("should emit `data` tagged as coming from the master", async () => {
       const { peer, wrc } = await connect();
-      const onData = jest.fn();
+      const onData = vi.fn();
       wrc.on("data", onData);
 
       peer.lastConnection().emitData({ type: "PING" });
@@ -106,7 +99,7 @@ describe("remote/core.remote", () => {
 
     it("should stop notifying a listener removed with `off`", async () => {
       const { peer, wrc } = await connect();
-      const onData = jest.fn();
+      const onData = vi.fn();
       wrc.on("data", onData);
       wrc.off("data", onData);
 
@@ -145,7 +138,7 @@ describe("remote/core.remote", () => {
       let attempts = 0;
       const peer = makeFakePeer({ id: "remote-peer-id" });
       const realConnect = peer.connect;
-      peer.connect = jest.fn((masterPeerId, options) => {
+      peer.connect = vi.fn((masterPeerId, options) => {
         attempts += 1;
         if (attempts > 1) {
           throw new Error(
@@ -196,7 +189,7 @@ describe("remote/core.remote", () => {
 
     it("should keep reconnecting on every subsequent close", async () => {
       const { peer, wrc } = await connect();
-      const onReconnect = jest.fn();
+      const onReconnect = vi.fn();
       wrc.on("remote.reconnect", onReconnect);
 
       peer.lastConnection().emitClose();

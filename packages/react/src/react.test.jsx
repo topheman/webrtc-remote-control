@@ -1,6 +1,7 @@
 /* eslint-disable import/no-relative-packages */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import React from "react";
-import { render, screen, act, waitFor } from "@testing-library/react";
+import { render, screen, act, waitFor, cleanup } from "@testing-library/react";
 
 import { WebRTCRemoteControlProvider, usePeer } from "./react";
 import { disableConsole, makeFakePeer } from "../../core/test.helpers";
@@ -19,6 +20,9 @@ describe("react", () => {
     restoreConsole = disableConsole();
   });
   afterEach(() => {
+    // Testing Library auto-cleans in a global `afterEach`, which only exists when
+    // Vitest injects test globals. This suite imports them, so cleanup is explicit.
+    cleanup();
     restoreConsole();
   });
 
@@ -80,7 +84,7 @@ describe("react", () => {
   describe("master mode", () => {
     it("should call `init` with the core utils and expose the resolved api", async () => {
       const peer = makeFakePeer({ id: "master-peer-id" });
-      const init = jest.fn(() => peer);
+      const init = vi.fn(() => peer);
 
       render(
         <WebRTCRemoteControlProvider mode="master" init={init}>
@@ -162,7 +166,7 @@ describe("react", () => {
     // KNOWN QUIRK, pinned on purpose: `utils` is rebuilt on every render and sits in the
     // effect's dependency array, so any re-render tears the peer down and calls `init` again.
     it("should re-run `init` on every re-render", () => {
-      const init = jest.fn(() => makeFakePeer());
+      const init = vi.fn(() => makeFakePeer());
       const { rerender } = render(
         <WebRTCRemoteControlProvider mode="master" init={init}>
           <Consumer />
