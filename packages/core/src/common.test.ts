@@ -4,7 +4,7 @@ import {
   makeConnectionFilterUtilities,
   makeHumanizeError,
   prepareUtils,
-} from "./common";
+} from "./common.js";
 
 describe("common", () => {
   describe("makeStoreAccessor", () => {

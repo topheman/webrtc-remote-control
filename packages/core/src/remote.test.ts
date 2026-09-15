@@ -1,4 +1,3 @@
-/* eslint-disable import/no-relative-packages */
 import {
   afterEach,
   beforeEach,
@@ -7,8 +6,10 @@ import {
   it,
   vi,
 } from "vite-plus/test";
-import prepare, { prepareUtils } from "./remote";
-import { disableConsole, makeFakePeer } from "../test.helpers";
+import prepare, { prepareUtils } from "./remote.js";
+import type { PrepareRemoteUtils } from "./remote.js";
+import { disableConsole, makeFakePeer } from "../test.helpers.js";
+import type { FakeConnection, FakeConnectFn } from "../test.helpers.js";
 
 /**
  * Behavioral baseline for the remote side of the connection.
@@ -17,7 +18,7 @@ import { disableConsole, makeFakePeer } from "../test.helpers";
  * is the close/reconnect cycle and the exact options handed to `peer.connect`.
  */
 describe("remote", () => {
-  let restoreConsole = null;
+  let restoreConsole: () => void;
 
   beforeEach(() => {
     restoreConsole = disableConsole();
@@ -27,7 +28,15 @@ describe("remote", () => {
     sessionStorage.clear();
   });
 
-  function makeWrcRemote({ utilsOverrides = {}, peerOverrides = {} } = {}) {
+  interface MakeWrcRemoteOptions {
+    utilsOverrides?: Partial<PrepareRemoteUtils>;
+    peerOverrides?: { id?: string };
+  }
+
+  function makeWrcRemote({
+    utilsOverrides = {},
+    peerOverrides = {},
+  }: MakeWrcRemoteOptions = {}) {
     const utils = { ...prepareUtils(), ...utilsOverrides };
     const peer = makeFakePeer({ id: "remote-peer-id", ...peerOverrides });
     const promise = prepare(utils).bindConnection(peer, "master-peer-id");
@@ -35,7 +44,7 @@ describe("remote", () => {
   }
 
   /** Drives the handshake up to a resolved api: peer opens, then the connection opens. */
-  async function connect(options) {
+  async function connect(options?: MakeWrcRemoteOptions) {
     const { peer, promise } = makeWrcRemote(options);
     peer.emitOpen();
     peer.lastConnection().emitOpen();
@@ -75,7 +84,7 @@ describe("remote", () => {
     });
 
     it("should write the peer id to sessionStorage when the peer opens", async () => {
-      const setPeerIdToSessionStorage = vi.fn();
+      const setPeerIdToSessionStorage = vi.fn<(peerId: string) => void>();
       const { peer } = makeWrcRemote({
         utilsOverrides: { setPeerIdToSessionStorage },
       });
@@ -96,7 +105,8 @@ describe("remote", () => {
   describe("data", () => {
     it("should emit `data` tagged as coming from the master", async () => {
       const { peer, wrc } = await connect();
-      const onData = vi.fn();
+      const onData =
+        vi.fn<(payload: { from: "master" }, data: unknown) => void>();
       wrc.on("data", onData);
 
       peer.lastConnection().emitData({ type: "PING" });
@@ -106,7 +116,8 @@ describe("remote", () => {
 
     it("should stop notifying a listener removed with `off`", async () => {
       const { peer, wrc } = await connect();
-      const onData = vi.fn();
+      const onData =
+        vi.fn<(payload: { from: "master" }, data: unknown) => void>();
       wrc.on("data", onData);
       wrc.off("data", onData);
 
@@ -144,8 +155,8 @@ describe("remote", () => {
       // connection can end up null: the close handler nulls it, then the rebuild throws.
       let attempts = 0;
       const peer = makeFakePeer({ id: "remote-peer-id" });
-      const realConnect = peer.connect;
-      peer.connect = vi.fn((masterPeerId, options) => {
+      const realConnect: FakeConnectFn = peer.connect;
+      peer.connect = vi.fn<FakeConnectFn>((masterPeerId, options) => {
         attempts += 1;
         if (attempts > 1) {
           throw new Error(
@@ -166,16 +177,19 @@ describe("remote", () => {
         "Cannot connect to new Peer after disconnecting from server.",
       );
 
-      // KNOWN DEFECT, pinned here on purpose: the no-connection branch calls
-      // `console.warning`, which does not exist, so `send` throws instead of warning.
-      expect(() => wrc.send({ type: "MOVE" })).toThrow(TypeError);
+      // Sending with no connection is a caller mistake and throws. Before the
+      // TypeScript port it threw by accident, from a call to the non-existent
+      // `console.warning`; now it throws deliberately, with a message.
+      expect(() => wrc.send({ type: "MOVE" })).toThrow(
+        "webrtc-remote-control: `send` was called before a connection was established",
+      );
     });
   });
 
   describe("reconnection", () => {
     it("should emit `remote.disconnect` then `remote.reconnect` across a close", async () => {
       const { peer, wrc } = await connect();
-      const events = [];
+      const events: [string, { id: string }][] = [];
       wrc.on("remote.disconnect", (payload) =>
         events.push(["remote.disconnect", payload]),
       );
@@ -196,7 +210,7 @@ describe("remote", () => {
 
     it("should keep reconnecting on every subsequent close", async () => {
       const { peer, wrc } = await connect();
-      const onReconnect = vi.fn();
+      const onReconnect = vi.fn<(payload: { id: string }) => void>();
       wrc.on("remote.reconnect", onReconnect);
 
       peer.lastConnection().emitClose();
@@ -210,9 +224,13 @@ describe("remote", () => {
   });
 
   describe("beforeunload", () => {
+    // KNOWN DEFECT, pinned here on purpose: this passes only because the fake
+    // connection has a `disconnect` method. A real peerjs `DataConnection` has
+    // `close`, not `disconnect`, so against real peerjs the handler does
+    // nothing. See the matching note in src/remote.ts.
     it("should disconnect the connection when the page goes away", async () => {
       const { peer } = await connect();
-      const conn = peer.lastConnection();
+      const conn: FakeConnection = peer.lastConnection();
 
       window.dispatchEvent(new window.Event("beforeunload"));
 

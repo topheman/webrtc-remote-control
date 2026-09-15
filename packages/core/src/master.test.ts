@@ -1,4 +1,3 @@
-/* eslint-disable import/no-relative-packages */
 import {
   afterEach,
   beforeEach,
@@ -7,12 +6,13 @@ import {
   it,
   vi,
 } from "vite-plus/test";
-import prepare, { prepareUtils } from "./master";
+import prepare, { prepareUtils } from "./master.js";
+import type { PrepareMasterUtils } from "./master.js";
 import {
   disableConsole,
   makeFakeConnection,
   makeFakePeer,
-} from "../test.helpers";
+} from "../test.helpers.js";
 
 /**
  * Behavioral baseline for the master side of the connection.
@@ -21,7 +21,7 @@ import {
  * the contract the package ships today - not an idealized version of it.
  */
 describe("master", () => {
-  let restoreConsole = null;
+  let restoreConsole: () => void;
 
   beforeEach(() => {
     restoreConsole = disableConsole();
@@ -31,7 +31,7 @@ describe("master", () => {
     sessionStorage.clear();
   });
 
-  function makeWrcMaster(utilsOverrides = {}) {
+  function makeWrcMaster(utilsOverrides: Partial<PrepareMasterUtils> = {}) {
     const utils = { ...prepareUtils(), ...utilsOverrides };
     const peer = makeFakePeer({ id: "master-peer-id" });
     const promise = prepare(utils).bindConnection(peer);
@@ -44,7 +44,7 @@ describe("master", () => {
 
   describe("bindConnection", () => {
     it("should not resolve until the peer emits `open`", async () => {
-      const setPeerIdToSessionStorage = vi.fn();
+      const setPeerIdToSessionStorage = vi.fn<(peerId: string) => void>();
       const { peer, promise } = makeWrcMaster({ setPeerIdToSessionStorage });
       let resolved = false;
       promise.then(() => {
@@ -91,7 +91,7 @@ describe("master", () => {
       const { peer, promise } = makeWrcMaster();
       peer.emitOpen();
       const wrc = await promise;
-      const onConnect = vi.fn();
+      const onConnect = vi.fn<(payload: { id: string }) => void>();
       wrc.on("remote.connect", onConnect);
 
       // a connection the user opened directly with `peer.connect`, without our metadata
@@ -115,7 +115,7 @@ describe("master", () => {
       const { peer, promise } = makeWrcMaster();
       peer.emitOpen();
       const wrc = await promise;
-      const onConnect = vi.fn();
+      const onConnect = vi.fn<(payload: { id: string }) => void>();
       wrc.on("remote.connect", onConnect);
 
       const conn = makeFakeConnection({ peer: "remote-1" });
@@ -130,7 +130,10 @@ describe("master", () => {
       const { peer, promise } = makeWrcMaster();
       peer.emitOpen();
       const wrc = await promise;
-      const onData = vi.fn();
+      const onData =
+        vi.fn<
+          (payload: { id: string; from: "remote" }, data: unknown) => void
+        >();
       wrc.on("data", onData);
 
       const conn = makeFakeConnection({ peer: "remote-1" });
@@ -148,7 +151,7 @@ describe("master", () => {
       const { peer, promise } = makeWrcMaster();
       peer.emitOpen();
       const wrc = await promise;
-      const onDisconnect = vi.fn();
+      const onDisconnect = vi.fn<(payload: { id: string }) => void>();
       wrc.on("remote.disconnect", onDisconnect);
 
       const conn = makeFakeConnection({ peer: "remote-1" });
@@ -166,7 +169,7 @@ describe("master", () => {
       const { peer, promise } = makeWrcMaster();
       peer.emitOpen();
       const wrc = await promise;
-      const onConnect = vi.fn();
+      const onConnect = vi.fn<(payload: { id: string }) => void>();
       wrc.on("remote.connect", onConnect);
       wrc.off("remote.connect", onConnect);
 

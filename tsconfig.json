@@ -1,0 +1,30 @@
+{
+  // One TypeScript for the whole workspace. `vp check` does not call `tsc` -
+  // it type checks through tsgolint - but this file is what tsgolint, tsdown's
+  // declaration generation inside `vp pack` and the editor's language service
+  // all read.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    // Type-only imports must say so, which keeps the emitted ESM free of
+    // imports that exist only for their types.
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "jsx": "react-jsx",
+    // Nothing here emits: `vp pack` builds, `vp check` only reads.
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  // Only TypeScript, deliberately. The demo and the react and vue packages are
+  // still JavaScript; each is added as it is ported.
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/node_modules", "**/dist", "**/build"]
+}
