@@ -1,2 +1,2 @@
-export { provideWebTCRemoteControl } from "./Provider";
-export { usePeer } from "./hooks";
+export { provideWebTCRemoteControl } from "./Provider.js";
+export { usePeer } from "./hooks.js";

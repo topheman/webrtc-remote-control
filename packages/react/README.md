@@ -30,9 +30,7 @@ Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-react
 
 TypeScript types are shipped with the package.
 
-## UMD build
+## Module format
 
-Don't want to use a bundler ? You can simply use the UMD (Universal Module Definition) build and drop it with a script tag, you'll have access to a `webrtcRemoteControlReact` object on the `window`.
-
-- Development build: [https://unpkg.com/@webrtc-remote-control/react/dist/webrtc-remote-control-react.umd.dev.js](https://unpkg.com/@webrtc-remote-control/react/dist/webrtc-remote-control-react.umd.dev.js)
-- Production build: [https://unpkg.com/@webrtc-remote-control/react/dist/webrtc-remote-control-react.umd.prod.js](https://unpkg.com/@webrtc-remote-control/react/dist/webrtc-remote-control-react.umd.prod.js)
+The package ships as ES modules only. There is no CommonJS or UMD build, so it
+needs a bundler or a browser that loads `<script type="module">`.

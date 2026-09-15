@@ -1,9 +1,9 @@
 /* eslint-disable import/no-relative-packages,import/no-extraneous-dependencies */
 import EventEmitter from "eventemitter3";
 
-import { makeConnectionFilterUtilities } from "../../shared/common";
+import { makeConnectionFilterUtilities } from "./common";
 
-export { prepareUtils } from "../../shared/common";
+export { prepareUtils } from "./common";
 
 function makePeerConnection(peer, masterPeerId, ee, onConnectionOpened) {
   const { connMetadata } = makeConnectionFilterUtilities();

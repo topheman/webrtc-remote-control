@@ -7,12 +7,12 @@ import {
   it,
   vi,
 } from "vite-plus/test";
-import prepare, { prepareUtils } from "./core.master";
+import prepare, { prepareUtils } from "./master";
 import {
   disableConsole,
   makeFakeConnection,
   makeFakePeer,
-} from "../../test.helpers";
+} from "../test.helpers";
 
 /**
  * Behavioral baseline for the master side of the connection.
@@ -20,7 +20,7 @@ import {
  * These tests drive the real `prepare` against fake peerjs objects, so they describe
  * the contract the package ships today - not an idealized version of it.
  */
-describe("master/core.master", () => {
+describe("master", () => {
   let restoreConsole = null;
 
   beforeEach(() => {

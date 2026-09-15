@@ -1,7 +1,7 @@
 /* eslint-disable import/no-relative-packages,import/no-extraneous-dependencies */
 import EventEmitter from "eventemitter3";
 
-export { prepareUtils } from "../../shared/common";
+export { prepareUtils } from "./common";
 
 export default function prepare({
   humanizeError,
