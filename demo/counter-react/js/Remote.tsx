@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
+import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
 import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
 import RemoteCountControl from "./RemoteCountControl";
@@ -10,31 +11,34 @@ import DirectLinkToSourceCode from "./DirectLinkToSource";
 import { useLogger, useSessionStorage } from "../../shared/js/react-common";
 
 export default function Remote() {
-  const { logs, logger } = useLogger([]);
-  const [peerId, setPeerId] = useState(null);
-  const [name, setName] = useSessionStorage("remote-name", "");
-  const [errors, setErrors] = useState(null);
+  const { logs, logger } = useLogger();
+  const [peerId, setPeerId] = useState<string | null>(null);
+  const [name, setName] = useSessionStorage<string>("remote-name", "");
+  const [errors, setErrors] = useState<string[] | null>(null);
 
-  const { ready, api, peer, humanizeError } = usePeer();
+  // see the note in `Master.tsx` about `ready` and the assertions below
+  const { ready, api, peer, humanizeError } = usePeer<"remote">();
 
-  const onRemoteDisconnect = (payload) => {
+  const onRemoteDisconnect: WrcRemoteEvents["remote.disconnect"] = (
+    payload,
+  ) => {
     logger.log({ event: "remote.disconnect", payload });
   };
-  const onRemoteReconnect = (payload) => {
+  const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
     logger.log({ event: "remote.reconnect", payload });
     if (name) {
-      api.send({ type: "REMOTE_SET_NAME", name });
+      api!.send({ type: "REMOTE_SET_NAME", name });
     }
   };
-  const onPeerError = (error) => {
+  const onPeerError = (error: Error) => {
     setPeerId(null);
     logger.error({ event: "error", error });
     setErrors([humanizeError(error)]);
   };
-  const onData = (_, data) => {
+  const onData: WrcRemoteEvents["data"] = (_, data) => {
     logger.log({ event: "data", data });
-    if (data.type === "PING") {
-      window?.frameworkIconPlay();
+    if ((data as { type?: string }).type === "PING") {
+      window.frameworkIconPlay();
     }
   };
 
@@ -52,45 +56,46 @@ export default function Remote() {
 
   useEffect(() => {
     if (ready) {
-      setPeerId(peer.id);
+      setPeerId(peer!.id);
       logger.log({
         event: "open",
         comment: "Remote connected",
-        payload: { id: peer.id },
+        payload: { id: peer!.id },
       });
-      api.on("remote.disconnect", onRemoteDisconnect);
-      api.on("remote.reconnect", onRemoteReconnect);
-      api.on("data", onData);
+      api!.on("remote.disconnect", onRemoteDisconnect);
+      api!.on("remote.reconnect", onRemoteReconnect);
+      api!.on("data", onData);
       if (name) {
-        api.send({ type: "REMOTE_SET_NAME", name });
+        api!.send({ type: "REMOTE_SET_NAME", name });
       }
     }
     return () => {
-      console.log("Remote.jsx.cleanup");
+      console.log("Remote.tsx.cleanup");
       if (ready) {
-        api.off("remote.disconnect", onRemoteDisconnect);
-        api.off("remote.reconnect", onRemoteReconnect);
-        api.off("data", onData);
+        api!.off("remote.disconnect", onRemoteDisconnect);
+        api!.off("remote.reconnect", onRemoteReconnect);
+        api!.off("data", onData);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
   function onIncrement() {
     if (ready) {
-      api.send({ type: "COUNTER_INCREMENT" });
+      api!.send({ type: "COUNTER_INCREMENT" });
     }
   }
   function onDecrement() {
     if (ready) {
-      api.send({ type: "COUNTER_DECREMENT" });
+      api!.send({ type: "COUNTER_DECREMENT" });
     }
   }
-  function onChangeName(value) {
+  function onChangeName(value: string) {
     setName(value);
   }
   function onConfirmName() {
     if (ready) {
-      api.send({ type: "REMOTE_SET_NAME", name });
+      api!.send({ type: "REMOTE_SET_NAME", name });
     }
   }
   return (

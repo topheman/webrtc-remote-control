@@ -1,7 +1,8 @@
-import React from "react";
-import PropTypes from "prop-types";
+export interface OpenRemoteProps {
+  peerId?: string | null;
+}
 
-export default function OpenRemote({ peerId }) {
+export default function OpenRemote({ peerId }: OpenRemoteProps) {
   return (
     <p>
       👆Snap the the QR code or{" "}
@@ -22,7 +23,3 @@ export default function OpenRemote({ peerId }) {
     </p>
   );
 }
-
-OpenRemote.propTypes = {
-  peerId: PropTypes.string,
-};

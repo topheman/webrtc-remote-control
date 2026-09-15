@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import { WebRTCRemoteControlProvider } from "@webrtc-remote-control/react";
 
@@ -11,7 +11,7 @@ import FooterDisplay from "../../shared/js/components/Footer";
 
 export default function App() {
   console.log("App render");
-  const [mode, setMode] = useState(null);
+  const [mode, setMode] = useState<"master" | "remote" | null>(null);
   useEffect(() => {
     setMode(window.location.hash ? "remote" : "master");
   }, []);
@@ -22,14 +22,16 @@ export default function App() {
           mode={mode}
           init={({ getPeerId }) =>
             new Peer(
-              getPeerId(),
+              // see the note in the vanilla demo - a null id means
+              // "generate one", which peerjs's declaration does not admit
+              getPeerId() as string,
               // line bellow is optional - you can rely on the signaling server exposed by peerjs
               getPeerjsConfig(),
             )
           }
           masterPeerId={
             (window.location.hash && window.location.hash.replace("#", "")) ||
-            null
+            undefined
           }
           sessionStorageKey="webrtc-remote-control-peer-id-react"
         >

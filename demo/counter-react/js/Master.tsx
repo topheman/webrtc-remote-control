@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
+import type { WrcMasterEvents } from "@webrtc-remote-control/core/master";
 
 import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
 import QrcodeDisplay from "../../shared/js/components/QrcodeDisplay";
@@ -17,9 +18,13 @@ import {
   counterReducer,
   globalCount,
 } from "../../shared/js/counter.master.logic";
+import type {
+  CounterAction,
+  RemoteCounter,
+} from "../../shared/js/counter.master.logic";
 import { useLogger } from "../../shared/js/react-common";
 
-function makeRemotePeerUrl(peerId) {
+function makeRemotePeerUrl(peerId: string) {
   return `${
     window.location.origin +
     window.location.pathname
@@ -31,14 +36,16 @@ function makeRemotePeerUrl(peerId) {
 }
 
 export default function Master() {
-  const { logs, logger } = useLogger([]);
-  const [peerId, setPeerId] = useState(null);
-  const [remotesList, setRemotesList] = useState([]);
-  const [errors, setErrors] = useState(null);
+  const { logs, logger } = useLogger();
+  const [peerId, setPeerId] = useState<string | null>(null);
+  const [remotesList, setRemotesList] = useState<RemoteCounter[]>([]);
+  const [errors, setErrors] = useState<string[] | null>(null);
 
-  const { ready, api, peer, humanizeError } = usePeer();
+  // `ready` guards every use of `api` and `peer`, but it is a boolean the
+  // compiler cannot tie to them, hence the assertions below.
+  const { ready, api, peer, humanizeError } = usePeer<"master">();
 
-  const onRemoteConnect = ({ id }) => {
+  const onRemoteConnect: WrcMasterEvents["remote.connect"] = ({ id }) => {
     const countersFromStorage = getCountersFromStorage();
     logger.log({ event: "remote.connect", payload: { id } });
     setRemotesList((counters) => [
@@ -46,22 +53,25 @@ export default function Master() {
       { counter: countersFromStorage?.[id] ?? 0, peerId: id },
     ]);
   };
-  const onRemoteDisconnect = ({ id }) => {
+  const onRemoteDisconnect: WrcMasterEvents["remote.disconnect"] = ({ id }) => {
     logger.log({ event: "remote.disconnect", payload: { id } });
     setRemotesList((counters) =>
       // eslint-disable-next-line no-shadow
       counters.filter(({ peerId }) => peerId !== id),
     );
   };
-  const onData = ({ id }, data) => {
+  const onData: WrcMasterEvents["data"] = ({ id }, data) => {
     logger.log({ event: "data", data, id });
     setRemotesList((counters) => {
-      const state = counterReducer(counters, { data, id });
+      const state = counterReducer(counters, {
+        data: data as CounterAction,
+        id,
+      });
       persistCountersToStorage(state);
       return state;
     });
   };
-  const onPeerError = (error) => {
+  const onPeerError = (error: Error) => {
     setPeerId(null);
     logger.error({ event: "error", error });
     setErrors([humanizeError(error)]);
@@ -81,22 +91,22 @@ export default function Master() {
 
   useEffect(() => {
     if (ready) {
-      setPeerId(peer.id);
+      setPeerId(peer!.id);
       logger.log({
         event: "open",
         comment: "Master connected",
-        payload: { id: peer.id },
+        payload: { id: peer!.id },
       });
-      api.on("remote.connect", onRemoteConnect);
-      api.on("remote.disconnect", onRemoteDisconnect);
-      api.on("data", onData);
+      api!.on("remote.connect", onRemoteConnect);
+      api!.on("remote.disconnect", onRemoteDisconnect);
+      api!.on("data", onData);
     }
     return () => {
-      console.log("Master.jsx.cleanup");
+      console.log("Master.tsx.cleanup");
       if (ready) {
-        api.off("remote.connect", onRemoteConnect);
-        api.off("remote.disconnect", onRemoteDisconnect);
-        api.off("data", onData);
+        api!.off("remote.connect", onRemoteConnect);
+        api!.off("remote.disconnect", onRemoteDisconnect);
+        api!.off("data", onData);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -113,7 +123,7 @@ export default function Master() {
         data={remotesList}
         onPingAll={() => {
           if (ready) {
-            api.sendAll({
+            api!.sendAll({
               type: "PING",
               date: new Date(),
             });
@@ -121,7 +131,7 @@ export default function Master() {
         }}
         onPing={(id) => {
           if (ready) {
-            api.sendTo(id, {
+            api!.sendTo(id!, {
               type: "PING",
               date: new Date(),
             });

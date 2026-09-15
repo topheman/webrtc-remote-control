@@ -1,17 +1,28 @@
-import React, { useEffect, useRef, useCallback } from "react";
-import PropTypes from "prop-types";
+import { useEffect, useRef, useCallback } from "react";
+
+import type { RemoteCounter } from "../../shared/js/counter.master.logic";
 
 import "../../shared/js/components/remotes-list";
 
-export default function RemotesList({ data, onPing, onPingAll }) {
-  const ref = useRef(null);
+export interface RemotesListProps {
+  data?: RemoteCounter[];
+  onPing?: (id: string | null) => void;
+  onPingAll?: () => void;
+}
+
+export default function RemotesList({
+  data,
+  onPing,
+  onPingAll,
+}: RemotesListProps) {
+  const ref = useRef<HTMLElementTagNameMap["remotes-list"]>(null);
   const onPingAllCallback = useCallback(() => {
     if (onPingAll) {
       onPingAll();
     }
   }, [onPingAll]);
   const onPingCallback = useCallback(
-    (e) => {
+    (e: HTMLElementEventMap["ping"]) => {
       if (onPing) {
         onPing(e.detail.id);
       }
@@ -20,13 +31,13 @@ export default function RemotesList({ data, onPing, onPingAll }) {
   );
   useEffect(() => {
     // copy the ref to be able to cleanup the right one if it changed
-    const refCurrent = ref?.current;
+    const refCurrent = ref.current;
     if (refCurrent) {
       refCurrent.addEventListener("pingAll", onPingAllCallback);
       refCurrent.addEventListener("ping", onPingCallback);
     }
     return () => {
-      if (ref) {
+      if (refCurrent) {
         refCurrent.removeEventListener("pingAll", onPingAllCallback);
         refCurrent.removeEventListener("ping", onPingCallback);
       }
@@ -34,15 +45,3 @@ export default function RemotesList({ data, onPing, onPingAll }) {
   }, [onPingAllCallback, onPingCallback, ref]);
   return <remotes-list data={JSON.stringify(data)} ref={ref}></remotes-list>;
 }
-
-RemotesList.propTypes = {
-  data: PropTypes.arrayOf(
-    PropTypes.exact({
-      counter: PropTypes.number,
-      peerId: PropTypes.string,
-      name: PropTypes.string,
-    }),
-  ),
-  onPing: PropTypes.func,
-  onPingAll: PropTypes.func,
-};

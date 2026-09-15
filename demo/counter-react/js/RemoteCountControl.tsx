@@ -1,11 +1,14 @@
-import React from "react";
-import PropTypes from "prop-types";
+export interface RemoteCountControlProps {
+  onIncrement: () => void;
+  onDecrement: () => void;
+  disabled?: boolean;
+}
 
 export default function RemoteCountControl({
   onIncrement,
   onDecrement,
   disabled,
-}) {
+}: RemoteCountControlProps) {
   return (
     <div className="counter-control">
       <button
@@ -29,9 +32,3 @@ export default function RemoteCountControl({
     </div>
   );
 }
-
-RemoteCountControl.propTypes = {
-  onIncrement: PropTypes.func,
-  onDecrement: PropTypes.func,
-  disabled: PropTypes.bool,
-};
