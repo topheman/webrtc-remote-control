@@ -24,11 +24,12 @@
     "jest": "^27.5.1",
     "jest-cucumber": "^3.0.1",
     "jest-puppeteer": "^6.1.0",
+    "peerjs": "^1.5.5",
     "puppeteer": "^13.4.0",
     "start-server-and-test": "catalog:",
     "vite": "catalog:",
-    "vitest": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   },
   "dependencies": {
     "@react-three/fiber": "^8.0.12",
