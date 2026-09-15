@@ -3,8 +3,9 @@ import {
   persistCountersToStorage,
   getCountersFromStorage,
 } from "../../../shared/js/counter.master.persistance";
+import type { RemoteCounter } from "../../../shared/js/counter.master.logic";
 
-function makeState() {
+function makeState(): RemoteCounter[] {
   return [
     { peerId: "foo", counter: 0 },
     { peerId: "bar", counter: 1 },

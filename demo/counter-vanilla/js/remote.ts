@@ -1,17 +1,25 @@
 import prepare, { prepareUtils } from "@webrtc-remote-control/core/remote";
+import type { WrcRemote } from "@webrtc-remote-control/core/remote";
 
 import { getPeerjsConfig } from "../../shared/js/common-peerjs";
 import { makeLogger } from "../../shared/js/common";
 import "../../shared/js/animate"; // todo
 import { render } from "./remote.view";
 
-const REMOTE_NAME_LOCAL_STORAGE_KEY = "remote-name";
-
-export function getRemoteNameFromSessionStorage() {
-  return sessionStorage.getItem(REMOTE_NAME_LOCAL_STORAGE_KEY) || "";
+declare global {
+  interface Window {
+    // The end-to-end suite reaches for this to drive the remote from the page.
+    wrcRemote: WrcRemote;
+  }
 }
 
-export function setRemoteNameToSessionStorage(remoteName) {
+const REMOTE_NAME_LOCAL_STORAGE_KEY = "remote-name";
+
+export function getRemoteNameFromSessionStorage(): string {
+  return sessionStorage.getItem(REMOTE_NAME_LOCAL_STORAGE_KEY) ?? "";
+}
+
+export function setRemoteNameToSessionStorage(remoteName: string): void {
   sessionStorage.setItem(REMOTE_NAME_LOCAL_STORAGE_KEY, remoteName);
 }
 
@@ -34,7 +42,8 @@ async function init() {
 
   // create your own PeerJS connection
   const peer = new Peer(
-    getPeerId(),
+    // see the note in `master.ts` - a null id means "generate one"
+    getPeerId() as string,
     // line bellow is optional - you can rely on the signaling server exposed by peerjs
     getPeerjsConfig(),
   );
@@ -72,8 +81,8 @@ async function init() {
   });
   wrcRemote.on("data", (_, data) => {
     logger.log({ event: "data", data });
-    if (data.type === "PING") {
-      window?.frameworkIconPlay();
+    if ((data as { type?: string }).type === "PING") {
+      window.frameworkIconPlay();
     }
   });
   if (initialName) {
@@ -93,4 +102,4 @@ async function init() {
     },
   });
 }
-init();
+void init();

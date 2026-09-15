@@ -1,7 +1,19 @@
 /* eslint-disable no-underscore-dangle */
+import type { RemoteCounter } from "../counter.master.logic";
+
 import "./counter-display";
 
+/** The payload of both events this element dispatches. */
+export interface PingEventDetail {
+  all: boolean;
+  id: string | null;
+}
+
 class RemotesList extends HTMLElement {
+  declare readonly shadowRoot: ShadowRoot;
+
+  private _data: RemoteCounter[] | undefined;
+
   constructor() {
     super();
     const shadow = this.attachShadow({ mode: "open" });
@@ -48,14 +60,17 @@ counter-display {
    * for performance reasons (to avoid large object serialization)
    */
 
-  attributeChangedCallback(attrName, oldVal, newVal) {
+  attributeChangedCallback(
+    attrName: string,
+    oldVal: string | null,
+    newVal: string | null,
+  ) {
     if (oldVal !== newVal) {
       if (attrName === "data") {
         try {
-          const data = JSON.parse(newVal);
+          const data = JSON.parse(newVal as string) as RemoteCounter[];
           this._data = data;
         } catch (e) {
-          // eslint-disable-next-line no-console
           console.error(
             "Failed to parse `data` attribute in `remotes-list` element",
             e,
@@ -66,11 +81,11 @@ counter-display {
     }
   }
 
-  get data() {
+  get data(): RemoteCounter[] | undefined {
     return this._data;
   }
 
-  set data(newVal) {
+  set data(newVal: RemoteCounter[] | undefined) {
     this._data = newVal;
     this.render();
   }
@@ -83,7 +98,7 @@ counter-display {
       const div = document.createElement("div"); // used for remote.name sanitizing
       content = `<p>${this._data.length} connected remote${
         this._data.length > 1 ? "s" : ""
-      } <button class="ping-button ping-all">PING ALL</button></p><ul>${this.data
+      } <button class="ping-button ping-all">PING ALL</button></p><ul>${this._data
         .slice()
         .sort((a, b) => (a.peerId > b.peerId ? 1 : -1))
         .map((remote) => {
@@ -102,7 +117,7 @@ counter-display {
         })
         .join("")}</ul>`;
     }
-    this.shadowRoot.querySelector("div").innerHTML = content;
+    this.shadowRoot.querySelector("div")!.innerHTML = content;
   }
 
   /**
@@ -115,11 +130,12 @@ counter-display {
   connectedCallback() {
     // event delegation - the webcomponent way
     this.shadowRoot.addEventListener("click", (e) => {
-      for (const elm of e.composedPath()) {
+      for (const target of e.composedPath()) {
+        const elm = target as HTMLElement;
         if (elm.classList?.contains("ping-button")) {
           if (elm.classList.contains("ping-all")) {
             this.dispatchEvent(
-              new CustomEvent("pingAll", {
+              new CustomEvent<PingEventDetail>("pingAll", {
                 detail: {
                   all: true,
                   id: null,
@@ -132,10 +148,10 @@ counter-display {
           }
           if (elm.classList.contains("ping-one")) {
             this.dispatchEvent(
-              new CustomEvent("ping", {
+              new CustomEvent<PingEventDetail>("ping", {
                 detail: {
                   all: false,
-                  id: elm.dataset.id,
+                  id: elm.dataset.id ?? null,
                 },
                 bubbles: true,
                 composed: true,
@@ -150,3 +166,14 @@ counter-display {
 }
 
 customElements.define("remotes-list", RemotesList);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "remotes-list": RemotesList;
+  }
+
+  interface HTMLElementEventMap {
+    ping: CustomEvent<PingEventDetail>;
+    pingAll: CustomEvent<PingEventDetail>;
+  }
+}

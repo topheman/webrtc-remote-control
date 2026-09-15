@@ -2,6 +2,10 @@
 import { humanizeErrors } from "../common";
 
 class ErrorsDisplay extends HTMLElement {
+  declare readonly shadowRoot: ShadowRoot;
+
+  private _data: string[] | undefined;
+
   constructor() {
     super();
     const shadow = this.attachShadow({ mode: "open" });
@@ -44,14 +48,17 @@ ul {
    * for performance reasons (to avoid large object serialization)
    */
 
-  attributeChangedCallback(attrName, oldVal, newVal) {
+  attributeChangedCallback(
+    attrName: string,
+    oldVal: string | null,
+    newVal: string | null,
+  ) {
     if (oldVal !== newVal) {
       if (attrName === "data") {
         try {
-          const data = JSON.parse(newVal);
+          const data = JSON.parse(newVal as string) as string[];
           this._data = data;
         } catch (e) {
-          // eslint-disable-next-line no-console
           console.error(
             "Failed to parse `data` attribute in `errors-display` element",
             e,
@@ -62,23 +69,23 @@ ul {
     }
   }
 
-  get data() {
+  get data(): string[] | undefined {
     return this._data;
   }
 
-  set data(newVal) {
+  set data(newVal: string[] | undefined) {
     this._data = newVal;
     this.render();
   }
 
   render() {
-    const ul = this.shadowRoot.querySelector("ul");
+    const ul = this.shadowRoot.querySelector("ul")!;
     let content;
-    if (!this._data || this.data.length === 0) {
+    if (!this._data || this._data.length === 0) {
       ul.classList.add("hide");
     } else {
       const div = document.createElement("div"); // used for error message html sanitizing
-      content = humanizeErrors(this.data)
+      content = humanizeErrors(this._data)
         .map((message) => {
           if (message) {
             div.textContent = message;
@@ -98,3 +105,9 @@ ul {
 }
 
 customElements.define("errors-display", ErrorsDisplay);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "errors-display": ErrorsDisplay;
+  }
+}

@@ -11,6 +11,10 @@ import {
   counterReducer,
   globalCount,
 } from "../../shared/js/counter.master.logic";
+import type {
+  CounterAction,
+  RemoteCounter,
+} from "../../shared/js/counter.master.logic";
 import { render } from "./master.view";
 
 async function init() {
@@ -29,13 +33,15 @@ async function init() {
     setConsoleDisplay,
   } = render();
 
-  let counters = [];
+  let counters: RemoteCounter[] = [];
 
   const logger = makeLogger({ onLog: setConsoleDisplay });
 
   // create your own PeerJS connection
   const peer = new Peer(
-    getPeerId(),
+    // `getPeerId` returns null on a first visit; peerjs treats any falsy id as
+    // "generate one for me", but its own declaration only admits `string`.
+    getPeerId() as string,
     // line bellow is optional - you can rely on the signaling server exposed by peerjs
     getPeerjsConfig(),
   );
@@ -78,28 +84,27 @@ async function init() {
   });
   wrcMaster.on("data", ({ id }, data) => {
     logger.log({ event: "data", data, id });
-    counters = counterReducer(counters, { data, id });
+    // Anything a remote sends arrives as `unknown`; the counter demos only ever
+    // send the three actions in `CounterAction`, and the reducer ignores the
+    // rest.
+    counters = counterReducer(counters, { data: data as CounterAction, id });
     setRemotesList(counters);
     persistCountersToStorage(counters);
     setGlobalCounter(globalCount(counters));
   });
 
   // bind "ping" buttons
-  document.querySelector("remotes-list").addEventListener("pingAll", () => {
-    if (wrcMaster) {
-      wrcMaster.sendAll({
-        type: "PING",
-        date: new Date(),
-      });
-    }
+  document.querySelector("remotes-list")!.addEventListener("pingAll", () => {
+    wrcMaster.sendAll({
+      type: "PING",
+      date: new Date(),
+    });
   });
-  document.querySelector("remotes-list").addEventListener("ping", (e) => {
-    if (wrcMaster) {
-      wrcMaster.sendTo(e.detail.id, {
-        type: "PING",
-        date: new Date(),
-      });
-    }
+  document.querySelector("remotes-list")!.addEventListener("ping", (e) => {
+    wrcMaster.sendTo(e.detail.id!, {
+      type: "PING",
+      date: new Date(),
+    });
   });
 }
-init();
+void init();

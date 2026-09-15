@@ -1,4 +1,6 @@
 class CounterDisplay extends HTMLElement {
+  declare readonly shadowRoot: ShadowRoot;
+
   constructor() {
     super();
     const shadow = this.attachShadow({ mode: "open" });
@@ -25,15 +27,30 @@ span {
     return ["data"];
   }
 
-  attributeChangedCallback(attrName, oldVal, newVal) {
+  attributeChangedCallback(
+    attrName: string,
+    oldVal: string | null,
+    newVal: string | null,
+  ) {
     if (oldVal !== newVal) {
       this.render();
     }
   }
 
   render() {
-    this.shadowRoot.querySelector("span").innerHTML = this.getAttribute("data");
+    // `getAttribute` returns null before `data` is set, and assigning null to
+    // `innerHTML` writes the string "null" - which is what this rendered
+    // before the port, and what the markup expects for an unset counter.
+    this.shadowRoot.querySelector("span")!.innerHTML = this.getAttribute(
+      "data",
+    ) as string;
   }
 }
 
 customElements.define("counter-display", CounterDisplay);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "counter-display": CounterDisplay;
+  }
+}

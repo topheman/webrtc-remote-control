@@ -47,18 +47,18 @@ describe("common", () => {
       expect(a).toHaveLength(1);
       expect(b).toHaveLength(2);
       expect(c).toHaveLength(3);
-      expect(c[0].payload).toBe("foo");
-      expect(c[2].payload).toBe("baz");
+      expect(c[0]?.payload).toBe("foo");
+      expect(c[2]?.payload).toBe("baz");
 
       const d = logger.log("qux");
       expect(d).toHaveLength(3);
-      expect(d[0].payload).toBe("bar");
-      expect(d[2].payload).toBe("qux");
+      expect(d[0]?.payload).toBe("bar");
+      expect(d[2]?.payload).toBe("qux");
 
       const e = logger.log("quux");
       expect(e).toHaveLength(3);
-      expect(e[0].payload).toBe("baz");
-      expect(e[2].payload).toBe("quux");
+      expect(e[0]?.payload).toBe("baz");
+      expect(e[2]?.payload).toBe("quux");
 
       restoreConsole();
     });

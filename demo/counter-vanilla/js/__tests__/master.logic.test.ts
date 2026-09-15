@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 import { counterReducer } from "../../../shared/js/counter.master.logic";
+import type { RemoteCounter } from "../../../shared/js/counter.master.logic";
 
-function makeInitialState() {
+function makeInitialState(): RemoteCounter[] {
   return [
     { peerId: "foo", counter: 0 },
     { peerId: "bar", counter: 0 },
@@ -12,7 +13,14 @@ function makeInitialState() {
 describe("master.logic", () => {
   describe("counterReducer", () => {
     it("should return default state if no action passed", () => {
-      const result = counterReducer(makeInitialState(), {});
+      // The reducer never reads `data` unless a peer id matches, so an empty
+      // action is a legitimate call that the typed signature has no way to
+      // spell. The assertion below is a tautology and was one before the port
+      // too - left alone rather than quietly given teeth here.
+      const result = counterReducer(
+        makeInitialState(),
+        {} as Parameters<typeof counterReducer>[1],
+      );
       expect(result).toStrictEqual(result);
     });
     it("should return new correct state with COUNTER_INCREMENT", () => {

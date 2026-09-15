@@ -17,6 +17,23 @@ const defaultAttributes = {
 };
 
 class TwitterButton extends HTMLElement {
+  declare readonly shadowRoot: ShadowRoot;
+
+  // Every key of `defaultAttributes` is turned into an accessor over the
+  // matching attribute by the `defineProperty` loop below, so they all read
+  // back as `string | null`. `lang`, `className` and `style` are deliberately
+  // left off this list: the loop shadows HTMLElement's own accessors for them,
+  // but re-declaring them here with an attribute type would conflict with the
+  // base class, and nothing reads them as anything but a string.
+  declare size: string | null;
+  declare dnt: string | null;
+  declare buttonTitle: string | null;
+  declare text: string | null;
+  declare url: string | null;
+  declare hashtags: string | null;
+  declare via: string | null;
+  declare related: string | null;
+
   constructor() {
     super();
     this.initDefaultValues();
@@ -35,9 +52,10 @@ class TwitterButton extends HTMLElement {
   }
 
   initDefaultValues() {
+    const self = this as unknown as Record<string, unknown>;
     Object.entries(defaultAttributes).forEach(
       ([attributeName, defaultValue]) => {
-        this[attributeName] = this[attributeName] || defaultValue;
+        self[attributeName] = self[attributeName] || defaultValue;
       },
     );
   }
@@ -46,7 +64,11 @@ class TwitterButton extends HTMLElement {
     return Object.keys(defaultAttributes);
   }
 
-  attributeChangedCallback(attrName, oldVal, newVal) {
+  attributeChangedCallback(
+    attrName: string,
+    oldVal: string | null,
+    newVal: string | null,
+  ) {
     if (oldVal !== newVal) {
       this.render();
     }
@@ -66,25 +88,31 @@ class TwitterButton extends HTMLElement {
     ]
       .filter(Boolean)
       .join("&");
-    const iframe = this.shadowRoot.querySelector("iframe");
+    const iframe = this.shadowRoot.querySelector("iframe")!;
     iframe.src = `https://platform.twitter.com/widgets/tweet_button.html?${params}`;
-    iframe.title = this.buttonTitle;
+    iframe.title = this.buttonTitle as string;
   }
 }
 
 Object.keys(defaultAttributes).forEach((attributeName) => {
   Object.defineProperty(TwitterButton.prototype, attributeName, {
-    get() {
+    get(this: TwitterButton) {
       return this.getAttribute(attributeName);
     },
-    set(value) {
+    set(this: TwitterButton, value: unknown) {
       if (typeof value === "undefined" || value === null) {
         this.removeAttribute(attributeName);
       } else {
-        this.setAttribute(attributeName, value);
+        this.setAttribute(attributeName, String(value));
       }
     },
   });
 });
 
 customElements.define("twitter-button", TwitterButton);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "twitter-button": TwitterButton;
+  }
+}

@@ -1,8 +1,9 @@
-/* eslint-disable no-console */
+export type ConsoleMethodName = "error" | "warn" | "log" | "info";
+
 export function disableConsole(
-  mockFunction = () => {},
-  methodNames = ["error", "warn", "log", "info"],
-) {
+  mockFunction: (...args: unknown[]) => void = () => {},
+  methodNames: ConsoleMethodName[] = ["error", "warn", "log", "info"],
+): () => void {
   const originalConsoleMethods = methodNames.map((methodName) => ({
     methodName,
     method: console[methodName],
@@ -17,11 +18,11 @@ export function disableConsole(
   };
 }
 
-export function getE2eTestServerAddress() {
+export function getE2eTestServerAddress(): string {
   return `http://localhost:${process.env.PORT || 3000}`;
 }
 
-export function sleep(ms = 0) {
+export function sleep(ms = 0): Promise<void> {
   return new Promise((res) => {
     setTimeout(res, ms);
   });

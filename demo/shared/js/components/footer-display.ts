@@ -1,6 +1,8 @@
 import "./twitter-button";
 
 class FooterDisplay extends HTMLElement {
+  declare readonly shadowRoot: ShadowRoot;
+
   constructor() {
     super();
     const shadow = this.attachShadow({ mode: "open" });
@@ -28,7 +30,11 @@ a {
     return ["from", "to"];
   }
 
-  attributeChangedCallback(attrName, oldVal, newVal) {
+  attributeChangedCallback(
+    attrName: string,
+    oldVal: string | null,
+    newVal: string | null,
+  ) {
     if (oldVal !== newVal) {
       this.render();
     }
@@ -38,7 +44,7 @@ a {
     const from = Number(this.getAttribute("from")) || 2019;
     const to = Number(this.getAttribute("to")) || 2019;
     const fromTo = from === to ? from : `${from}-${to}`;
-    this.shadowRoot.querySelector("footer").innerHTML = `
+    this.shadowRoot.querySelector("footer")!.innerHTML = `
 <p>
     ©${fromTo} - <a href="http://labs.topheman.com/">labs.topheman.com</a> - Christophe Rosset
 </p>
@@ -50,3 +56,9 @@ a {
 }
 
 customElements.define("footer-display", FooterDisplay);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "footer-display": FooterDisplay;
+  }
+}

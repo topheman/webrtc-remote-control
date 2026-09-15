@@ -5,6 +5,8 @@ if (typeof QRCode === "undefined") {
 }
 
 class QRCodeDisplay extends HTMLElement {
+  declare readonly shadowRoot: ShadowRoot;
+
   constructor() {
     super();
     const shadow = this.attachShadow({ mode: "open" });
@@ -28,7 +30,11 @@ class QRCodeDisplay extends HTMLElement {
     return ["data", "width", "height", "wrap-anchor"];
   }
 
-  attributeChangedCallback(attrName, oldVal, newVal) {
+  attributeChangedCallback(
+    attrName: string,
+    oldVal: string | null,
+    newVal: string | null,
+  ) {
     if (oldVal !== newVal) {
       this.render();
     }
@@ -38,42 +44,51 @@ class QRCodeDisplay extends HTMLElement {
     const data = this.getAttribute("data");
     let wrapAnchor = false;
     try {
-      wrapAnchor = JSON.parse(this.getAttribute("wrap-anchor"));
-    } catch (e) {
-      // eslint-disable-next-line no-console
+      wrapAnchor = JSON.parse(
+        this.getAttribute("wrap-anchor") as string,
+      ) as boolean;
+    } catch {
       console.warn(
         "Wrong `wrap-anchor` attribute passed to `qrcode-display` (only accepts `true` or `false`)",
       );
       wrapAnchor = false;
     }
     if (data) {
-      this.shadowRoot.querySelector(".build").innerHTML = "";
+      this.shadowRoot.querySelector(".build")!.innerHTML = "";
       /* eslint-disable */
-      new QRCode(this.shadowRoot.querySelector(".build"), {
-        text: this.getAttribute("data"),
-        width: parseInt(this.getAttribute("width")) || 200,
-        height: parseInt(this.getAttribute("height")) || 200,
+      new QRCode(this.shadowRoot.querySelector(".build")!, {
+        text: this.getAttribute("data") as string,
+        width: parseInt(this.getAttribute("width") as string) || 200,
+        height: parseInt(this.getAttribute("height") as string) || 200,
         colorDark: "#900000",
       });
       /* eslint-enable */
-      const img = this.shadowRoot.querySelector(".build img");
+      const img = this.shadowRoot.querySelector(
+        ".build img",
+      ) as HTMLImageElement;
       // 😢
       setTimeout(() => {
         img.style.display = "initial";
       }, 0);
       img.title = data;
-      this.shadowRoot.querySelector(".run").innerHTML = "";
+      this.shadowRoot.querySelector(".run")!.innerHTML = "";
       if (wrapAnchor) {
         const a = document.createElement("a");
         a.href = data;
         a.title = data;
         a.appendChild(img);
-        this.shadowRoot.querySelector(".run").appendChild(a);
+        this.shadowRoot.querySelector(".run")!.appendChild(a);
       } else {
-        this.shadowRoot.querySelector(".run").appendChild(img);
+        this.shadowRoot.querySelector(".run")!.appendChild(img);
       }
     }
   }
 }
 
 customElements.define("qrcode-display", QRCodeDisplay);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "qrcode-display": QRCodeDisplay;
+  }
+}

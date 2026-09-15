@@ -1,5 +1,14 @@
 /* eslint-disable no-underscore-dangle */
+import type { LogEntry } from "../common";
+
 class ConsoleDisplay extends HTMLElement {
+  // The constructor always attaches an open shadow root, so the inherited
+  // `ShadowRoot | null` is narrowed here once rather than asserted in every
+  // method. `declare` emits nothing.
+  declare readonly shadowRoot: ShadowRoot;
+
+  private _data: LogEntry[] | undefined;
+
   constructor() {
     super();
     const template = document.createElement("template");
@@ -80,10 +89,11 @@ li.log::before {
     `;
     const shadow = this.attachShadow({ mode: "open" });
     shadow.appendChild(template.content.cloneNode(true));
-    shadow.querySelector(".header").addEventListener(
+    shadow.querySelector(".header")!.addEventListener(
       "click",
       () => {
-        const rootDivClassList = this.shadowRoot.querySelector("div").classList;
+        const rootDivClassList =
+          this.shadowRoot.querySelector("div")!.classList;
         rootDivClassList.toggle("slidedown");
         rootDivClassList.toggle("slideup");
       },
@@ -102,14 +112,17 @@ li.log::before {
    * for performance reasons (to avoid large object serialization)
    */
 
-  attributeChangedCallback(attrName, oldVal, newVal) {
+  attributeChangedCallback(
+    attrName: string,
+    oldVal: string | null,
+    newVal: string | null,
+  ) {
     if (oldVal !== newVal) {
       if (attrName === "data") {
         try {
-          const data = JSON.parse(newVal);
+          const data = JSON.parse(newVal as string) as LogEntry[];
           this._data = data;
         } catch (e) {
-          // eslint-disable-next-line no-console
           console.error(
             "Failed to parse `data` attribute in `errors-display` element",
             e,
@@ -120,18 +133,18 @@ li.log::before {
     }
   }
 
-  get data() {
+  get data(): LogEntry[] | undefined {
     return this._data;
   }
 
-  set data(newVal) {
+  set data(newVal: LogEntry[] | undefined) {
     this._data = newVal;
     this.render();
   }
 
   render() {
-    const ul = this.shadowRoot.querySelector("ul");
-    const content = (this._data || [])
+    const ul = this.shadowRoot.querySelector("ul")!;
+    const content = (this._data ?? [])
       .map((line) => {
         return `<li class="${line.level} ${
           // eslint-disable-next-line no-nested-ternary
@@ -141,11 +154,11 @@ li.log::before {
             ? (() => {
                 try {
                   return JSON.stringify(line.payload);
-                } catch (_) {
+                } catch {
                   return "";
                 }
               })()
-            : line.payload
+            : String(line.payload)
         }</li>`;
       })
       .join("");
@@ -154,3 +167,9 @@ li.log::before {
 }
 
 customElements.define("console-display", ConsoleDisplay);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "console-display": ConsoleDisplay;
+  }
+}

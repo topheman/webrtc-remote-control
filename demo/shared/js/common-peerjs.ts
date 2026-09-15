@@ -1,4 +1,6 @@
-export function getPeerjsConfig() {
+import type { PeerOptions } from "peerjs";
+
+export function getPeerjsConfig(): PeerOptions {
   // when using the local signaling server
   if (import.meta.env.VITE_USE_LOCAL_PEER_SERVER) {
     return {
