@@ -285,6 +285,9 @@ importers:
       jest-puppeteer:
         specifier: ^6.1.0
         version: 6.2.0(debug@4.3.4(supports-color@9.4.0))(puppeteer@13.7.0(supports-color@9.4.0))
+      peerjs:
+        specifier: ^1.5.5
+        version: 1.5.5
       puppeteer:
         specifier: ^13.4.0
         version: 13.7.0(supports-color@9.4.0)

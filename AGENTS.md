@@ -138,11 +138,23 @@ version from the `vite-plus` catalog entry. Dependabot bumps the pin weekly.
 `staged` and `test` blocks. There is no `.eslintrc`, `.prettierrc`, `vitest.config`, or
 lint-staged block in `package.json` any more.
 
-`tsconfig.json` at the root is the only one in the repo, on TypeScript 6 with `strict` on.
-`vp check` never calls `tsc` - it type checks through tsgolint - but that file is what
-tsgolint, tsdown's declaration generation inside `vp pack` and the editor's language
-service all read. Its `include` deliberately lists only `**/*.ts` and `**/*.tsx`; the
-react and vue packages and the demo join it as each is ported.
+`tsconfig.json` at the root is the only TypeScript project in the repo, on TypeScript 6
+with `strict` on. `vp check` never calls `tsc` - it type checks through tsgolint - but
+that file is what tsgolint, tsdown's declaration generation inside `vp pack` and the
+editor's language service all read. Its `include` deliberately lists only `**/*.ts` and
+`**/*.tsx`; the react and vue packages and the demo join it as each is ported.
+
+`demo/jsconfig.json` is the one companion to it. The demo is still JavaScript, so its
+files fall outside that `include`, and without a project file of their own they would open
+in an inferred project that sees no ambient declarations at all. `checkJs` is off - it
+exists for inference and go-to-definition, not to type check the demo. What it buys today
+is `demo/types/peerjs-global.d.ts`, which types the global `Peer` constructor: the demo
+loads peerjs from a CDN `<script>` tag, so `Peer` is only reachable as a global and the
+editor inferred `any` for `new Peer(...)`. `peerjs` is a devDependency of `demo` for its
+types only and is never bundled, and its range is kept in step with the version the
+`<script>` tags pin, so the types describe what actually loads. Do not "fix" the global by
+importing peerjs as a module - loading it from the CDN is a peerjs limitation and is
+deliberate.
 
 The three published packages each add a `vite.config.ts` of their own, and those hold
 **only** a `pack` block, because entries, externals and declaration handling are
