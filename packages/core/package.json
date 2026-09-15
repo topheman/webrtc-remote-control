@@ -39,6 +39,7 @@
   ],
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.5",
+    "peerjs": "^1.5.5",
     "publint": "^0.3.24",
     "vite": "catalog:",
     "vite-plus": "catalog:"

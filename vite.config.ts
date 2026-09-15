@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, lazyPlugins } from "vite-plus";
 
 const corePath = fileURLToPath(
-  new URL("./packages/core/src/index.js", import.meta.url),
+  new URL("./packages/core/src/index.ts", import.meta.url),
 );
 
 // One config for the whole workspace: lint, format and test settings all live

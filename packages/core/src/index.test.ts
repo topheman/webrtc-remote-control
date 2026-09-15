@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import * as core from "./index";
+import * as core from "./index.js";
 
 /**
  * The package's three public subpaths are `.`, `./master` and `./remote`. This pins the
