@@ -1,5 +1,31 @@
-export function remotesListReducer(state, { data, id }) {
-  return state.reduce((acc, cur) => {
+/** One connected remote, as the accelerometer master tracks it. */
+export interface RemoteOrientation {
+  peerId: string;
+  alpha: number | null;
+  beta: number | null;
+  gamma: number | null;
+  scale?: number;
+  color?: string;
+  name?: string;
+}
+
+/** The messages a remote sends to the accelerometer master. */
+export type OrientationAction =
+  | {
+      type: "ORIENTATION";
+      alpha: number | null;
+      beta: number | null;
+      gamma: number | null;
+    }
+  | { type: "PING_DOWN" }
+  | { type: "PING_UP" }
+  | { type: "REMOTE_SET_NAME"; name: string };
+
+export function remotesListReducer(
+  state: RemoteOrientation[],
+  { data, id }: { data: OrientationAction; id: string },
+): RemoteOrientation[] {
+  return state.reduce<RemoteOrientation[]>((acc, cur) => {
     if (cur.peerId === id) {
       switch (data.type) {
         case "ORIENTATION":

@@ -1,15 +1,27 @@
-import React, { lazy, Suspense } from "react";
-import PropTypes from "prop-types";
+import { lazy, Suspense } from "react";
 
 import { orientationToRotation } from "./accelerometer.helpers";
+import type { RemoteOrientation } from "./master.logic";
 
 const Phone3D = lazy(() => import("./Phone3D"));
 
-export default function RemotesList({ list }) {
+export interface RemotesListProps {
+  list?: RemoteOrientation[];
+}
+
+export default function RemotesList({ list }: RemotesListProps) {
   if (list && list.length) {
     return (
       <ul>
-        {list.map(({ peerId, alpha, beta, gamma, scale, color }) => (
+        {/*
+          `color` is deliberately not read here. The reducer sets it to "pink"
+          on PING_DOWN and the pre-TypeScript version forwarded it to `Phone3D`,
+          which has never declared or used such a prop - so the master's phone
+          has never turned pink on a press. Making it work means threading a
+          colour override into `Phone3D`, which is a behaviour change and wants
+          its own pull request.
+        */}
+        {list.map(({ peerId, alpha, beta, gamma, scale }) => (
           <li key={peerId}>
             <span>{peerId}</span>
             <div style={{ display: "flex" }}>
@@ -20,7 +32,6 @@ export default function RemotesList({ list }) {
                   height={150}
                   peerId={peerId}
                   scale={scale}
-                  color={color}
                 />
               </Suspense>
               <ul>
@@ -36,14 +47,3 @@ export default function RemotesList({ list }) {
   }
   return null;
 }
-
-RemotesList.propTypes = {
-  list: PropTypes.arrayOf(
-    PropTypes.exact({
-      peerId: PropTypes.string,
-      alpha: PropTypes.number,
-      beta: PropTypes.number,
-      gamma: PropTypes.number,
-    }),
-  ),
-};

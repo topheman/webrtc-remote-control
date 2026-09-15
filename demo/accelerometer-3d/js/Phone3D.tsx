@@ -1,12 +1,16 @@
 import { useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import PropTypes from "prop-types";
+import type { MeshProps, ThreeEvent } from "@react-three/fiber";
+import type { Mesh } from "three";
 
 import { usePhoneColor } from "./color";
+import type { Rotation } from "./accelerometer.helpers";
 
-function Box({ color, ...props }) {
+type BoxProps = MeshProps & { color?: string };
+
+function Box({ color = "#900000", ...props }: BoxProps) {
   // This reference gives us direct access to the THREE.Mesh object
-  const ref = useRef();
+  const ref = useRef<Mesh>(null);
   // Return the view, these are regular Threejs elements expressed in JSX
   return (
     <mesh {...props} ref={ref}>
@@ -16,17 +20,24 @@ function Box({ color, ...props }) {
   );
 }
 
-Box.defaultProps = {
-  color: "#900000",
-};
-
-Box.propTypes = {
-  color: PropTypes.string,
-};
+export interface Phone3DProps {
+  width?: number | string;
+  height?: number | string;
+  rotation: Rotation;
+  peerId?: string | null;
+  colorHover?: string;
+  scale?: number;
+  onPointerEnter?: (event: ThreeEvent<PointerEvent>) => void;
+  onPointerLeave?: (event: ThreeEvent<PointerEvent>) => void;
+  onPointerDown?: (event: ThreeEvent<PointerEvent>) => void;
+  onPointerUp?: (event: ThreeEvent<PointerEvent>) => void;
+}
 
 export default function Phone3D({
-  width,
-  height,
+  // `defaultProps` on a function component is deprecated in React 18 and gone
+  // in 19; default parameters do the same thing.
+  width = 150,
+  height = 150,
   rotation,
   peerId,
   colorHover,
@@ -35,7 +46,7 @@ export default function Phone3D({
   onPointerLeave,
   onPointerDown,
   onPointerUp,
-}) {
+}: Phone3DProps) {
   const [, y, z] = rotation;
   const [hover, setHover] = useState(false);
   const phoneColor = usePhoneColor(peerId);
@@ -79,21 +90,3 @@ export default function Phone3D({
     </div>
   );
 }
-
-Phone3D.defaultProps = {
-  width: 150,
-  height: 150,
-};
-
-Phone3D.propTypes = {
-  width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  rotation: PropTypes.arrayOf(PropTypes.number),
-  peerId: PropTypes.string,
-  colorHover: PropTypes.string,
-  scale: PropTypes.number,
-  onPointerEnter: PropTypes.func,
-  onPointerLeave: PropTypes.func,
-  onPointerDown: PropTypes.func,
-  onPointerUp: PropTypes.func,
-};

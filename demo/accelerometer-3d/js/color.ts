@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 
 // inspired by https://stackoverflow.com/questions/3426404/create-a-hexadecimal-colour-based-on-a-string-with-javascript
-function makeColor(str = "AZERTY") {
+function makeColor(str = "AZERTY"): string {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -15,10 +15,10 @@ function makeColor(str = "AZERTY") {
   return colour;
 }
 
-export function usePhoneColor(peerId) {
+export function usePhoneColor(peerId?: string | null): string {
   const [phoneColor, setPhoneColor] = useState("#900000");
   useEffect(() => {
-    setPhoneColor(makeColor(peerId || ""));
+    setPhoneColor(makeColor(peerId ?? ""));
   }, [peerId]);
   return phoneColor;
 }

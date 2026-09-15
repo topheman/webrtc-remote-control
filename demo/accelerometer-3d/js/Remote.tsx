@@ -1,5 +1,6 @@
-import React, { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
+import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
 import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
@@ -12,15 +13,16 @@ const Phone3D = lazy(() => import("./Phone3D"));
 
 export default function Remote() {
   // eslint-disable-next-line no-unused-vars
-  const [peerId, setPeerId] = useState(null);
+  const [peerId, setPeerId] = useState<string | null>(null);
   const [
     name,
     // setName
-  ] = useSessionStorage("remote-name", "");
-  const [errors, setErrors] = useState(null);
+  ] = useSessionStorage<string>("remote-name", "");
+  const [errors, setErrors] = useState<string[] | null>(null);
   const [phoneScale, setPhoneScale] = useState(1);
 
-  const { ready, api, peer, humanizeError } = usePeer();
+  // see the note in `Master.tsx` about `ready` and the assertions below
+  const { ready, api, peer, humanizeError } = usePeer<"remote">();
 
   const {
     orientation,
@@ -28,24 +30,26 @@ export default function Remote() {
     permissionState,
   } = useDeviceOrientation({ precision: 2, throttle: 16 });
 
-  const onRemoteDisconnect = (payload) => {
+  const onRemoteDisconnect: WrcRemoteEvents["remote.disconnect"] = (
+    payload,
+  ) => {
     console.log({ event: "remote.disconnect", payload });
   };
-  const onRemoteReconnect = (payload) => {
+  const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
     console.log({ event: "remote.reconnect", payload });
     if (name) {
-      api.send({ type: "REMOTE_SET_NAME", name });
+      api!.send({ type: "REMOTE_SET_NAME", name });
     }
   };
-  const onPeerError = (error) => {
+  const onPeerError = (error: Error) => {
     setPeerId(null);
     console.error({ event: "error", error });
     setErrors([humanizeError(error)]);
   };
-  const onData = (_, data) => {
+  const onData: WrcRemoteEvents["data"] = (_, data) => {
     console.log({ event: "data", data });
-    if (data.type === "PING") {
-      window?.frameworkIconPlay();
+    if ((data as { type?: string }).type === "PING") {
+      window.frameworkIconPlay();
     }
   };
 
@@ -63,32 +67,33 @@ export default function Remote() {
 
   useEffect(() => {
     if (ready) {
-      setPeerId(peer.id);
+      setPeerId(peer!.id);
       console.log({
         event: "open",
         comment: "Remote connected",
-        payload: { id: peer.id },
+        payload: { id: peer!.id },
       });
-      api.on("remote.disconnect", onRemoteDisconnect);
-      api.on("remote.reconnect", onRemoteReconnect);
-      api.on("data", onData);
+      api!.on("remote.disconnect", onRemoteDisconnect);
+      api!.on("remote.reconnect", onRemoteReconnect);
+      api!.on("data", onData);
       if (name) {
-        api.send({ type: "REMOTE_SET_NAME", name });
+        api!.send({ type: "REMOTE_SET_NAME", name });
       }
     }
     return () => {
-      console.log("Remote.jsx.cleanup");
+      console.log("Remote.tsx.cleanup");
       if (ready) {
-        api.off("remote.disconnect", onRemoteDisconnect);
-        api.off("remote.reconnect", onRemoteReconnect);
-        api.off("data", onData);
+        api!.off("remote.disconnect", onRemoteDisconnect);
+        api!.off("remote.reconnect", onRemoteReconnect);
+        api!.off("data", onData);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
   useEffect(() => {
     if (ready) {
-      api.send({ type: "ORIENTATION", ...orientation });
+      api!.send({ type: "ORIENTATION", ...orientation });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orientation]);
@@ -106,19 +111,19 @@ export default function Remote() {
           onPointerDown={() => {
             setPhoneScale(1.3);
             if (ready) {
-              api.send({ type: "PING_DOWN" });
+              api!.send({ type: "PING_DOWN" });
             }
           }}
           onPointerUp={() => {
             setPhoneScale(1);
             if (ready) {
-              api.send({ type: "PING_UP" });
+              api!.send({ type: "PING_UP" });
             }
           }}
           onPointerLeave={() => {
             setPhoneScale(1);
             if (ready) {
-              api.send({ type: "PING_UP" });
+              api!.send({ type: "PING_UP" });
             }
           }}
         />
