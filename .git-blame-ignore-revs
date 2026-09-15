@@ -1,0 +1,11 @@
+# Revisions to skip when running `git blame`.
+#
+# Enable it once per clone:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# GitHub reads this file automatically. Only whole-repo mechanical rewrites
+# belong here - never a commit that changes behaviour.
+
+# style: add trailing commas in multi-line argument lists (#26)
+# Prettier 2 defaulted `trailingComma` to "es5"; Oxfmt always emits "all".
+d6452672316ed586a39cd48e1dc74f09967b8592

@@ -182,4 +182,9 @@ why `demo` keeps `jest`, `@babel/preset-env` and `demo/babel.config.js`.
   Prettier's `printWidth` of 80 rather than Oxfmt's default of 100, so adopting it did not
   rewrap the repo. `vp check --fix` formats and fixes lint in one go.
 - Tests sit next to the code they cover (`*.test.js`), not in a separate tree.
+- Whole-repo mechanical rewrites are listed in `.git-blame-ignore-revs`. GitHub honours
+  it automatically; locally it needs
+  `git config blame.ignoreRevsFile .git-blame-ignore-revs` once per clone. Because the
+  repository squash-merges, the hash only exists after the merge, so such a rewrite has to
+  land as its own pull request and the file is updated in a later one.
 - Pull requests that change a published package carry a changeset.
