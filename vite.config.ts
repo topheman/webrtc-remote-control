@@ -63,9 +63,9 @@ export default defineConfig({
     },
     rules: {
       "vite-plus/prefer-vite-plus-imports": "error",
-      // Kept at "warn" to match what ESLint reported. There are console.log
-      // calls shipped in core, react and vue; phase 5 removes them and this
-      // becomes ["error", { allow: ["warn", "error"] }].
+      // Kept at "warn" to match what ESLint reported. Core and react no longer
+      // log; vue still does, and this becomes
+      // ["error", { allow: ["warn", "error"] }] once it is ported too.
       "no-console": "warn",
     },
     overrides: [
