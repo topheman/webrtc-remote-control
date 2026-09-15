@@ -1,4 +1,3 @@
-/* eslint-disable import/no-relative-packages */
 import {
   afterAll,
   afterEach,
@@ -8,11 +7,16 @@ import {
   it,
   vi,
 } from "vite-plus/test";
-import { h } from "vue";
-import { render, waitFor, cleanup } from "@testing-library/vue";
+import { defineComponent, h } from "vue";
+import type { Component } from "vue";
+import { cleanup, render, waitFor } from "@testing-library/vue";
 
-import { provideWebTCRemoteControl, usePeer } from "./vue";
-import { disableConsole, makeFakePeer } from "../../core/test.helpers";
+import { provideWebTCRemoteControl, usePeer } from "./vue.js";
+import type {
+  ProvideInitOptions,
+  ProvideWebRTCRemoteControlOptions,
+} from "./vue.js";
+import { disableConsole, makeFakePeer } from "../../core/test.helpers.js";
 
 /**
  * Behavioral baseline for the vue binding.
@@ -21,10 +25,10 @@ import { disableConsole, makeFakePeer } from "../../core/test.helpers";
  * context: three constructor guards, then the resolved-api path against a fake peer.
  */
 describe("vue", () => {
-  let restoreConsole = null;
+  let restoreConsole: () => void = () => {};
 
-  // Disabled for the whole file rather than per test: the provider logs while it is
-  // being torn down, which happens in the `cleanup()` below.
+  // Disabled for the whole file rather than per test: core still logs while a
+  // connection is being torn down, which happens in the `cleanup()` below.
   beforeAll(() => {
     restoreConsole = disableConsole();
   });
@@ -41,11 +45,8 @@ describe("vue", () => {
     document.body.innerHTML = "";
   });
 
-  const Consumer = {
+  const Consumer = defineComponent({
     setup() {
-      // `setup` is a vue entry point, not a react component - the react-hooks rule
-      // has no way to know that.
-      // eslint-disable-next-line react-hooks/rules-of-hooks
       const { ready, api, mode, masterPeerId } = usePeer();
       return { ready, api, mode, masterPeerId };
     },
@@ -57,23 +58,32 @@ describe("vue", () => {
           ? [
               this.mode,
               this.masterPeerId || "-",
-              Object.keys(this.api).sort().join("|"),
+              Object.keys(this.api ?? {})
+                .sort()
+                .join("|"),
             ].join(" ")
           : "not-ready",
       );
     },
-  };
+  });
+
+  type Init = (options: ProvideInitOptions) => ReturnType<typeof makeFakePeer>;
 
   /** Root component that installs the provider, so the child can inject it. */
-  function makeRoot(init, mode, options, child = Consumer) {
-    return {
+  function makeRoot(
+    init: Init,
+    mode: "master" | "remote",
+    options?: ProvideWebRTCRemoteControlOptions,
+    child: Component = Consumer,
+  ) {
+    return defineComponent({
       setup() {
         provideWebTCRemoteControl(init, mode, options);
       },
       render() {
         return h(child);
       },
-    };
+    });
   }
 
   /**
@@ -81,12 +91,22 @@ describe("vue", () => {
    * subtree after a setup error, and a consumer mounted without a provider blows up
    * asynchronously inside `usePeer`, which would mask the assertion under test.
    */
-  const Inert = { render: () => h("div") };
+  const Inert = defineComponent({ render: () => h("div") });
 
   describe("constructor guards", () => {
     it("should reject an unsupported mode", () => {
       expect(() =>
-        render(makeRoot(() => makeFakePeer(), "peer", undefined, Inert)),
+        render(
+          makeRoot(
+            () => makeFakePeer(),
+            // The guard defends JavaScript callers - TypeScript ones cannot
+            // write this - so the unsupported value has to be forced past the
+            // compiler.
+            "peer" as "master",
+            undefined,
+            Inert,
+          ),
+        ),
       ).toThrow('Unsupported "peer" mode. Only "master", "remote" accepted.');
     });
 
@@ -115,12 +135,13 @@ describe("vue", () => {
   describe("master mode", () => {
     it("should call `init` with the core utils and expose the resolved api", async () => {
       const peer = makeFakePeer({ id: "master-peer-id" });
-      const init = vi.fn(() => peer);
+      const init = vi.fn<Init>(() => peer);
 
       const { getByTestId } = render(makeRoot(init, "master"));
 
       expect(init).toHaveBeenCalledTimes(1);
-      expect(Object.keys(init.mock.calls[0][0]).sort()).toEqual([
+      const initArgs = init.mock.calls[0]?.[0];
+      expect(Object.keys(initArgs ?? {}).sort()).toEqual([
         "getPeerId",
         "humanizeError",
         "isConnectionFromRemote",
@@ -149,14 +170,14 @@ describe("vue", () => {
   describe("remote mode", () => {
     it("should connect to the master and expose the resolved api", async () => {
       const peer = makeFakePeer({ id: "remote-peer-id" });
-      const init = vi.fn(() => peer);
+      const init = vi.fn<Init>(() => peer);
 
       const { getByTestId } = render(
         makeRoot(init, "remote", { masterPeerId: "master-peer-id" }),
       );
 
       // the remote side has no use for the filter, so it is not handed one
-      expect(init.mock.calls[0][0].isConnectionFromRemote).toBeUndefined();
+      expect(init.mock.calls[0]?.[0].isConnectionFromRemote).toBeUndefined();
 
       peer.emitOpen("remote-peer-id");
       expect(peer.connect).toHaveBeenCalledWith("master-peer-id", {
@@ -175,7 +196,7 @@ describe("vue", () => {
 
   describe("options", () => {
     it("should forward sessionStorageKey and humanErrors to the core utils", () => {
-      const init = vi.fn(() => makeFakePeer());
+      const init = vi.fn<Init>(() => makeFakePeer());
 
       render(
         makeRoot(init, "master", {
@@ -184,10 +205,12 @@ describe("vue", () => {
         }),
       );
 
-      const { humanizeError, getPeerId } = init.mock.calls[0][0];
-      expect(humanizeError({ type: "network" })).toBe("My custom message");
+      const initArgs = init.mock.calls[0]?.[0];
+      expect(initArgs?.humanizeError({ type: "network" })).toBe(
+        "My custom message",
+      );
       window.sessionStorage.setItem("my-key", "stored-peer-id");
-      expect(getPeerId()).toBe("stored-peer-id");
+      expect(initArgs?.getPeerId()).toBe("stored-peer-id");
     });
   });
 });
