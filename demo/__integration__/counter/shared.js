@@ -10,7 +10,7 @@ const NEXT_TICK = 20;
  */
 const DEFAULT_WEBRTC_CONNECTION_TIMEOUT = process.env.CI ? 3000 : 600;
 const WEBRTC_CONNECTION_TIMEOUT = Number.isNaN(
-  Number(process.env.WEBRTC_CONNECTION_TIMEOUT)
+  Number(process.env.WEBRTC_CONNECTION_TIMEOUT),
 )
   ? DEFAULT_WEBRTC_CONNECTION_TIMEOUT
   : Number(process.env.WEBRTC_CONNECTION_TIMEOUT);
@@ -20,8 +20,8 @@ export function getVisitInfosFromMode(mode) {
   if (!acceptedModes.includes(mode)) {
     throw new Error(
       `mode ${mode} not supported, please pass one of ${acceptedModes.join(
-        ", "
-      )}`
+        ", ",
+      )}`,
     );
   }
   const infos = {
@@ -59,7 +59,7 @@ export function givenIVisitMasterPage(
   given,
   pathname,
   title,
-  { getMasterPage }
+  { getMasterPage },
 ) {
   given("I visit master page", async () => {
     await getMasterPage().goto(`${getE2eTestServerAddress()}${pathname}`);
@@ -74,14 +74,14 @@ export function givenMasterPeerOpenEventIsTriggered(given, { getMasterPage }) {
     const logs = await getMasterPage().evaluate(() => {
       // JSON.parse(JSON.stringify(...)) to unwrap vue Proxies
       return JSON.parse(
-        JSON.stringify(document.querySelector("console-display").data)
+        JSON.stringify(document.querySelector("console-display").data),
       );
     });
     try {
       expect(logs.length).toBeGreaterThan(0);
     } catch (e) {
       throw new Error(
-        `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000`
+        `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000`,
       );
     }
     expect(logs[0].payload.event).toBe("open");
@@ -114,14 +114,14 @@ export function givenIOpenANewRemote(given, { getMasterPage }) {
       await sleep(WEBRTC_CONNECTION_TIMEOUT);
       const remoteLogs = await remotePage.evaluate(() => {
         return JSON.parse(
-          JSON.stringify(document.querySelector("console-display").data)
+          JSON.stringify(document.querySelector("console-display").data),
         );
       });
       try {
         expect(remoteLogs.length).toBeGreaterThan(0);
       } catch (e) {
         throw new Error(
-          `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`
+          `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`,
         );
       }
       expect(remoteLogs[0].payload.event).toBe("open");
@@ -130,7 +130,7 @@ export function givenIOpenANewRemote(given, { getMasterPage }) {
       remotePeerId = remoteLogs[0].payload.payload.id;
 
       await sleep(SAFE_TIMEOUT);
-    }
+    },
   );
 
   return function getCurrentRemote() {
@@ -143,20 +143,20 @@ export function givenIOpenANewRemote(given, { getMasterPage }) {
 
 export function givenMasterAndRemoteEmitReceiveRemoteConnectEvent(
   given,
-  { getCurrentRemote, getMasterPage }
+  { getCurrentRemote, getMasterPage },
 ) {
   given("[master] should receive remote.connect event", async () => {
     // check the events on the master page
     const masterLogs = await getMasterPage().evaluate(() => {
       return JSON.parse(
-        JSON.stringify(document.querySelector("console-display").data)
+        JSON.stringify(document.querySelector("console-display").data),
       );
     });
     try {
       expect(masterLogs.length).toBeGreaterThan(0);
     } catch (e) {
       throw new Error(
-        `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`
+        `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`,
       );
     }
     expect(masterLogs[0].payload).toEqual({
@@ -182,21 +182,21 @@ export function givenICloseEveryPages(given, { getAllRemotes, getMasterPage }) {
 export function givenIResetSessionStorage(
   given,
   mode,
-  { getAllRemotes, getMasterPage, getMasterPeerId }
+  { getAllRemotes, getMasterPage, getMasterPeerId },
 ) {
   given("I reset the sessionStorage of every pages", async () => {
     // remote pages
     for (const getCurrentRemote of getAllRemotes()) {
       await getCurrentRemote().page.exposeFunction(
         "fromPuppeteerGetSessionStorageKey",
-        () => `webrtc-remote-control-peer-id-${mode}`
+        () => `webrtc-remote-control-peer-id-${mode}`,
       );
       const peerIdInStorage = await getCurrentRemote().page.evaluate(
         async () => {
           const sessionStorageKey =
             await window.fromPuppeteerGetSessionStorageKey();
           return sessionStorage.getItem(sessionStorageKey);
-        }
+        },
       );
       // check the correct peerId was stored in sessionStorage
       expect(peerIdInStorage).toContain(getCurrentRemote().peerId);
@@ -211,7 +211,7 @@ export function givenIResetSessionStorage(
     // master pages
     await getMasterPage().exposeFunction(
       "fromPuppeteerGetSessionStorageKey",
-      () => `webrtc-remote-control-peer-id-${mode}`
+      () => `webrtc-remote-control-peer-id-${mode}`,
     );
     const masterPeerIdInStorage = await getMasterPage().evaluate(async () => {
       const sessionStorageKey =
@@ -236,7 +236,7 @@ export function givenIResetSessionStorage(
  */
 export function givenRemoteListShouldContain(
   given,
-  { getAllRemotes, getMasterPage }
+  { getAllRemotes, getMasterPage },
 ) {
   given(
     /^\[master\] remote lists should be "(.*)"$/,
@@ -257,17 +257,17 @@ export function givenRemoteListShouldContain(
           }
           return acc;
         },
-        []
+        [],
       );
 
       // match
       const remotesListCurrentData = await getMasterPage().evaluate(() => {
         return JSON.parse(
-          JSON.stringify(document.querySelector("remotes-list").data)
+          JSON.stringify(document.querySelector("remotes-list").data),
         );
       });
       expect(remotesListCurrentData).toEqual(remotesListExpectedData);
-    }
+    },
   );
 }
 
@@ -293,7 +293,7 @@ export function giventIClickTimesOnRemote(given, { getRemote }) {
       };
       await getRemote(Number(remoteIndex))().page.exposeFunction(
         "fromPuppeteer",
-        fromPuppeteer
+        fromPuppeteer,
       );
       await getRemote(Number(remoteIndex))().page.evaluate(async () => {
         // eslint-disable-next-line no-shadow
@@ -304,13 +304,13 @@ export function giventIClickTimesOnRemote(given, { getRemote }) {
       });
 
       await sleep(SAFE_TIMEOUT);
-    }
+    },
   );
 }
 
 export function givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(
   given,
-  { getRemote, getMasterPage }
+  { getRemote, getMasterPage },
 ) {
   given(
     /^I reload remote (\d+) then master should receive remote.disconnect\/remote.connect event$/,
@@ -321,15 +321,15 @@ export function givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(
       const remoteLogs = await getRemote(remoteIndex)().page.evaluate(
         async () => {
           return JSON.parse(
-            JSON.stringify(document.querySelector("console-display").data)
+            JSON.stringify(document.querySelector("console-display").data),
           );
-        }
+        },
       );
       try {
         expect(remoteLogs.length).toBeGreaterThan(0);
       } catch (e) {
         throw new Error(
-          `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`
+          `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`,
         );
       }
       // remote should re-open and re-use the same id
@@ -339,7 +339,7 @@ export function givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(
       // master should receive remote.disconnect/remote.connect
       const masterLogs = await getMasterPage().evaluate(async () => {
         return JSON.parse(
-          JSON.stringify(document.querySelector("console-display").data)
+          JSON.stringify(document.querySelector("console-display").data),
         );
       });
       expect(masterLogs[1].payload).toEqual({
@@ -356,13 +356,13 @@ export function givenIReloadARemoteThenMasterShouldReceiveDisconnectEvent(
       });
 
       await sleep(SAFE_TIMEOUT);
-    }
+    },
   );
 }
 
 export function givenIReloadMasterThenRemotesShouldReconnect(
   given,
-  { getAllRemotes, getMasterPage }
+  { getAllRemotes, getMasterPage },
 ) {
   given(
     "I reload master then all remotes should receive remote.disconnect/remote.reconnect",
@@ -382,14 +382,14 @@ export function givenIReloadMasterThenRemotesShouldReconnect(
       await sleep(WEBRTC_CONNECTION_TIMEOUT);
       const masterLogs = await getMasterPage().evaluate(async () => {
         return JSON.parse(
-          JSON.stringify(document.querySelector("console-display").data)
+          JSON.stringify(document.querySelector("console-display").data),
         );
       });
       try {
         expect(masterLogs.length).toBeGreaterThan(0);
       } catch (e) {
         throw new Error(
-          `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`
+          `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`,
         );
       }
       const received = masterLogs
@@ -403,14 +403,14 @@ export function givenIReloadMasterThenRemotesShouldReconnect(
         await sleep(WEBRTC_CONNECTION_TIMEOUT);
         const remoteLogs = await getCurrentRemote().page.evaluate(async () => {
           return JSON.parse(
-            JSON.stringify(document.querySelector("console-display").data)
+            JSON.stringify(document.querySelector("console-display").data),
           );
         });
         try {
           expect(remoteLogs.length).toBeGreaterThan(0);
         } catch (e) {
           throw new Error(
-            `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`
+            `No events detected in console-display, check your connection / add a sleep before the assertion, or set the env var WEBRTC_CONNECTION_TIMEOUT=1000.`,
           );
         }
         expect(remoteLogs[1].payload).toEqual({
@@ -426,7 +426,7 @@ export function givenIReloadMasterThenRemotesShouldReconnect(
           },
         });
       }
-    }
+    },
   );
 }
 

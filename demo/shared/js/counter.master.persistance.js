@@ -8,21 +8,21 @@ export function persistCountersToStorage(counters) {
       counters.reduce((acc, cur) => {
         acc[cur.peerId] = cur.counter;
         return acc;
-      }, {})
+      }, {}),
     );
   } catch {
     payload = JSON.stringify({});
   }
   sessionStorage.setItem(
     MASTER_PERSISTANCE_COUNTERS_SESSION_STORAGE_KEY,
-    payload
+    payload,
   );
 }
 
 export function getCountersFromStorage() {
   try {
     return JSON.parse(
-      sessionStorage.getItem(MASTER_PERSISTANCE_COUNTERS_SESSION_STORAGE_KEY)
+      sessionStorage.getItem(MASTER_PERSISTANCE_COUNTERS_SESSION_STORAGE_KEY),
     );
   } catch {
     return {};

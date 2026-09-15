@@ -13,7 +13,7 @@ export function humanizeErrors(errors = []) {
         acc = currentError.replace(regExp, replaceError);
         return acc;
       },
-      currentError
+      currentError,
     );
     errorsList.push(humanizedCurrentError);
     return errorsList;
@@ -42,6 +42,6 @@ export function makeLogger({ onLog = () => {}, logs = [], size = 30 } = {}) {
     ["log", "info", "warn", "error"].map((level) => [
       level,
       makeLogFunction(level),
-    ])
+    ]),
   );
 }

@@ -87,7 +87,7 @@ li.log::before {
         rootDivClassList.toggle("slidedown");
         rootDivClassList.toggle("slideup");
       },
-      false
+      false,
     );
     this.render();
   }
@@ -112,7 +112,7 @@ li.log::before {
           // eslint-disable-next-line no-console
           console.error(
             "Failed to parse `data` attribute in `errors-display` element",
-            e
+            e,
           );
         }
       }

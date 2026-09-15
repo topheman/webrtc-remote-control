@@ -48,7 +48,7 @@ export default function prepare({
           off: ee.off.bind(ee),
         };
         const createPeerConnectionWithReconnectOnClose = (
-          onConnectionOpened
+          onConnectionOpened,
         ) => {
           conn = null;
           conn = makePeerConnection(peer, masterPeerId, ee, onConnectionOpened);

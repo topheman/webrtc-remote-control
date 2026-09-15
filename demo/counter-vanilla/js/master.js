@@ -15,7 +15,9 @@ import { render } from "./master.view";
 
 async function init() {
   const { bindConnection, getPeerId, humanizeError } = prepare(
-    prepareUtils({ sessionStorageKey: "webrtc-remote-control-peer-id-vanilla" })
+    prepareUtils({
+      sessionStorageKey: "webrtc-remote-control-peer-id-vanilla",
+    }),
   );
 
   const {
@@ -35,7 +37,7 @@ async function init() {
   const peer = new Peer(
     getPeerId(),
     // line bellow is optional - you can rely on the signaling server exposed by peerjs
-    getPeerjsConfig()
+    getPeerjsConfig(),
   );
   peer.on("open", (peerId) => {
     setPeerId(peerId);

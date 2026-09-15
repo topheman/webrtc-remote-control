@@ -83,7 +83,7 @@ export default {
         "Remote.watchEffect",
         { currentReady, prevReady },
         ready.value,
-        api.value.on
+        api.value.on,
       );
       if (ready.value) {
         peerId.value = peer.value.id;

@@ -20,5 +20,5 @@ export function provideWebTCRemoteControl(
     masterPeerId?: string;
     sessionStorageKey?: string;
     humanErrors?: Partial<HumanErrorsMapping>;
-  }
+  },
 ): void;

@@ -58,7 +58,7 @@ counter-display {
           // eslint-disable-next-line no-console
           console.error(
             "Failed to parse `data` attribute in `remotes-list` element",
-            e
+            e,
           );
         }
       }
@@ -126,7 +126,7 @@ counter-display {
                 },
                 bubbles: true,
                 composed: true,
-              })
+              }),
             );
             break;
           }
@@ -139,7 +139,7 @@ counter-display {
                 },
                 bubbles: true,
                 composed: true,
-              })
+              }),
             );
             break;
           }

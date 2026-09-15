@@ -44,6 +44,6 @@ RemotesList.propTypes = {
       alpha: PropTypes.number,
       beta: PropTypes.number,
       gamma: PropTypes.number,
-    })
+    }),
   ),
 };
