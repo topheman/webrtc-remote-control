@@ -1,4 +1,3 @@
-/* eslint-disable import/no-relative-packages */
 import {
   afterEach,
   beforeEach,
@@ -7,11 +6,11 @@ import {
   it,
   vi,
 } from "vite-plus/test";
-import React from "react";
-import { render, screen, act, waitFor, cleanup } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 
-import { WebRTCRemoteControlProvider, usePeer } from "./react";
-import { disableConsole, makeFakePeer } from "../../core/test.helpers";
+import { usePeer, WebRTCRemoteControlProvider } from "./react.js";
+import type { ProviderProps } from "./react.js";
+import { disableConsole, makeFakePeer } from "../../core/test.helpers.js";
 
 /**
  * Behavioral baseline for the react binding.
@@ -21,7 +20,7 @@ import { disableConsole, makeFakePeer } from "../../core/test.helpers";
  * tests cover the three constructor guards and the resolved-api path, against a fake peer.
  */
 describe("react", () => {
-  let restoreConsole = null;
+  let restoreConsole: () => void = () => {};
 
   beforeEach(() => {
     restoreConsole = disableConsole();
@@ -40,9 +39,13 @@ describe("react", () => {
     }
     return (
       <div data-testid="out">
-        {[mode, masterPeerId || "-", Object.keys(api).sort().join("|")].join(
-          " ",
-        )}
+        {[
+          mode,
+          masterPeerId || "-",
+          Object.keys(api ?? {})
+            .sort()
+            .join("|"),
+        ].join(" ")}
       </div>
     );
   }
@@ -51,7 +54,12 @@ describe("react", () => {
     it("should reject an unsupported mode", () => {
       expect(() =>
         render(
-          <WebRTCRemoteControlProvider mode="peer" init={() => makeFakePeer()}>
+          // The guard defends JavaScript callers - TypeScript ones cannot write
+          // this - so the unsupported value has to be forced past the compiler.
+          <WebRTCRemoteControlProvider
+            mode={"peer" as ProviderProps["mode"]}
+            init={() => makeFakePeer()}
+          >
             <Consumer />
           </WebRTCRemoteControlProvider>,
         ),
@@ -91,7 +99,7 @@ describe("react", () => {
   describe("master mode", () => {
     it("should call `init` with the core utils and expose the resolved api", async () => {
       const peer = makeFakePeer({ id: "master-peer-id" });
-      const init = vi.fn(() => peer);
+      const init = vi.fn<ProviderProps["init"]>(() => peer);
 
       render(
         <WebRTCRemoteControlProvider mode="master" init={init}>
@@ -100,13 +108,13 @@ describe("react", () => {
       );
 
       expect(init).toHaveBeenCalledTimes(1);
-      const initArgs = init.mock.calls[0][0];
-      expect(Object.keys(initArgs).sort()).toEqual([
+      const initArgs = init.mock.calls[0]?.[0];
+      expect(Object.keys(initArgs ?? {}).sort()).toEqual([
         "getPeerId",
         "humanizeError",
         "isConnectionFromRemote",
       ]);
-      expect(typeof initArgs.isConnectionFromRemote).toBe("function");
+      expect(typeof initArgs?.isConnectionFromRemote).toBe("function");
       expect(screen.getByTestId("out").textContent).toBe("not-ready");
 
       await act(async () => {
@@ -120,7 +128,7 @@ describe("react", () => {
       });
     });
 
-    it("should disconnect the peer on unmount", async () => {
+    it("should disconnect the peer on unmount", () => {
       const peer = makeFakePeer({ id: "master-peer-id" });
       const { unmount } = render(
         <WebRTCRemoteControlProvider mode="master" init={() => peer}>
@@ -173,7 +181,7 @@ describe("react", () => {
     // KNOWN QUIRK, pinned on purpose: `utils` is rebuilt on every render and sits in the
     // effect's dependency array, so any re-render tears the peer down and calls `init` again.
     it("should re-run `init` on every re-render", () => {
-      const init = vi.fn(() => makeFakePeer());
+      const init = vi.fn<ProviderProps["init"]>(() => makeFakePeer());
       const { rerender } = render(
         <WebRTCRemoteControlProvider mode="master" init={init}>
           <Consumer />
