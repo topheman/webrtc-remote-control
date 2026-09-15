@@ -38,7 +38,7 @@ class TwitterButton extends HTMLElement {
     Object.entries(defaultAttributes).forEach(
       ([attributeName, defaultValue]) => {
         this[attributeName] = this[attributeName] || defaultValue;
-      }
+      },
     );
   }
 

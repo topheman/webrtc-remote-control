@@ -23,7 +23,7 @@ export const useDeviceOrientation = ({ precision, throttle = 0 } = {}) => {
   const requestAccessAsync = async () => {
     if (typeof DeviceOrientationEvent === "undefined") {
       setError(
-        new Error("Device orientation event is not supported by your browser")
+        new Error("Device orientation event is not supported by your browser"),
       );
       return false;
     }
@@ -42,7 +42,7 @@ export const useDeviceOrientation = ({ precision, throttle = 0 } = {}) => {
       }
       if (permission !== "granted") {
         setError(
-          new Error("Request to access the device orientation was rejected")
+          new Error("Request to access the device orientation was rejected"),
         );
         return false;
       }

@@ -19,7 +19,7 @@ describe("shared/common", () => {
 
       expect(getPeerId()).toBe("foo");
       expect(sessionStorage.getItem("webrtc-remote-control-peer-id")).toBe(
-        "foo"
+        "foo",
       );
     });
     it("should persist state with default key", () => {
@@ -37,14 +37,14 @@ describe("shared/common", () => {
     it("isConnectionFromRemote should return true if conn was issued by remote", () => {
       const { isConnectionFromRemote } = makeConnectionFilterUtilities();
       expect(
-        isConnectionFromRemote({ metadata: "from-webrtc-remote-control" })
+        isConnectionFromRemote({ metadata: "from-webrtc-remote-control" }),
       ).toBe(true);
     });
     it("isConnectionFromRemote should return false for a connection the user opened", () => {
       const { isConnectionFromRemote } = makeConnectionFilterUtilities();
       expect(isConnectionFromRemote({ metadata: undefined })).toBe(false);
       expect(isConnectionFromRemote({ metadata: "something-else" })).toBe(
-        false
+        false,
       );
     });
     it("should expose the metadata it filters on", () => {
@@ -56,13 +56,13 @@ describe("shared/common", () => {
     it("should be a factory that returns a translating function", () => {
       const humanizeError = makeHumanizeError();
       expect(humanizeError({ type: "browser-incompatible" })).toBe(
-        "Your browser doesn't support WebRTC features, please try with a recent browser."
+        "Your browser doesn't support WebRTC features, please try with a recent browser.",
       );
     });
     it("non translated errors should show default message", () => {
       const humanizeError = makeHumanizeError();
       expect(humanizeError({ type: "some-unsupported-error" })).toBe(
-        "An error occured - type: some-unsupported-error"
+        "An error occured - type: some-unsupported-error",
       );
     });
     it("you should be able to pass a mapping", () => {
@@ -79,9 +79,9 @@ describe("shared/common", () => {
         humanizeError({
           type: "network",
           message: "Lost connection to server.",
-        })
+        }),
       ).toBe(
-        "It seems you're experimenting some network problems. (Lost connection to server.)"
+        "It seems you're experimenting some network problems. (Lost connection to server.)",
       );
     });
     it("should NOT have error.message of withTechicalErrorMessage = false", () => {
@@ -92,7 +92,7 @@ describe("shared/common", () => {
         humanizeError({
           type: "network",
           message: "Lost connection to server.",
-        })
+        }),
       ).toBe("It seems you're experimenting some network problems.");
     });
     it("should drop error.message for unmapped errors too when withTechicalErrorMessage = false", () => {
@@ -100,7 +100,7 @@ describe("shared/common", () => {
         withTechicalErrorMessage: false,
       });
       expect(
-        humanizeError({ type: "some-unsupported-error", message: "Boom." })
+        humanizeError({ type: "some-unsupported-error", message: "Boom." }),
       ).toBe("An error occured - type: some-unsupported-error");
     });
     it("should accept a function as the `default` mapping", () => {
@@ -110,7 +110,7 @@ describe("shared/common", () => {
         },
       });
       expect(humanizeError({ type: "some-unsupported-error" })).toBe(
-        'Custom fallback for "some-unsupported-error"'
+        'Custom fallback for "some-unsupported-error"',
       );
     });
     it("should accept a plain string as the `default` mapping", () => {
@@ -118,7 +118,7 @@ describe("shared/common", () => {
         mapping: { default: "Something went wrong." },
       });
       expect(humanizeError({ type: "some-unsupported-error" })).toBe(
-        "Something went wrong."
+        "Something went wrong.",
       );
     });
     it("should append error.message to a function-valued default", () => {
@@ -127,7 +127,7 @@ describe("shared/common", () => {
         withTechicalErrorMessage: true,
       });
       expect(
-        humanizeError({ type: "some-unsupported-error", message: "Boom." })
+        humanizeError({ type: "some-unsupported-error", message: "Boom." }),
       ).toBe('Custom fallback for "some-unsupported-error" (Boom.)');
     });
     it("should handle an error with no type at all", () => {
@@ -152,7 +152,7 @@ describe("shared/common", () => {
       setPeerIdToSessionStorage("foo");
       expect(getPeerId()).toBe("foo");
       expect(sessionStorage.getItem("webrtc-remote-control-peer-id")).toBe(
-        "foo"
+        "foo",
       );
     });
     it("should forward sessionStorageKey and humanErrors", () => {

@@ -34,7 +34,7 @@ function makeAnimate(elm, duration = 1500) {
 // eslint-disable-next-line no-unused-vars
 function init() {
   window.frameworkIconPlay = makeAnimate(
-    document.querySelector(".framework-icon")
+    document.querySelector(".framework-icon"),
   );
 }
 

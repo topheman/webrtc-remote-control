@@ -61,7 +61,7 @@ describe("master/core.master", () => {
       await promise;
 
       expect(sessionStorage.getItem("webrtc-remote-control-peer-id")).toBe(
-        "master-peer-id"
+        "master-peer-id",
       );
     });
 
@@ -133,7 +133,7 @@ describe("master/core.master", () => {
 
       expect(onData).toHaveBeenCalledWith(
         { id: "remote-1", from: "remote" },
-        { type: "MOVE", payload: { x: 1 } }
+        { type: "MOVE", payload: { x: 1 } },
       );
     });
 

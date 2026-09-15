@@ -34,7 +34,7 @@ describe("react", () => {
     return (
       <div data-testid="out">
         {[mode, masterPeerId || "-", Object.keys(api).sort().join("|")].join(
-          " "
+          " ",
         )}
       </div>
     );
@@ -46,8 +46,8 @@ describe("react", () => {
         render(
           <WebRTCRemoteControlProvider mode="peer" init={() => makeFakePeer()}>
             <Consumer />
-          </WebRTCRemoteControlProvider>
-        )
+          </WebRTCRemoteControlProvider>,
+        ),
       ).toThrow('Unsupported "peer" mode. Only "master", "remote" accepted.');
     });
 
@@ -60,10 +60,10 @@ describe("react", () => {
             init={() => makeFakePeer()}
           >
             <Consumer />
-          </WebRTCRemoteControlProvider>
-        )
+          </WebRTCRemoteControlProvider>,
+        ),
       ).toThrow(
-        '`masterPeerId` prop not allowed in "master" mode - "master-peer-id" was passed.'
+        '`masterPeerId` prop not allowed in "master" mode - "master-peer-id" was passed.',
       );
     });
 
@@ -75,8 +75,8 @@ describe("react", () => {
             init={() => makeFakePeer()}
           >
             <Consumer />
-          </WebRTCRemoteControlProvider>
-        )
+          </WebRTCRemoteControlProvider>,
+        ),
       ).toThrow('`masterPeerId` prop required in "remote" mode.');
     });
   });
@@ -89,7 +89,7 @@ describe("react", () => {
       render(
         <WebRTCRemoteControlProvider mode="master" init={init}>
           <Consumer />
-        </WebRTCRemoteControlProvider>
+        </WebRTCRemoteControlProvider>,
       );
 
       expect(init).toHaveBeenCalledTimes(1);
@@ -108,7 +108,7 @@ describe("react", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("out").textContent).toBe(
-          "master - off|on|sendAll|sendTo"
+          "master - off|on|sendAll|sendTo",
         );
       });
     });
@@ -118,7 +118,7 @@ describe("react", () => {
       const { unmount } = render(
         <WebRTCRemoteControlProvider mode="master" init={() => peer}>
           <Consumer />
-        </WebRTCRemoteControlProvider>
+        </WebRTCRemoteControlProvider>,
       );
 
       unmount();
@@ -142,7 +142,7 @@ describe("react", () => {
           }}
         >
           <Consumer />
-        </WebRTCRemoteControlProvider>
+        </WebRTCRemoteControlProvider>,
       );
 
       await act(async () => {
@@ -156,7 +156,7 @@ describe("react", () => {
       });
       await waitFor(() => {
         expect(screen.getByTestId("out").textContent).toBe(
-          "remote master-peer-id off|on|send"
+          "remote master-peer-id off|on|send",
         );
       });
     });
@@ -170,7 +170,7 @@ describe("react", () => {
       const { rerender } = render(
         <WebRTCRemoteControlProvider mode="master" init={init}>
           <Consumer />
-        </WebRTCRemoteControlProvider>
+        </WebRTCRemoteControlProvider>,
       );
 
       expect(init).toHaveBeenCalledTimes(1);
@@ -178,7 +178,7 @@ describe("react", () => {
       rerender(
         <WebRTCRemoteControlProvider mode="master" init={init}>
           <Consumer />
-        </WebRTCRemoteControlProvider>
+        </WebRTCRemoteControlProvider>,
       );
 
       expect(init).toHaveBeenCalledTimes(2);

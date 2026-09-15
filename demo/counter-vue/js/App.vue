@@ -29,7 +29,7 @@ export default {
           new Peer(
             getPeerId(),
             // line bellow is optional - you can rely on the signaling server exposed by peerjs
-            getPeerjsConfig()
+            getPeerjsConfig(),
           ),
         mode.value,
         {
@@ -37,7 +37,7 @@ export default {
             (window.location.hash && window.location.hash.replace("#", "")) ||
             null,
           sessionStorageKey: "webrtc-remote-control-peer-id-vue",
-        }
+        },
       );
     });
     return {

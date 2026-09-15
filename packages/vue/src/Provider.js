@@ -8,20 +8,20 @@ export const MyContext = Symbol("context-webrtc-remote-control");
 export function provideWebTCRemoteControl(
   init,
   mode,
-  { masterPeerId, sessionStorageKey, humanErrors } = {}
+  { masterPeerId, sessionStorageKey, humanErrors } = {},
 ) {
   const allowedMode = ["master", "remote"];
   if (!allowedMode.includes(mode)) {
     throw new Error(
       `Unsupported "${mode}" mode. Only ${allowedMode
         .map((a) => `"${a}"`)
-        .join(", ")} accepted.`
+        .join(", ")} accepted.`,
     );
   }
   if (mode === "master" && masterPeerId) {
     console.log(typeof masterPeerId);
     throw new Error(
-      `\`masterPeerId\` prop not allowed in "master" mode - "${masterPeerId}" was passed.`
+      `\`masterPeerId\` prop not allowed in "master" mode - "${masterPeerId}" was passed.`,
     );
   }
   if (mode === "remote" && !masterPeerId) {
@@ -61,7 +61,7 @@ export function provideWebTCRemoteControl(
       .default(utils)
       .bindConnection(
         providerValue.value.peer,
-        remote ? masterPeerId : undefined
+        remote ? masterPeerId : undefined,
       );
     // start resolving the promise as soon as possible (it will be used in `usePeer`)
     providerValue.value.promise.then((wrcApi) => {

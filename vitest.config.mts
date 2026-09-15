@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 const corePath = fileURLToPath(
-  new URL("./packages/core/src/core.index.js", import.meta.url)
+  new URL("./packages/core/src/core.index.js", import.meta.url),
 );
 
 // One config for the whole workspace. Inline projects inherit everything below

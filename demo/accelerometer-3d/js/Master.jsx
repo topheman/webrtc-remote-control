@@ -39,7 +39,7 @@ export default function Master() {
     console.log({ event: "remote.disconnect", payload: { id } });
     setRemotesList((remotes) =>
       // eslint-disable-next-line no-shadow
-      remotes.filter(({ peerId }) => peerId !== id)
+      remotes.filter(({ peerId }) => peerId !== id),
     );
   };
   const onData = ({ id }, data) => {

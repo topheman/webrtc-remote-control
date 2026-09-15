@@ -21,7 +21,7 @@ export function render() {
   // create view based on <template> tag content
   const templateNode = document.importNode(
     document.querySelector("template").content,
-    true
+    true,
   );
   const staticContent = document.querySelector(".static-content");
   const { content, ...view } = createView(templateNode, staticContent);
