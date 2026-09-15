@@ -12,7 +12,7 @@ export function useLogger() {
         const fullLogs = loggerRef.current[level](msg);
         setLogs(fullLogs);
       },
-    ])
+    ]),
   );
   return {
     logger,

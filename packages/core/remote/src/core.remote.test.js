@@ -142,21 +142,21 @@ describe("remote/core.remote", () => {
         attempts += 1;
         if (attempts > 1) {
           throw new Error(
-            "Cannot connect to new Peer after disconnecting from server."
+            "Cannot connect to new Peer after disconnecting from server.",
           );
         }
         return realConnect(masterPeerId, options);
       });
       const promise = prepare(prepareUtils()).bindConnection(
         peer,
-        "master-peer-id"
+        "master-peer-id",
       );
       peer.emitOpen();
       peer.lastConnection().emitOpen();
       const wrc = await promise;
 
       expect(() => peer.lastConnection().emitClose()).toThrow(
-        "Cannot connect to new Peer after disconnecting from server."
+        "Cannot connect to new Peer after disconnecting from server.",
       );
 
       // KNOWN DEFECT, pinned here on purpose: the no-connection branch calls
@@ -170,10 +170,10 @@ describe("remote/core.remote", () => {
       const { peer, wrc } = await connect();
       const events = [];
       wrc.on("remote.disconnect", (payload) =>
-        events.push(["remote.disconnect", payload])
+        events.push(["remote.disconnect", payload]),
       );
       wrc.on("remote.reconnect", (payload) =>
-        events.push(["remote.reconnect", payload])
+        events.push(["remote.reconnect", payload]),
       );
 
       peer.lastConnection().emitClose();

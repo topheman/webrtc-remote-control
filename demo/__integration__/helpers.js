@@ -6,8 +6,8 @@ export function makeGetModes(processEnvKey, allowedModes) {
         if (!allowedModes.includes(modeToCheck)) {
           throw new Error(
             `Unsupported ${processEnvKey} "${modeToCheck}", only accepts ${allowedModes.join(
-              ", "
-            )}`
+              ", ",
+            )}`,
           );
         }
       }

@@ -50,7 +50,7 @@ export default function Master() {
     logger.log({ event: "remote.disconnect", payload: { id } });
     setRemotesList((counters) =>
       // eslint-disable-next-line no-shadow
-      counters.filter(({ peerId }) => peerId !== id)
+      counters.filter(({ peerId }) => peerId !== id),
     );
   };
   const onData = ({ id }, data) => {

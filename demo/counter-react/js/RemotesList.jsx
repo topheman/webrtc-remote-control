@@ -16,7 +16,7 @@ export default function RemotesList({ data, onPing, onPingAll }) {
         onPing(e.detail.id);
       }
     },
-    [onPing]
+    [onPing],
   );
   useEffect(() => {
     // copy the ref to be able to cleanup the right one if it changed
@@ -41,7 +41,7 @@ RemotesList.propTypes = {
       counter: PropTypes.number,
       peerId: PropTypes.string,
       name: PropTypes.string,
-    })
+    }),
   ),
   onPing: PropTypes.func,
   onPingAll: PropTypes.func,

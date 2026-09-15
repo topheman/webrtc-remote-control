@@ -13,6 +13,6 @@ ConsoleDisplay.propTypes = {
       key: PropTypes.number,
       level: PropTypes.string,
       payload: PropTypes.object,
-    })
+    }),
   ),
 };

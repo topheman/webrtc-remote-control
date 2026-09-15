@@ -80,7 +80,7 @@ export default {
     const onRemoteDisconnect = ({ id }) => {
       logger.log({ event: "remote.disconnect", payload: { id } });
       remotesList.value = remotesList.value.filter(
-        ({ peerId }) => peerId !== id
+        ({ peerId }) => peerId !== id,
       );
     };
     const onData = ({ id }, data) => {
@@ -114,7 +114,7 @@ export default {
         "Master.watchEffect",
         { currentReady, prevReady },
         ready.value,
-        api.value.on
+        api.value.on,
       );
       if (ready.value) {
         peerId.value = peer.value.id;

@@ -59,7 +59,7 @@ describe("vue", () => {
               this.masterPeerId || "-",
               Object.keys(this.api).sort().join("|"),
             ].join(" ")
-          : "not-ready"
+          : "not-ready",
       );
     },
   };
@@ -86,7 +86,7 @@ describe("vue", () => {
   describe("constructor guards", () => {
     it("should reject an unsupported mode", () => {
       expect(() =>
-        render(makeRoot(() => makeFakePeer(), "peer", undefined, Inert))
+        render(makeRoot(() => makeFakePeer(), "peer", undefined, Inert)),
       ).toThrow('Unsupported "peer" mode. Only "master", "remote" accepted.');
     });
 
@@ -97,17 +97,17 @@ describe("vue", () => {
             () => makeFakePeer(),
             "master",
             { masterPeerId: "master-peer-id" },
-            Inert
-          )
-        )
+            Inert,
+          ),
+        ),
       ).toThrow(
-        '`masterPeerId` prop not allowed in "master" mode - "master-peer-id" was passed.'
+        '`masterPeerId` prop not allowed in "master" mode - "master-peer-id" was passed.',
       );
     });
 
     it("should require `masterPeerId` in remote mode", () => {
       expect(() =>
-        render(makeRoot(() => makeFakePeer(), "remote", undefined, Inert))
+        render(makeRoot(() => makeFakePeer(), "remote", undefined, Inert)),
       ).toThrow('`masterPeerId` prop required in "remote" mode.');
     });
   });
@@ -131,7 +131,7 @@ describe("vue", () => {
 
       await waitFor(() => {
         expect(getByTestId("out").textContent).toBe(
-          "master - off|on|sendAll|sendTo"
+          "master - off|on|sendAll|sendTo",
         );
       });
     });
@@ -152,7 +152,7 @@ describe("vue", () => {
       const init = vi.fn(() => peer);
 
       const { getByTestId } = render(
-        makeRoot(init, "remote", { masterPeerId: "master-peer-id" })
+        makeRoot(init, "remote", { masterPeerId: "master-peer-id" }),
       );
 
       // the remote side has no use for the filter, so it is not handed one
@@ -167,7 +167,7 @@ describe("vue", () => {
 
       await waitFor(() => {
         expect(getByTestId("out").textContent).toBe(
-          "remote master-peer-id off|on|send"
+          "remote master-peer-id off|on|send",
         );
       });
     });
@@ -181,7 +181,7 @@ describe("vue", () => {
         makeRoot(init, "master", {
           sessionStorageKey: "my-key",
           humanErrors: { mapping: { network: "My custom message" } },
-        })
+        }),
       );
 
       const { humanizeError, getPeerId } = init.mock.calls[0][0];

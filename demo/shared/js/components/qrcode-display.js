@@ -1,6 +1,6 @@
 if (typeof QRCode === "undefined") {
   throw new Error(
-    "Missing `QRCode` function, please include `qrcode.min.js` as script tags before from https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"
+    "Missing `QRCode` function, please include `qrcode.min.js` as script tags before from https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js",
   );
 }
 
@@ -42,7 +42,7 @@ class QRCodeDisplay extends HTMLElement {
     } catch (e) {
       // eslint-disable-next-line no-console
       console.warn(
-        "Wrong `wrap-anchor` attribute passed to `qrcode-display` (only accepts `true` or `false`)"
+        "Wrong `wrap-anchor` attribute passed to `qrcode-display` (only accepts `true` or `false`)",
       );
       wrapAnchor = false;
     }

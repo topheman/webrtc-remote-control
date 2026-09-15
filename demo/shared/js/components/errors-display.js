@@ -54,7 +54,7 @@ ul {
           // eslint-disable-next-line no-console
           console.error(
             "Failed to parse `data` attribute in `errors-display` element",
-            e
+            e,
           );
         }
       }

@@ -24,7 +24,7 @@ export default function App() {
             new Peer(
               getPeerId(),
               // line bellow is optional - you can rely on the signaling server exposed by peerjs
-              getPeerjsConfig()
+              getPeerjsConfig(),
             )
           }
           masterPeerId={

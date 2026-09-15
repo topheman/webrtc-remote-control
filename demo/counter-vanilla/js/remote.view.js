@@ -12,13 +12,13 @@ export function render(initialState) {
   // create view based on <template> tag content
   const templateNode = document.importNode(
     document.querySelector("template").content,
-    true
+    true,
   );
   const staticContent = document.querySelector(".static-content");
   const { content, ...view } = createView(
     templateNode,
     staticContent,
-    initialState
+    initialState,
   );
   document.querySelector("#content").innerHTML = "";
   document.querySelector("#content").appendChild(content);
@@ -30,7 +30,7 @@ function createView(
   staticContent,
   initialState = {
     initialName: "",
-  }
+  },
 ) {
   let events = { ...defaultEvents };
   const content = document.createElement("div");
@@ -57,7 +57,7 @@ function createView(
         events.onClickMinus();
       }
     },
-    false
+    false,
   );
   content.addEventListener(
     "submit",
@@ -67,7 +67,7 @@ function createView(
         events.onUpdateName(e.target.querySelector("input").value);
       }
     },
-    false
+    false,
   );
   return {
     content,

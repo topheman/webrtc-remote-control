@@ -1,5 +1,5 @@
 export function makeStoreAccessor(
-  sessionStorageKey = "webrtc-remote-control-peer-id"
+  sessionStorageKey = "webrtc-remote-control-peer-id",
 ) {
   return {
     getPeerId() {
@@ -29,7 +29,7 @@ export function makeHumanizeError(
   { mapping: overrideMapping, withTechicalErrorMessage } = {
     mapping: {},
     withTechicalErrorMessage: true,
-  }
+  },
 ) {
   const mapping = {
     "browser-incompatible":
