@@ -4,7 +4,8 @@
 tsconfig.tsbuildinfo
 
 # tools
-.eslintcache
+# Vite Task's cache; the hook dispatcher under .vite-hooks/_ ignores itself.
+.vite
 
 # dependencies
 node_modules

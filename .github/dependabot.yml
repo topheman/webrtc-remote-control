@@ -1,0 +1,8 @@
+version: 2
+updates:
+  # setup-vp is pinned to an exact release in both workflows, and Vite+ ships
+  # roughly fortnightly, so the pin needs something to keep it moving.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

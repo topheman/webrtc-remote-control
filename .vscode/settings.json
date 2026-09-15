@@ -1,6 +1,20 @@
 {
+  // Oxfmt and Oxlint both read the `fmt` and `lint` blocks of the root
+  // vite.config.ts, so the editor and `vp check` agree by construction.
+  // The per-language overrides are not redundant: VS Code ranks a user-level
+  // `[language]` default formatter above a workspace-level one, so without them
+  // a contributor's global Prettier would quietly win.
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "[javascript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[javascriptreact]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[typescript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "oxc.disableNestedConfig": true,
+  "oxc.fmt.disableNestedConfig": true,
   "editor.formatOnSave": true,
+  // Oxfmt has no partial-format mode, so it always formats the whole file.
+  "editor.formatOnSaveMode": "file",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.oxc": "explicit"
   }
 }

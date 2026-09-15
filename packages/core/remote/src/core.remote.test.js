@@ -1,5 +1,12 @@
 /* eslint-disable import/no-relative-packages */
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
 import prepare, { prepareUtils } from "./core.remote";
 import { disableConsole, makeFakePeer } from "../../test.helpers";
 

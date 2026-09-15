@@ -12,6 +12,12 @@ concurrency:
 # Each job declares what it needs; nothing is granted by default.
 permissions: {}
 
+env:
+  # The root `prepare` script installs the Git hook dispatcher. The version job
+  # commits through changesets/action, whose "Version Packages" subject is not a
+  # Conventional Commit, so the commit-msg hook must not be in the way here.
+  VP_GIT_HOOKS: 0
+
 jobs:
   select-mode:
     name: Select mode
@@ -27,17 +33,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup pnpm 📦
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node 🥣
-        uses: actions/setup-node@v4
+      - name: Setup Vite+ ⚡️
+        uses: voidzero-dev/setup-vp@v1.20.0
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install dependencies 📦
-        run: pnpm install --frozen-lockfile
+          node-version-file: .node-version
+          cache: true
+          run-install: |
+            args: [--frozen-lockfile]
 
       - name: Select mode
         id: select-mode
@@ -58,17 +60,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup pnpm 📦
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node 🥣
-        uses: actions/setup-node@v4
+      - name: Setup Vite+ ⚡️
+        uses: voidzero-dev/setup-vp@v1.20.0
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install dependencies 📦
-        run: pnpm install --frozen-lockfile
+          node-version-file: .node-version
+          cache: true
+          run-install: |
+            args: [--frozen-lockfile]
 
       - name: Create or update the version pull request 🔖
         uses: changesets/action/version@v2.1.2
@@ -95,17 +93,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup pnpm 📦
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node 🥣
-        uses: actions/setup-node@v4
+      - name: Setup Vite+ ⚡️
+        uses: voidzero-dev/setup-vp@v1.20.0
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install dependencies 📦
-        run: pnpm install --frozen-lockfile
+          node-version-file: .node-version
+          cache: true
+          run-install: |
+            args: [--frozen-lockfile]
 
       - name: Publish to npm 🚀
         uses: changesets/action/publish@v2.1.2

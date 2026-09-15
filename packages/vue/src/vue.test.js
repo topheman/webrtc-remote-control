@@ -7,7 +7,7 @@ import {
   expect,
   it,
   vi,
-} from "vitest";
+} from "vite-plus/test";
 import { h } from "vue";
 import { render, waitFor, cleanup } from "@testing-library/vue";
 

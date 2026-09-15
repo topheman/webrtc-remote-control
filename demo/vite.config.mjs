@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import react from "@vitejs/plugin-react";
 import vue from "@vitejs/plugin-vue";
-import { defineConfig } from "vite";
+import { defineConfig, lazyPlugins } from "vite-plus";
 
 // The repo root has no `"type": "module"`, so this config is `.mjs` rather than
 // `.js`: Vite 8 dropped the CommonJS Node API, and the extension is what tells
@@ -33,7 +33,7 @@ export default defineConfig({
   preview: {
     port: process.env.PORT || 3000,
   },
-  plugins: [
+  plugins: lazyPlugins(() => [
     react(),
     // https://vuejs.org/guide/extras/web-components.html#using-custom-elements-in-vue
     vue({
@@ -44,5 +44,5 @@ export default defineConfig({
         },
       },
     }),
-  ],
+  ]),
 });
