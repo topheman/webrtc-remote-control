@@ -5,7 +5,12 @@
     @submit="
       (e) => {
         e.preventDefault();
-        onConfirmName(e.target.name.value);
+        // `e.target` is the form, and the input carries no `name` attribute, so
+        // `e.target.name` has always been undefined and this argument has always
+        // been `undefined`. `onConfirmName` ignores its argument and reads the
+        // name off the store, so nothing is lost - preserved as it behaved, the
+        // fix belongs in its own pull request.
+        onConfirmName?.(undefined);
       }
     "
     :disabled="disabled"
@@ -14,7 +19,7 @@
       <input
         type="text"
         placeholder="Enter name"
-        @change="(e) => onChangeName(e.target.value)"
+        @change="(e) => onChangeName?.((e.target as HTMLInputElement).value)"
         :value="name"
         :disabled="disabled"
       />
@@ -23,13 +28,11 @@
   </form>
 </template>
 
-<script>
-export default {
-  props: {
-    onChangeName: Function,
-    onConfirmName: Function,
-    name: String,
-    disabled: Boolean,
-  },
-};
+<script setup lang="ts">
+defineProps<{
+  onChangeName?: (value: string) => void;
+  onConfirmName?: (value?: string) => void;
+  name?: string;
+  disabled?: boolean;
+}>();
 </script>

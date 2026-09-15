@@ -16,10 +16,8 @@
   </p>
 </template>
 
-<script>
-export default {
-  props: {
-    peerId: String,
-  },
-};
+<script setup lang="ts">
+defineProps<{
+  peerId?: string | null;
+}>();
 </script>

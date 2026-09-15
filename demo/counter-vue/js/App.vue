@@ -6,7 +6,7 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
 import { onBeforeMount, ref } from "vue";
 
 import { provideWebTCRemoteControl } from "@webrtc-remote-control/vue";
@@ -18,31 +18,28 @@ import "../../shared/js/components/footer-display";
 import Master from "./Master.vue";
 import Remote from "./Remote.vue";
 
-export default {
-  components: { Master, Remote },
-  setup() {
-    const mode = ref(null);
-    onBeforeMount(() => {
-      mode.value = window.location.hash ? "remote" : "master";
-      provideWebTCRemoteControl(
-        ({ getPeerId }) =>
-          new Peer(
-            getPeerId(),
-            // line bellow is optional - you can rely on the signaling server exposed by peerjs
-            getPeerjsConfig(),
-          ),
-        mode.value,
-        {
-          masterPeerId:
-            (window.location.hash && window.location.hash.replace("#", "")) ||
-            null,
-          sessionStorageKey: "webrtc-remote-control-peer-id-vue",
-        },
-      );
-    });
-    return {
-      mode,
-    };
-  },
-};
+const mode = ref<"master" | "remote" | null>(null);
+
+onBeforeMount(() => {
+  mode.value = window.location.hash ? "remote" : "master";
+  provideWebTCRemoteControl(
+    ({ getPeerId }) =>
+      new Peer(
+        // `getPeerId` returns the id kept in session storage, or null the first
+        // time round - peerjs takes that as "allocate me one".
+        getPeerId() as string,
+        // line bellow is optional - you can rely on the signaling server exposed by peerjs
+        getPeerjsConfig(),
+      ),
+    mode.value,
+    {
+      // the option is optional rather than nullable, so the empty case is
+      // `undefined` here where it used to be `null`
+      masterPeerId:
+        (window.location.hash && window.location.hash.replace("#", "")) ||
+        undefined,
+      sessionStorageKey: "webrtc-remote-control-peer-id-vue",
+    },
+  );
+});
 </script>

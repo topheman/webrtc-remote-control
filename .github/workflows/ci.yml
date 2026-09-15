@@ -42,6 +42,11 @@ jobs:
       - name: Check (format, lint, types)
         run: vp check
 
+      # `vp check` type checks through tsgolint, which only reads `.ts` and
+      # `.tsx`. The single file components of the vue demo need vue-tsc.
+      - name: Check (vue single file components)
+        run: pnpm run typecheck:vue
+
       - name: Unit tests
         run: pnpm run test
 

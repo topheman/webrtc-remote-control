@@ -1,0 +1,15 @@
+{
+  // `vp check` type checks through tsgolint, which reads the root
+  // `tsconfig.json` and only understands `.ts` and `.tsx`. The seven single
+  // file components under `counter-vue` need vue-tsc, which needs a project
+  // that includes them - hence this one. It is the root project narrowed to
+  // the vue demo and what it imports; `pnpm run typecheck:vue` runs it, and it
+  // resolves the three workspace packages through their built declarations, so
+  // it wants a build first.
+  "extends": "../tsconfig.json",
+  "include": ["counter-vue/**/*", "shared/**/*.ts", "types/*.d.ts", "env.d.ts"],
+  // The unit tests are already covered by `vp check`, and pulling them in here
+  // would drag `test.helpers.ts` - and with it Node's globals - into a project
+  // that otherwise only needs the DOM.
+  "exclude": ["**/node_modules", "**/dist", "**/build", "**/*.test.ts"]
+}

@@ -15,15 +15,14 @@
   </p>
 </template>
 
-<script>
-export default {
-  props: {
-    mode: String,
-  },
-  computed: {
-    target() {
-      return this.mode.at(0).toUpperCase() + this.mode.slice(1);
-    },
-  },
-};
+<script setup lang="ts">
+import { computed } from "vue";
+
+const props = defineProps<{
+  mode: "master" | "remote";
+}>();
+
+const target = computed(
+  () => props.mode.at(0)!.toUpperCase() + props.mode.slice(1),
+);
 </script>
