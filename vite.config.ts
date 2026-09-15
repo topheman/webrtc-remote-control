@@ -63,12 +63,21 @@ export default defineConfig({
     },
     rules: {
       "vite-plus/prefer-vite-plus-imports": "error",
-      // Kept at "warn" to match what ESLint reported. Core and react no longer
-      // log; vue still does, and this becomes
-      // ["error", { allow: ["warn", "error"] }] once it is ported too.
-      "no-console": "warn",
+      // None of the three published packages log any more, so this is an error
+      // now: a library has no business writing to the console of the
+      // application embedding it. The demo is an application and is allowed to
+      // keep logging - see the override below.
+      "no-console": ["error", { allow: ["warn", "error"] }],
     },
     overrides: [
+      {
+        // The demo is an application, not a library, and several of its pages
+        // log on purpose - the accelerometer master prints every event it
+        // receives. Kept at "warn", which is what the whole repo reported
+        // before the packages were cleaned up.
+        files: ["demo/**"],
+        rules: { "no-console": "warn" },
+      },
       {
         // react-three-fiber renders three.js objects as JSX intrinsics, so
         // every prop on them looks unknown to the react plugin.
