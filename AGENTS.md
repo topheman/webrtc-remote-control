@@ -29,19 +29,26 @@ pointed at.
 
 ## Layout worth knowing
 
-`packages/core` carries **three** `package.json` files. `master/package.json` and
-`remote/package.json` exist only to give microbundle a build root for the
-`@webrtc-remote-control/core/master` and `/remote` subpath exports. They are not separate
-packages in any other sense.
+`packages/core` is flat, and one `package.json`. Its three public subpaths are served by
+the `exports` map alone, over a single `vp pack` build with three entries.
 
 ```
 packages/core/
-  src/core.index.js          # the "." export
-  master/src/core.master.js  # the "./master" export
-  remote/src/core.remote.js  # the "./remote" export
-  shared/common.js           # shared utilities, not a public subpath
-  test.helpers.js            # fake peer/connection + a console silencer
+  src/index.js       # the "." export
+  src/master.js      # the "./master" export
+  src/remote.js      # the "./remote" export
+  src/common.js      # shared utilities, not a public subpath
+  test.helpers.js    # fake peer/connection + a console silencer
+  vite.config.ts     # the `pack` block for this package
 ```
+
+Until Phase 4 `master/` and `remote/` each carried a `package.json` of their own. Those
+were load-bearing in two ways, not one: they gave microbundle a build root, and - because
+`files` shipped the directories - they let pre-`exports` resolvers (webpack 4, TypeScript
+`moduleResolution: "node"`) reach the subpaths by walking into the directory. Collapsing
+them drops that second group, which is why the change carries a major-ish note in the
+changeset. Everything that reads the `exports` map is unaffected, so
+`import ... from "@webrtc-remote-control/core/master"` is unchanged for current consumers.
 
 The `.d.ts` files sitting next to each source file are **hand-written**, not build
 output. Editing a signature means editing its `.d.ts` by hand - and `vp check` type-checks
@@ -60,21 +67,21 @@ Run from the repo root unless noted. The toolchain is [Vite+](https://viteplus.d
 `vp` drives installs, the dev server, builds, tests, linting and formatting. The root
 `package.json` scripts wrap it, and either form works.
 
-| Command                                                        | What it does                                                             |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `vp install`                                                   | installs and links every workspace package                               |
-| `pnpm run build` (`vp run -r build`)                           | builds core, react, vue (microbundle) then the demo, in dependency order |
-| `pnpm run dev` (`vp run -r --parallel dev`)                    | watch mode for all four packages at once                                 |
-| `vp check`                                                     | Oxfmt, Oxlint and tsgolint in one pass - what CI gates on                |
-| `pnpm run lint` (`vp lint`)                                    | Oxlint only                                                              |
-| `pnpm run format` (`vp fmt`)                                   | Oxfmt over the whole repo                                                |
-| `pnpm test` (`vp test run`)                                    | unit tests: core, react, vue, demo                                       |
-| `pnpm run test:watch`                                          | the same suite in watch mode                                             |
-| `pnpm run test:core` / `test:react` / `test:vue` / `test:demo` | one Vitest project, with a `:watch` variant each                         |
-| `pnpm run test:e2e`                                            | Puppeteer + jest-cucumber suite, needs a server already running          |
-| `pnpm run test:e2e:start-server-and-test`                      | builds nothing, previews the demo and runs e2e against it                |
-| `pnpm run peer-server`                                         | local peerjs signaling server on port 9000                               |
-| `pnpm changeset`                                               | records a version bump for the next release                              |
+| Command                                                        | What it does                                                           |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `vp install`                                                   | installs and links every workspace package                             |
+| `pnpm run build` (`vp run -r build`)                           | builds core, react, vue (`vp pack`) then the demo, in dependency order |
+| `pnpm run dev` (`vp run -r --parallel dev`)                    | watch mode for all four packages at once                               |
+| `vp check`                                                     | Oxfmt, Oxlint and tsgolint in one pass - what CI gates on              |
+| `pnpm run lint` (`vp lint`)                                    | Oxlint only                                                            |
+| `pnpm run format` (`vp fmt`)                                   | Oxfmt over the whole repo                                              |
+| `pnpm test` (`vp test run`)                                    | unit tests: core, react, vue, demo                                     |
+| `pnpm run test:watch`                                          | the same suite in watch mode                                           |
+| `pnpm run test:core` / `test:react` / `test:vue` / `test:demo` | one Vitest project, with a `:watch` variant each                       |
+| `pnpm run test:e2e`                                            | Puppeteer + jest-cucumber suite, needs a server already running        |
+| `pnpm run test:e2e:start-server-and-test`                      | builds nothing, previews the demo and runs e2e against it              |
+| `pnpm run peer-server`                                         | local peerjs signaling server on port 9000                             |
+| `pnpm changeset`                                               | records a version bump for the next release                            |
 
 `vp dev`, `vp build` and `vp preview` refuse to guess a target at the workspace root.
 `defaultPackage` in `vite.config.ts` points them at the demo, so bare `vp dev` does the
@@ -115,11 +122,16 @@ Both workflows set up through `voidzero-dev/setup-vp`, pinned to an exact releas
 replaces the separate `pnpm/action-setup` and `actions/setup-node` steps and reads the vp
 version from the `vite-plus` catalog entry. Dependabot bumps the pin weekly.
 
-## One config file
+## Config files
 
-`vite.config.ts` at the root is the only tool configuration in the repo. It holds the
-`lint`, `fmt`, `staged` and `test` blocks; there is no `.eslintrc`, `.prettierrc`,
-`vitest.config`, or lint-staged block in `package.json` any more.
+`vite.config.ts` at the root holds every cross-cutting tool setting: the `lint`, `fmt`,
+`staged` and `test` blocks. There is no `.eslintrc`, `.prettierrc`, `vitest.config`, or
+lint-staged block in `package.json` any more.
+
+The three published packages each add a `vite.config.ts` of their own, and those hold
+**only** a `pack` block, because entries, externals and declaration handling are
+per-package. Nothing else belongs in them - lint and test settings there would be ignored,
+since the Vitest projects are declared inline at the root.
 
 Unit tests are Vitest, driven by the `test.projects` array in that file, one project per
 package. There are no per-package test configs and no per-package `test` scripts:
@@ -163,12 +175,14 @@ why `demo` keeps `jest`, `@babel/preset-env` and `demo/babel.config.js`.
 
 ## Things that are already broken by age
 
-- microbundle is effectively unmaintained. It still builds all three packages; `vp pack`
-  replaces it in a later phase.
-- There are `console.log` calls shipped in `core.master.js`, `core.remote.js`,
+- There are `console.log` calls shipped in `core/master.js`, `core/remote.js`,
   `vue/hooks.js`, `vue/Provider.js` and `react/Provider.jsx`. `no-console` is set to
   `warn` in `vite.config.ts` so they do not fail `vp check`; once they are gone the rule
   becomes `["error", { allow: ["warn", "error"] }]`.
+- The hand-written `.d.ts` files over-promise on the `.` export: `src/index.d.ts` does
+  `export * from "./common.js"`, so it declares `makeStoreAccessor`,
+  `makeConnectionFilterUtilities` and `makeHumanizeError`, none of which `src/index.js`
+  actually re-exports. Pre-existing, and Phase 5's generated declarations fix it.
 
 ## Conventions
 

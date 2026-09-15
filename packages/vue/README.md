@@ -30,9 +30,7 @@ Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-vue/i
 
 TypeScript types are shipped with the package.
 
-## UMD build
+## Module format
 
-Don't want to use a bundler ? You can simply use the UMD (Universal Module Definition) build and drop it with a script tag, you'll have access to a `webrtcRemoteControlVue` object on the `window`.
-
-- Development build: [https://unpkg.com/@webrtc-remote-control/vue/dist/webrtc-remote-control-vue.umd.dev.js](https://unpkg.com/@webrtc-remote-control/vue/dist/webrtc-remote-control-vue.umd.dev.js)
-- Production build: [https://unpkg.com/@webrtc-remote-control/vue/dist/webrtc-remote-control-vue.umd.prod.js](https://unpkg.com/@webrtc-remote-control/vue/dist/webrtc-remote-control-vue.umd.prod.js)
+The package ships as ES modules only. There is no CommonJS or UMD build, so it
+needs a bundler or a browser that loads `<script type="module">`.

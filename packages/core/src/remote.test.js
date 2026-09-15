@@ -7,8 +7,8 @@ import {
   it,
   vi,
 } from "vite-plus/test";
-import prepare, { prepareUtils } from "./core.remote";
-import { disableConsole, makeFakePeer } from "../../test.helpers";
+import prepare, { prepareUtils } from "./remote";
+import { disableConsole, makeFakePeer } from "../test.helpers";
 
 /**
  * Behavioral baseline for the remote side of the connection.
@@ -16,7 +16,7 @@ import { disableConsole, makeFakePeer } from "../../test.helpers";
  * The remote is the side that owns reconnection, so most of what is pinned down here
  * is the close/reconnect cycle and the exact options handed to `peer.connect`.
  */
-describe("remote/core.remote", () => {
+describe("remote", () => {
   let restoreConsole = null;
 
   beforeEach(() => {

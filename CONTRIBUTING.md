@@ -54,7 +54,7 @@ Add dependencies to a specific workspace package with `pnpm --filter`, run from 
 Examples:
 
 ```sh
-pnpm --filter @webrtc-remote-control/react add -D npm-run-all
+pnpm --filter @webrtc-remote-control/react add -D publint
 pnpm --filter @webrtc-remote-control/react add prop-types
 pnpm --filter @webrtc-remote-control/react add -P "react@>=16.8.0"
 pnpm --filter @webrtc-remote-control/demo add react vue
@@ -108,9 +108,9 @@ request work regardless.
 
 ## Environment variables
 
-You can pass environment variables at build time **before publish** via microbundle - [see docs](https://github.com/developit/microbundle#defining-build-time-constants).
+You can pass environment variables at build time **before publish** via tsdown, which backs `vp pack` - [see docs](https://tsdown.dev/options/define).
 
-This is currently used to create production (minified) and development (unminified) versions of the UMD builds.
+Nothing in the repo relies on this today. It used to produce the production (minified) and development (unminified) UMD builds, which the packages no longer ship.
 
 ## https
 

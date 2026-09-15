@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, lazyPlugins } from "vite-plus";
 
 const corePath = fileURLToPath(
-  new URL("./packages/core/src/core.index.js", import.meta.url),
+  new URL("./packages/core/src/index.js", import.meta.url),
 );
 
 // One config for the whole workspace: lint, format and test settings all live
@@ -20,14 +20,9 @@ export default defineConfig({
   resolve: {
     alias: {
       // Tests run against the core source rather than its build output, so the
-      // whole suite stays independent of microbundle.
+      // whole suite stays independent of the packaging step.
       "@webrtc-remote-control/core": corePath,
     },
-  },
-
-  server: {
-    // microbundle's scratch directory, written to by `vp run -r --parallel dev`
-    watch: { ignored: ["**/.tmp/**"] },
   },
 
   test: {

@@ -6,7 +6,7 @@ import {
   prepareUtils,
 } from "./common";
 
-describe("shared/common", () => {
+describe("common", () => {
   describe("makeStoreAccessor", () => {
     afterEach(() => {
       sessionStorage.clear();
