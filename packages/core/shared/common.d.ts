@@ -4,7 +4,7 @@ export function makeStoreAccessor(sessionStorageKey?: string): {
 };
 
 export function makeConnectionFilterUtilities(): {
-  isConnectionFromRemote(conn): boolean;
+  isConnectionFromRemote(conn: { metadata?: unknown }): boolean;
   connMetadata: string;
 };
 

@@ -27,17 +27,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup pnpm 📦
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node 🥣
-        uses: actions/setup-node@v4
+      - name: Setup Vite+ ⚡️
+        uses: voidzero-dev/setup-vp@v1.20.0
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install dependencies 📦
-        run: pnpm install --frozen-lockfile
+          node-version-file: .node-version
+          cache: true
+          run-install: |
+            args: [--frozen-lockfile]
 
       - name: Select mode
         id: select-mode
@@ -58,17 +54,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup pnpm 📦
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node 🥣
-        uses: actions/setup-node@v4
+      - name: Setup Vite+ ⚡️
+        uses: voidzero-dev/setup-vp@v1.20.0
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install dependencies 📦
-        run: pnpm install --frozen-lockfile
+          node-version-file: .node-version
+          cache: true
+          run-install: |
+            args: [--frozen-lockfile]
 
       - name: Create or update the version pull request 🔖
         uses: changesets/action/version@v2.1.2
@@ -95,17 +87,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup pnpm 📦
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node 🥣
-        uses: actions/setup-node@v4
+      - name: Setup Vite+ ⚡️
+        uses: voidzero-dev/setup-vp@v1.20.0
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install dependencies 📦
-        run: pnpm install --frozen-lockfile
+          node-version-file: .node-version
+          cache: true
+          run-install: |
+            args: [--frozen-lockfile]
 
       - name: Publish to npm 🚀
         uses: changesets/action/publish@v2.1.2

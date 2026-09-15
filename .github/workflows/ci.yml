@@ -7,28 +7,35 @@ jobs:
       - name: Checkout 🛎
         uses: actions/checkout@v4
 
-      - name: Setup pnpm 📦
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node 🥣
-        uses: actions/setup-node@v4
+      - name: Setup Vite+ ⚡️
+        # Replaces pnpm/action-setup and actions/setup-node. The vp version comes
+        # from the `vite-plus` catalog entry in pnpm-workspace.yaml, so it stays in
+        # step with local development without being repeated here.
+        uses: voidzero-dev/setup-vp@v1.20.0
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
+          node-version-file: .node-version
+          cache: true
+          run-install: |
+            args: [--frozen-lockfile]
 
-      - run: node -v
-      - run: pnpm -v
+      - name: Cache Vite Task results 💾
+        # setup-vp's cache only covers package-manager data, so the task cache
+        # that makes `vp run` skip unchanged work needs its own entry.
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ github.sha }}
+          restore-keys: vite-task-${{ runner.os }}-
 
-      - name: Install dependencies 📦
-        run: pnpm install --frozen-lockfile
+      - run: vp toolchain
 
       - name: Build
         # run: pnpm run build
         # Public peer server is down for the moment -> we use a local signaling server
         run: pnpm run build:peer-server
 
-      - name: Lint
-        run: pnpm run lint
+      - name: Check (format, lint, types)
+        run: vp check
 
       - name: Unit tests
         run: pnpm run test

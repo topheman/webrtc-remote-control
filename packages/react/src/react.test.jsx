@@ -1,5 +1,12 @@
 /* eslint-disable import/no-relative-packages */
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
 import React from "react";
 import { render, screen, act, waitFor, cleanup } from "@testing-library/react";
 

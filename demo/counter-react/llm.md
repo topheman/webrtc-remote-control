@@ -1,6 +1,7 @@
 # Building a Counter with @webrtc-remote-control/react
 
 ## Application Behavior
+
 This application creates a real-time counter that can be controlled remotely:
 
 1. **Master Device (e.g., Laptop)**
@@ -18,6 +19,7 @@ This application creates a real-time counter that can be controlled remotely:
 The library does handle all the WebRTC communication automatically, making the counter update in real-time across devices. It also handles any reload of the page, and will reconnect to the same peer if the page is reloaded.
 
 ## Application Structure
+
 ```
 Root
 └── WebRTCRemoteControlProvider
@@ -26,19 +28,25 @@ Root
 ```
 
 ## Prerequisites
+
 The library is a wrapper for [PeerJS](https://peerjs.com/), you will need to include the PeerJS library in your project.
 
 ## Mode Configuration
+
 You should determine the mode based on the URL:
+
 - `mode="master"`: When accessing the page directly
 - `mode="remote"`: When the URL contains a hash (peer ID)
 
 For example:
+
 - `https://your-app.com` → Set `mode="master"`
 - `https://your-app.com#abc123` → Set `mode="remote"`
 
 ## Getting Started
+
 The library does automatically handle WebRTC connections, but you should:
+
 1. Wrap your application with `WebRTCRemoteControlProvider`
 2. Implement Master and Remote components
 3. Use the `usePeer` hook for WebRTC communication
@@ -46,7 +54,9 @@ The library does automatically handle WebRTC connections, but you should:
 ## Implementation Guide
 
 ### 1. Root Component Setup
+
 You should initialize the WebRTC context like this:
+
 ```jsx
 <WebRTCRemoteControlProvider
   mode={mode}
@@ -57,7 +67,9 @@ You should initialize the WebRTC context like this:
 ```
 
 ### 2. Master Component Implementation
+
 The library does provide:
+
 - WebRTC connection management
 - Peer discovery and connection
 - Real-time data transmission
@@ -65,6 +77,7 @@ The library does provide:
 - QR code generation for peer ID
 
 You should implement:
+
 - Counter state management (increment/decrement logic)
 - Display of current counter value
 - List of connected remotes and their individual counters
@@ -72,6 +85,7 @@ You should implement:
 - Error handling specific to counter operations
 
 Here's a minimal Master component:
+
 ```jsx
 function Master() {
   const { ready, api, peer } = usePeer();
@@ -81,23 +95,23 @@ function Master() {
     if (ready) {
       // Handle remote connections
       api.on("remote.connect", ({ id }) => {
-        setRemotesList(prev => [...prev, { id, counter: 0 }]);
+        setRemotesList((prev) => [...prev, { id, counter: 0 }]);
       });
 
       // Handle remote disconnections
       api.on("remote.disconnect", ({ id }) => {
-        setRemotesList(prev => prev.filter(remote => remote.id !== id));
+        setRemotesList((prev) => prev.filter((remote) => remote.id !== id));
       });
 
       // Handle incoming counter commands
       api.on("data", ({ id }, data) => {
         if (data.type === "COUNTER_INCREMENT") {
-          setRemotesList(prev =>
-            prev.map(remote =>
+          setRemotesList((prev) =>
+            prev.map((remote) =>
               remote.id === id
                 ? { ...remote, counter: remote.counter + 1 }
-                : remote
-            )
+                : remote,
+            ),
           );
         }
       });
@@ -111,27 +125,32 @@ function Master() {
 
       <h2>Connected Remotes ({remotesList.length})</h2>
       <ul>
-        {remotesList.map(remote => (
+        {remotesList.map((remote) => (
           <li key={remote.id}>
             Remote {remote.id}: {remote.counter}
           </li>
         ))}
       </ul>
 
-      <h2>Total: {remotesList.reduce((sum, remote) => sum + remote.counter, 0)}</h2>
+      <h2>
+        Total: {remotesList.reduce((sum, remote) => sum + remote.counter, 0)}
+      </h2>
     </div>
   );
 }
 ```
 
 ### 3. Remote Component Implementation
+
 The library does provide:
+
 - WebRTC connection to master
 - Real-time data transmission
 - Connection state management
 - Automatic reconnection handling
 
 You should implement:
+
 - UI with + and - buttons
 - Counter command sending logic
 - Remote device identification
@@ -139,6 +158,7 @@ You should implement:
 - Error handling specific to counter operations
 
 Here's a minimal Remote component:
+
 ```jsx
 function Remote() {
   const { ready, api } = usePeer();
@@ -159,14 +179,18 @@ function Remote() {
 ```
 
 ## Best Practices
+
 You should:
+
 - Use the `usePeer` hook for all WebRTC operations
 - Implement proper error handling, using the `humanizeError` function
 - Clean up connections in useEffect
 - Make sure your application correctly behaves in reconnection scenarios
 
 ## Technical Requirements
+
 The library does:
+
 - Handle WebRTC signaling through PeerJS
 - Manage real-time bidirectional communication
 - Maintain persistent connections
