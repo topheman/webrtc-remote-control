@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- Nodejs >=24 (see [.nvmrc](.nvmrc))
+- Nodejs >=24 (see [.node-version](.node-version))
 - pnpm >=12 - `corepack enable pnpm` picks up the version pinned in `packageManager`
 
 ## Setup
@@ -14,7 +14,12 @@ following installs dependencies for every workspace package and links them toget
 
 ```sh
 pnpm install
+pnpm run test:e2e:install # optional (if you want to run e2e test in local)
 ```
+
+The second command downloads the Chromium build Playwright drives. It is a few hundred
+megabytes and is not fetched by `pnpm install`, so skip it unless you intend to run
+`pnpm run test:e2e`.
 
 ## Commonly used scripts
 
