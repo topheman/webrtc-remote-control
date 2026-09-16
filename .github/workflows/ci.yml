@@ -55,7 +55,7 @@ jobs:
       # `--with-deps` also installs the shared libraries Chromium needs on a
       # bare ubuntu runner.
       - name: Install Playwright's Chromium 🎭
-        run: pnpm run test:e2e:install -- --with-deps
+        run: pnpm run test:e2e:install --with-deps
 
       - name: End2end tests
         # `pnpm run test:e2e` builds the demo against the local signaling server

@@ -247,9 +247,13 @@ opening the master page and connecting three remotes - and the assertion helpers
   scenario only passes on a second attempt, that is a bug to chase, not noise to retry away.
 - **The three demo modes are Playwright projects**, not a `describe.each` over a `MODE` env
   var, so `pnpm run test:e2e --project=vue` runs one of them. Write it without the `--`:
-  the script reaches Playwright through two levels of `vp run`, and a `--` separator is
-  swallowed on the way rather than forwarded, so the flag is silently dropped and the whole
-  suite runs.
+  pnpm stopped treating a `--` after the script name as a separator in v7 - everything
+  after the name goes to the script verbatim - and `vp run` follows the same convention,
+  so a `--` written anywhere after the script name reaches the final command in its argv.
+  What that costs depends on the subcommand - `test` ignores the flag and runs the whole
+  suite, `install` rejects `--` as an installation target and fails outright. Putting the
+  separator before the script name instead does work, because that is the position pnpm
+  still consumes, but the shorter form without it is the one to write.
 - **Each peer is its own tab of one browser context.** Chromium keeps sessionStorage per tab,
   so every peer gets its own stored id while still sharing a context, which is what the
   puppeteer suite relied on too.

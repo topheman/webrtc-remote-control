@@ -33,7 +33,7 @@ megabytes and is not fetched by `pnpm install`, so skip it unless you intend to 
 - `pnpm test`: runs unit tests (you can use some more specific scripts)
 - `pnpm run test:e2e:install`: downloads the Chromium build Playwright needs - run it once per clone
 - `pnpm run test:e2e`: runs the end-to-end tests. It builds the demo, starts a local signaling server and a preview server, runs all three demo modes, and shuts the servers down again - nothing needs to be running beforehand
-  - `pnpm run test:e2e --project=vue`: one demo mode only (`vanilla`, `react` or `vue`). Do not write `-- --project=vue`: the `--` is swallowed on the way to Playwright and the flag is silently dropped
+  - `pnpm run test:e2e --project=vue`: one demo mode only (`vanilla`, `react` or `vue`). Do not write `-- --project=vue`: pnpm passes everything after the script name through verbatim, so the `--` reaches Playwright as a literal argument and the whole suite runs
   - `pnpm run test:e2e:ui`: Playwright's UI mode, for stepping through a scenario
   - `pnpm run test:e2e:headed`: the same run with a visible browser
   - `pnpm run test:e2e:report`: opens the HTML report of the last run
