@@ -155,7 +155,13 @@ tsgolint does not read `.vue`, so the seven single file components under `demo/c
 fall outside `vp check`. That file is the root project narrowed to the vue demo and what it
 imports, and `pnpm run typecheck:vue` runs `vue-tsc --noEmit` against it - a separate CI
 step next to `vp check`. It resolves the three workspace packages through their built
-declarations, so it wants a build first. Unit tests are excluded from it: `vp check`
+declarations, so it wants a build first - and that is deliberate, not incidental. Nothing
+else in the repo reads those declarations through the `exports` maps: the alias in the root
+`vite.config.ts` only covers core and only for Vite, and `assignability.test-d.ts` compares
+each package's **source** against `legacy-types`. So this step is the one place a broken
+`exports` map or a declaration tsdown generated wrong would surface. Do not point it at the
+package sources with `paths` to save the build - that trades the repo's only packaging check
+for a few seconds. Unit tests are excluded from it: `vp check`
 already covers them, and including them would drag `demo/test.helpers.ts` and Node's
 globals into a project that otherwise only needs the DOM.
 
