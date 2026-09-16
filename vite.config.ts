@@ -37,8 +37,37 @@ export default defineConfig({
       { extends: true, test: { name: "core", root: "./packages/core" } },
       { extends: true, test: { name: "react", root: "./packages/react" } },
       { extends: true, test: { name: "vue", root: "./packages/vue" } },
-      { extends: true, test: { name: "demo", root: "./demo" } },
+      {
+        extends: true,
+        test: {
+          name: "demo",
+          root: "./demo",
+          // Vitest's default `include` matches `*.spec.ts` as well as
+          // `*.test.ts`, so without this it collects the Playwright suite and
+          // fails on `test.extend`'s fixtures. Unit tests here are `*.test.ts`;
+          // `e2e/` belongs to `pnpm run test:e2e`.
+          exclude: ["e2e/**", "**/node_modules/**", "**/dist/**"],
+        },
+      },
     ],
+  },
+
+  // The end-to-end suite. `cache: false` because it drives real browsers
+  // against real servers, so there is no input fingerprint that makes a cached
+  // pass trustworthy. `dependsOn` is what guarantees the preview server in
+  // `demo/playwright.config.ts` has something to serve.
+  run: {
+    tasks: {
+      e2e: {
+        // Delegates to the demo's own script rather than calling `playwright`
+        // here: a task declared at the root runs with the root package's
+        // `node_modules/.bin` on PATH, and Playwright is a dependency of the
+        // demo.
+        command: "vp run @webrtc-remote-control/demo#test:e2e",
+        cache: false,
+        dependsOn: ["@webrtc-remote-control/demo#build"],
+      },
+    },
   },
 
   // Replaces the airbnb-base / react / react-hooks / jsx-a11y ESLint stack.
@@ -83,14 +112,6 @@ export default defineConfig({
         // every prop on them looks unknown to the react plugin.
         files: ["demo/accelerometer-3d/**/*.tsx"],
         rules: { "react/no-unknown-property": "off" },
-      },
-      {
-        // The end-to-end suite is the only thing still on Jest, so it is the
-        // only thing that still needs Jest's globals and rules. Unit tests
-        // import theirs from vite-plus/test.
-        files: ["demo/__integration__/**/*.js"],
-        plugins: ["jest"],
-        globals: { page: "readonly", browser: "readonly" },
       },
     ],
     ignorePatterns: ["**/dist/**", "**/build/**"],

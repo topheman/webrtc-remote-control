@@ -39,16 +39,17 @@
     "test:vue:watch": "vp test --project vue",
     "test:demo": "vp test run --project demo",
     "test:demo:watch": "vp test --project demo",
-    "test:e2e": "vp run @webrtc-remote-control/demo#test:e2e",
-    "test:e2e:watch": "vp run @webrtc-remote-control/demo#test:e2e:watch",
-    "test:e2e:start-server-and-test": "vp run @webrtc-remote-control/demo#test:e2e:start-server-and-test",
-    "test:e2e:start-server-and-test:peer-server": "start-server-and-test peer-server http-get://localhost:9000/myapp test:e2e:start-server-and-test",
+    "test:e2e": "VITE_USE_LOCAL_PEER_SERVER=true vp run e2e",
     "check:dotenv": "dotenv -c -- node -e 'console.log(process.env.FOO_BAR)'",
     "changeset": "changeset",
     "changeset:version": "VP_GIT_HOOKS=0 changeset version",
     "changeset:status": "changeset status",
     "release": "vp run -r build && VP_GIT_HOOKS=0 changeset publish",
-    "clean:install": "find . -name \"node_modules\" -exec rm -rf '{}' +"
+    "clean:install": "find . -name \"node_modules\" -exec rm -rf '{}' +",
+    "test:e2e:install": "vp run @webrtc-remote-control/demo#test:e2e:install",
+    "test:e2e:ui": "vp run @webrtc-remote-control/demo#test:e2e:ui",
+    "test:e2e:headed": "vp run @webrtc-remote-control/demo#test:e2e:headed",
+    "test:e2e:report": "vp run @webrtc-remote-control/demo#test:e2e:report"
   },
   "keywords": [
     "webrtc",

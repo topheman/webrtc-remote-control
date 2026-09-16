@@ -17,12 +17,13 @@ catalog:
   start-server-and-test: ^3.0.12
   vite-plus: 0.3.1
 
-# Postinstall scripts pnpm runs. esbuild and puppeteer fetch binaries, vue-demi
-# picks the Vue 2/3 shim, protobufjs runs a codegen check.
+# Postinstall scripts pnpm runs. esbuild fetches binaries, vue-demi picks the
+# Vue 2/3 shim, protobufjs runs a codegen check. Playwright is deliberately not
+# here: its browsers are fetched by an explicit `pnpm run test:e2e:install`, so
+# a plain install stays quick and the download is visible rather than implied.
 allowBuilds:
   esbuild: true
   protobufjs: true
-  puppeteer: true
   vue-demi: true
 overrides:
   vite@*: "catalog:"

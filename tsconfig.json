@@ -23,11 +23,10 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  // Only TypeScript, deliberately - which is now the packages and the demo
-  // alike. Two things stay outside: the single file components of the vue demo,
-  // because tsgolint does not read `.vue` (`demo/tsconfig.vue.json` picks them
-  // up for vue-tsc), and the end-to-end suite, which is still Jest and
-  // JavaScript until the Playwright migration.
+  // Only TypeScript, deliberately - the packages, the demo and the end-to-end
+  // suite alike. One thing stays outside: the single file components of the vue
+  // demo, because tsgolint does not read `.vue` (`demo/tsconfig.vue.json` picks
+  // them up for vue-tsc).
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["**/node_modules", "**/dist", "**/build"]
 }
