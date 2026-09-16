@@ -57,11 +57,11 @@ The library does automatically handle WebRTC connections, but you should:
 
 You should initialize the WebRTC context like this:
 
-```jsx
+```tsx
 <WebRTCRemoteControlProvider
   mode={mode}
-  init={({ getPeerId }) => new Peer(getPeerId(), getPeerjsConfig())}
-  masterPeerId={window.location.hash?.replace("#", "") || null}
+  init={({ getPeerId }) => new Peer(getPeerId() as string, getPeerjsConfig())}
+  masterPeerId={window.location.hash?.replace("#", "") || undefined}
   sessionStorageKey="webrtc-remote-control-peer-id-react"
 >
 ```
@@ -86,26 +86,35 @@ You should implement:
 
 Here's a minimal Master component:
 
-```jsx
+```tsx
+interface RemoteCounter {
+  id: string;
+  counter: number;
+}
+
 function Master() {
-  const { ready, api, peer } = usePeer();
-  const [remotesList, setRemotesList] = useState([]);
+  // the type parameter picks the side you are on, so `api` is the master api
+  const { ready, api, peer } = usePeer<"master">();
+  const [remotesList, setRemotesList] = useState<RemoteCounter[]>([]);
 
   useEffect(() => {
+    // `ready` guards every use of `api`, but it is a boolean the compiler
+    // cannot tie to it, hence the `!` assertions below
     if (ready) {
       // Handle remote connections
-      api.on("remote.connect", ({ id }) => {
+      api!.on("remote.connect", ({ id }) => {
         setRemotesList((prev) => [...prev, { id, counter: 0 }]);
       });
 
       // Handle remote disconnections
-      api.on("remote.disconnect", ({ id }) => {
+      api!.on("remote.disconnect", ({ id }) => {
         setRemotesList((prev) => prev.filter((remote) => remote.id !== id));
       });
 
-      // Handle incoming counter commands
-      api.on("data", ({ id }, data) => {
-        if (data.type === "COUNTER_INCREMENT") {
+      // Handle incoming counter commands. `data` is whatever the remote sent,
+      // so it arrives as `unknown` and you narrow it yourself.
+      api!.on("data", ({ id }, data) => {
+        if ((data as { type?: string }).type === "COUNTER_INCREMENT") {
           setRemotesList((prev) =>
             prev.map((remote) =>
               remote.id === id
@@ -159,13 +168,13 @@ You should implement:
 
 Here's a minimal Remote component:
 
-```jsx
+```tsx
 function Remote() {
-  const { ready, api } = usePeer();
+  const { ready, api } = usePeer<"remote">();
 
   const increment = () => {
     if (ready) {
-      api.send({ type: "COUNTER_INCREMENT" });
+      api!.send({ type: "COUNTER_INCREMENT" });
     }
   };
 

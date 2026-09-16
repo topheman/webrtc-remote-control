@@ -81,7 +81,7 @@ export default defineConfig({
       {
         // react-three-fiber renders three.js objects as JSX intrinsics, so
         // every prop on them looks unknown to the react plugin.
-        files: ["demo/accelerometer-3d/**/*.jsx"],
+        files: ["demo/accelerometer-3d/**/*.tsx"],
         rules: { "react/no-unknown-property": "off" },
       },
       {

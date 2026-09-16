@@ -21,6 +21,7 @@
     "dev:demo": "vp run @webrtc-remote-control/demo#dev",
     "demo:forward": "vp run @webrtc-remote-control/demo#forward",
     "check": "vp check",
+    "typecheck:vue": "vue-tsc --noEmit -p demo/tsconfig.vue.json",
     "lint": "vp lint",
     "format": "vp fmt",
     "peer-server": "peerjs --port 9000 --key peerjs --path /myapp",
@@ -67,7 +68,8 @@
     "start-server-and-test": "catalog:",
     "typescript": "6.0.3",
     "vite": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "vue-tsc": "3.3.11"
   },
   "packageManager": "pnpm@12.4.1"
 }

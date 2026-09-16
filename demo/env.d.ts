@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 // Single-file-component shim for the `.vue` imports under `counter-vue/`.
 // `vp migrate` wrote one of these into `packages/vue/` as well, but they both
 // augment the same `*.vue` module in a single program, so the second one was a

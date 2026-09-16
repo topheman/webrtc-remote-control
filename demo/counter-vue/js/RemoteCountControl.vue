@@ -21,12 +21,10 @@
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    onIncrement: Function,
-    onDecrement: Function,
-    disabled: Boolean,
-  },
-};
+<script setup lang="ts">
+defineProps<{
+  onIncrement?: () => void;
+  onDecrement?: () => void;
+  disabled?: boolean;
+}>();
 </script>

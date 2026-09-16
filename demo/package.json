@@ -3,7 +3,7 @@
   "version": "0.2.2",
   "description": "",
   "private": true,
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "dev": "vp dev",
     "build": "vp build",
@@ -18,6 +18,11 @@
   "license": "MIT",
   "devDependencies": {
     "@babel/preset-env": "^7.16.11",
+    "@babel/preset-typescript": "^7.16.11",
+    "@types/lodash": "^4.17.25",
+    "@types/react": "catalog:",
+    "@types/react-dom": "^18.3.7",
+    "@types/three": "^0.139.0",
     "@vitejs/plugin-react": "catalog:",
     "@vitejs/plugin-vue": "catalog:",
     "chalk": "^4.1.2",
@@ -38,7 +43,6 @@
     "@webrtc-remote-control/react": "workspace:^",
     "@webrtc-remote-control/vue": "workspace:^",
     "lodash": "^4.17.21",
-    "prop-types": "^15.8.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "three": "^0.139.2",

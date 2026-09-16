@@ -1,0 +1,9 @@
+import "./errors-display";
+
+export interface ErrorsDisplayProps {
+  data?: string[] | null;
+}
+
+export default function ErrorsDisplay({ data }: ErrorsDisplayProps) {
+  return <errors-display data={JSON.stringify(data)}></errors-display>;
+}
