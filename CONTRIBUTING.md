@@ -7,6 +7,50 @@
 - Nodejs >=24 (see [.node-version](.node-version))
 - pnpm >=12 - `corepack enable pnpm` picks up the version pinned in `packageManager`
 
+Everything else this repository builds with comes down with `pnpm install` - see
+[The toolchain](#the-toolchain) below.
+
+## The toolchain
+
+Everything here - installs, the dev server, builds, tests, linting, formatting and the Git
+hooks - runs through [Vite+](https://viteplus.dev) and its `vp` binary. There is no ESLint,
+Prettier, Jest, Babel, microbundle, husky or lint-staged left in the repository, and no
+`.eslintrc`, `.prettierrc` or `vitest.config.ts` either: the `lint`, `fmt`, `staged` and `test`
+blocks all live in the root [`vite.config.ts`](vite.config.ts).
+
+**The `pnpm run` scripts need nothing installed globally.** `vite-plus` is an ordinary
+dependency, so `pnpm install` links `node_modules/.bin/vp` and every script resolves it from
+there. That is how Vercel and CI build the project, and it is enough for everything documented
+below. Each script is a thin wrapper, so `pnpm test` and `vp test run` are the same command.
+
+Typing `vp` directly is a convenience rather than a requirement. It needs `vp` on your PATH -
+either installed globally, or reached through `pnpm exec vp`. It is worth having for the
+subcommands no script wraps. Three of them have no obvious target at the workspace root:
+`vp dev`, `vp build` and `vp preview` fall back to `defaultPackage` in `vite.config.ts`, which
+points at the demo. To reach one of the libraries instead, pass its directory:
+
+```sh
+pnpm exec vp -C packages/core build
+```
+
+Vite+ is a 0.x release on a roughly fortnightly cadence, so `vite-plus` and the
+`voidzero-dev/setup-vp` action CI uses are pinned to exact versions rather than caret ranges.
+Dependabot bumps them.
+
+### Why TypeScript is pinned at 6.0.3
+
+One TypeScript for the whole repository, pinned exactly, at the root.
+
+`vp check` never calls `tsc` - it type checks through **tsgolint**, built on the TypeScript Go
+toolchain - so the installed `typescript` package is only read by two things: tsdown's
+declaration generation inside `vp pack`, and the editor's language service. That leaves
+`vue-tsc` as the binding constraint. It cannot run on TypeScript 7.0, which ships no stable
+programmatic API, and the seven single file components under `demo/counter-vue` are the one part
+of the repository `vp check` cannot read - so `pnpm run typecheck:vue` has to keep working.
+
+Revisit when TypeScript 7.1 restores the programmatic API and `vue-tsc` follows. At that point
+it is a one-line bump.
+
 ## Setup
 
 This project is organized as a monorepo, with [pnpm workspaces](https://pnpm.io/workspaces). The
@@ -29,7 +73,10 @@ megabytes and is not fetched by `pnpm install`, so skip it unless you intend to 
   - `pnpm run dev:peer-server`: same, using a local signaling server
 - `pnpm run preview`: launch the built version
   - `pnpm run preview:peer-server`: same using a local signaling server
-- `pnpm run lint`: runs linter
+- `pnpm run check`: Oxfmt, Oxlint and tsgolint in one pass - this is the command CI gates on, and `pnpm run check --fix` formats and fixes what it can
+- `pnpm run typecheck:vue`: `vue-tsc --noEmit` over the Vue demo, which tsgolint cannot read. It resolves the three packages through their built declarations, so run a build first
+- `pnpm run lint`: Oxlint on its own
+- `pnpm run format`: Oxfmt over the whole repository
 - `pnpm test`: runs unit tests (you can use some more specific scripts)
 - `pnpm run test:e2e:install`: downloads the Chromium build Playwright needs - run it once per clone
 - `pnpm run test:e2e`: runs the end-to-end tests. It builds the demo, starts a local signaling server and a preview server, runs all three demo modes, and shuts the servers down again - nothing needs to be running beforehand
@@ -54,6 +101,34 @@ Then on an other tab, set the env var `VITE_USE_LOCAL_PEER_SERVER=true`
 VITE_USE_LOCAL_PEER_SERVER=true pnpm run dev # also works with pnpm run build
 ```
 
+## Editor
+
+[`.vscode/extensions.json`](.vscode/extensions.json) recommends the three extensions this setup
+wants: the Vite+ extension pack, Volar for the Vue demo and Playwright's. The Oxc extension
+formats and lints from the same `fmt` and `lint` blocks `vp check` reads, so format-on-save and
+CI cannot disagree.
+
+[`.vscode/settings.json`](.vscode/settings.json) repeats `editor.defaultFormatter` per language
+on purpose. VS Code ranks a user-level `[language]` setting above a workspace-level one, so
+without those lines a contributor's global Prettier quietly takes over and every save fights the
+repository's formatting.
+
+One gap worth knowing about: Oxlint's `vue` plugin covers the script block of a single file
+component, not the template, and `eslint-plugin-vue`'s template rules have no equivalent. The
+seven components under `demo/counter-vue` are therefore only half linted. Their templates are
+still type checked, by `pnpm run typecheck:vue`.
+
+## Git hooks
+
+Hooks run through the Vite+ dispatcher rather than husky. Two of them are committed:
+[`.vite-hooks/pre-commit`](.vite-hooks/pre-commit) runs `vp staged`, which applies the `staged`
+block of the root `vite.config.ts`, and [`.vite-hooks/commit-msg`](.vite-hooks/commit-msg) runs
+commitlint. The generated dispatcher under `.vite-hooks/_` is gitignored and written by the
+`prepare` script on install, which is what `husky install` used to do.
+
+- `pnpm exec vp hooks status` tells you whether the hooks are actually wired up in your clone
+- `VP_GIT_HOOKS=0` skips them for a single command, the way `HUSKY=0` used to
+
 ## Adding dependencies
 
 Add dependencies to a specific workspace package with `pnpm --filter`, run from the repo root.
@@ -70,6 +145,11 @@ pnpm --filter @webrtc-remote-control/demo add react vue
 Dependencies between the packages of this repo use the `workspace:^` protocol, so they resolve to
 the local sources. `changeset publish` detects the workspace tool and delegates to `pnpm publish`,
 which rewrites `workspace:^` into a real range in the published tarball.
+
+Dependencies used by more than one workspace package go in the `catalog` block of
+[`pnpm-workspace.yaml`](pnpm-workspace.yaml), which keeps them pinned to one version in one
+place. Postinstall scripts are opt-in: a new dependency that needs to run one has to be listed
+under `allowBuilds` in the same file, which `pnpm approve-builds` writes for you.
 
 ## Releasing
 
