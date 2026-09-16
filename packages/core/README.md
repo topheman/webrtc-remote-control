@@ -24,7 +24,7 @@ Add the peerjs library as a script tag in your html page. You'll have access to 
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 ```
 
-Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-vanilla/master.html) source code: [master.js](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vanilla/js/master.js) / [remote.js](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vanilla/js/remote.js)
+Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-vanilla/master.html) source code: [master.ts](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vanilla/js/master.ts) / [remote.ts](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vanilla/js/remote.ts)
 
 ### master
 

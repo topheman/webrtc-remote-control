@@ -16,7 +16,7 @@ This application creates a real-time counter that can be controlled remotely:
    - Each button press instantly updates the counter on the master device
    - Connection status is clearly displayed
 
-The library does handle all the WebRTC communication automatically, making the counter update in real-time across devices. It also handles any reload of the page, and will reconnect to the same peer if the page is reloaded.
+The library handles the WebRTC communication, so the counter updates in real time across devices. It survives a page reload too: a peer that comes back reconnects under the same id rather than joining as a new one.
 
 ## Application Structure
 
@@ -45,7 +45,7 @@ For example:
 
 ## Getting Started
 
-The library does automatically handle WebRTC connections, but you should:
+The library handles the WebRTC connections. What is left to you:
 
 1. Wrap your application with `WebRTCRemoteControlProvider`
 2. Implement Master and Remote components
@@ -66,9 +66,19 @@ You should initialize the WebRTC context like this:
 >
 ```
 
+Three of those props carry more weight than they look:
+
+- `mode` decides which side of the connection this page is, and comes from the URL - see
+  [Mode Configuration](#mode-configuration) above.
+- `masterPeerId` is the id a remote dials. On the master it is `undefined`.
+- `sessionStorageKey` is what makes reconnection after a reload work. The peer id is stored
+  under it, so a reloaded page asks PeerJS for the same id instead of being handed a new one.
+  Give each mode of your app its own key, or two pages open side by side will fight over one
+  id. Session storage is per tab, which is why it is the right place for this.
+
 ### 2. Master Component Implementation
 
-The library does provide:
+The library provides:
 
 - WebRTC connection management
 - Peer discovery and connection
@@ -151,7 +161,7 @@ function Master() {
 
 ### 3. Remote Component Implementation
 
-The library does provide:
+The library provides:
 
 - WebRTC connection to master
 - Real-time data transmission
@@ -198,11 +208,11 @@ You should:
 
 ## Technical Requirements
 
-The library does:
+The library:
 
-- Handle WebRTC signaling through PeerJS
-- Manage real-time bidirectional communication
-- Maintain persistent connections
+- Handles WebRTC signaling through PeerJS
+- Manages real-time bidirectional communication
+- Maintains persistent connections
 - Handles connection errors
 - Handles reconnection scenarios
-- Provide React hooks for state management
+- Provides React hooks for state management

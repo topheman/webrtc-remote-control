@@ -18,6 +18,12 @@ export default function DirectLinkToSourceCode({
       <a href="https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-react/js/App.tsx">
         App.tsx
       </a>
+      <br />
+      Building this with an LLM?{" "}
+      <a href="https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-react/llm.md">
+        llm.md
+      </a>{" "}
+      writes down the behavioural contract the types cannot.
     </p>
   );
 }

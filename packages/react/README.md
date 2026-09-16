@@ -24,7 +24,15 @@ Add the peerjs library as a script tag in your html page. You'll have access to 
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 ```
 
-Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-react/index.html) source code: [App.jsx](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-react/js/App.jsx) / [Master.jsx](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-react/js/Master.jsx) / [Remote.jsx](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-react/js/Remote.jsx)
+Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-react/index.html) source code: [App.tsx](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-react/js/App.tsx) / [Master.tsx](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-react/js/Master.tsx) / [Remote.tsx](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-react/js/Remote.tsx)
+
+## Building with an LLM
+
+[`demo/counter-react/llm.md`](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-react/llm.md)
+is a guide written for coding assistants. It states the parts of the contract the types cannot:
+that the mode comes from the URL hash, what `sessionStorageKey` buys you on reload, and which
+responsibilities sit with this package rather than with your application. Paste it into your
+assistant's context, or point the assistant at the URL.
 
 ## TypeScript
 
