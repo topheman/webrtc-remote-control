@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- Nodejs >=24 (see [.nvmrc](.nvmrc))
+- Nodejs >=24 (see [.node-version](.node-version))
 - pnpm >=12 - `corepack enable pnpm` picks up the version pinned in `packageManager`
 
 ## Setup
@@ -14,7 +14,12 @@ following installs dependencies for every workspace package and links them toget
 
 ```sh
 pnpm install
+pnpm run test:e2e:install # optional (if you want to run e2e test in local)
 ```
+
+The second command downloads the Chromium build Playwright drives. It is a few hundred
+megabytes and is not fetched by `pnpm install`, so skip it unless you intend to run
+`pnpm run test:e2e`.
 
 ## Commonly used scripts
 
@@ -26,10 +31,12 @@ pnpm install
   - `pnpm run preview:peer-server`: same using a local signaling server
 - `pnpm run lint`: runs linter
 - `pnpm test`: runs unit tests (you can use some more specific scripts)
-- `pnpm run test:e2e`: run end-to-end test (you need to have your preview or dev server started)
-  - `pnpm run test:e2e:watch`: same in watch mode
-- `pnpm run test:e2e:start-server-and-test`: launches preview server and runs e2e tests (you need to have built the project before)
-  - `pnpm run test:e2e:start-server-and-test:peer-server`: same using a local signaling server
+- `pnpm run test:e2e:install`: downloads the Chromium build Playwright needs - run it once per clone
+- `pnpm run test:e2e`: runs the end-to-end tests. It builds the demo, starts a local signaling server and a preview server, runs all three demo modes, and shuts the servers down again - nothing needs to be running beforehand
+  - `pnpm run test:e2e --project=vue`: one demo mode only (`vanilla`, `react` or `vue`). Do not write `-- --project=vue`: pnpm passes everything after the script name through verbatim, so the `--` reaches Playwright as a literal argument and the whole suite runs
+  - `pnpm run test:e2e:ui`: Playwright's UI mode, for stepping through a scenario
+  - `pnpm run test:e2e:headed`: the same run with a visible browser
+  - `pnpm run test:e2e:report`: opens the HTML report of the last run
 
 ## Using the local peer server
 
@@ -132,11 +139,14 @@ The public https temporary address will be outputted on your terminal (keep in m
 
 In the [demo](demo#readme), you'll find a version of the counter app for each implementation of webrtc-remote-control (vanilla, react, vue). The UI relies on the same web-components.
 
-The exact same [test suite](demo/__integration__/) runs on each counter app. If you want to contribute and add support for your framework of choice:
+The exact same [test suite](demo/e2e/) runs on each counter app - it is a [Playwright](https://playwright.dev/) suite, with one project per mode. If you want to contribute and add support for your framework of choice:
 
 - add the implementation of webrtc-remote-control for your framework
 - make a counter app (using the existing web-components)
+- add a project for it in [`demo/playwright.config.ts`](demo/playwright.config.ts) and an entry in `MASTER_PAGES` in [`demo/e2e/fixtures.ts`](demo/e2e/fixtures.ts)
 - ensure the tests pass
+
+The suite always signals through a local peer server, which `pnpm run test:e2e` starts for you. It has no fixed waits and no retries: every assertion polls until the peers have actually connected, so a scenario takes as long as the connection takes. If a test only passes on a second run, treat that as a bug worth chasing rather than flakiness worth retrying.
 
 ## PeerJS
 

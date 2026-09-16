@@ -1,3 +1,7 @@
 {
-  "recommendations": ["VoidZero.vite-plus-extension-pack", "Vue.volar"]
+  "recommendations": [
+    "VoidZero.vite-plus-extension-pack",
+    "Vue.volar",
+    "ms-playwright.playwright"
+  ]
 }

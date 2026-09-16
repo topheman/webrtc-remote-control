@@ -17,13 +17,3 @@ export function disableConsole(
     });
   };
 }
-
-export function getE2eTestServerAddress(): string {
-  return `http://localhost:${process.env.PORT || 3000}`;
-}
-
-export function sleep(ms = 0): Promise<void> {
-  return new Promise((res) => {
-    setTimeout(res, ms);
-  });
-}

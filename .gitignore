@@ -16,6 +16,12 @@ node_modules
 build
 dist
 
+# Playwright's run artefacts: the HTML report, and the traces and videos it
+# keeps for failures.
+playwright-report
+test-results
+blob-report
+
 # misc
 .DS_Store
 *.pem

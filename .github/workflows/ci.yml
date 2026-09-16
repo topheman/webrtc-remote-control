@@ -50,7 +50,26 @@ jobs:
       - name: Unit tests
         run: pnpm run test
 
+      # Playwright's browsers are not fetched by `pnpm install` - the postinstall
+      # hook is not in `allowBuilds` - so they are downloaded here, explicitly.
+      # `--with-deps` also installs the shared libraries Chromium needs on a
+      # bare ubuntu runner.
+      - name: Install Playwright's Chromium 🎭
+        run: pnpm run test:e2e:install --with-deps
+
       - name: End2end tests
-        # run: JEST_TIMEOUT=30000 pnpm run test:e2e:start-server-and-test
-        # Public peer server is down for the moment -> we use a local signaling server
-        run: JEST_TIMEOUT=30000 pnpm run test:e2e:start-server-and-test:peer-server
+        # `pnpm run test:e2e` builds the demo against the local signaling server
+        # and starts both that server and the preview server itself, so there is
+        # no start-server-and-test wrapper and no timeout to tune here any more.
+        run: pnpm run test:e2e
+
+      - name: Upload Playwright report 📤
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            demo/playwright-report
+            demo/test-results
+          retention-days: 7
+          if-no-files-found: ignore
