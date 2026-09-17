@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.2.0
+## 0.2.1
 
 ### Minor Changes
 
@@ -76,6 +76,10 @@
 
 ### Patch Changes
 
+- [`3c18036`](https://github.com/topheman/webrtc-remote-control/commit/3c180361ba110decee8ac0a20d9bc4f20aeefb91) Thanks [@topheman](https://github.com/topheman)! - Fix the release pipeline so published tarballs no longer carry literal pnpm protocol strings.
+
+  `0.2.0` shipped with `"@webrtc-remote-control/core": "workspace:^"` literally in `dependencies`, because the release script shelled out to `npm publish` on the raw package directory instead of `pnpm publish`, and npm's publish path never rewrites pnpm's `workspace:` protocol into a real version range. No registry resolves `workspace:^`, so `npm install @webrtc-remote-control/react@0.2.0` failed outright for every consumer. `pnpm publish` performs that rewrite natively, so this release restores it.
+
 - [#36](https://github.com/topheman/webrtc-remote-control/pull/36) [`82f8d1c`](https://github.com/topheman/webrtc-remote-control/commit/82f8d1cce5a3e2ea382d3acbfc72c20e13f5afa6) Thanks [@topheman](https://github.com/topheman)! - Known issues carried over on purpose, to be fixed in 0.3.0.
   
   This release is the TypeScript port and the toolchain move, and it was held to a
@@ -132,8 +136,19 @@
   is a release-tooling fix with no runtime difference from 1.5.4, and the demo now
   loads that version, so the copy-pasteable snippet matches what the demo actually
   runs.
-- Updated dependencies [[`0d3bab0`](https://github.com/topheman/webrtc-remote-control/commit/0d3bab061fc1c1acdb04681ed1245579fa5a73f6), [`82f8d1c`](https://github.com/topheman/webrtc-remote-control/commit/82f8d1cce5a3e2ea382d3acbfc72c20e13f5afa6), [`d88d683`](https://github.com/topheman/webrtc-remote-control/commit/d88d683d93918963495c1e7177e2cb62203541e7), [`da0bfd7`](https://github.com/topheman/webrtc-remote-control/commit/da0bfd78d485a91ed4fd7f54f320b64edecf1e85), [`421fa5a`](https://github.com/topheman/webrtc-remote-control/commit/421fa5aea8c848148e32523a542bb0aa8d72aa62), [`d2f998b`](https://github.com/topheman/webrtc-remote-control/commit/d2f998b33fc9784e49972c284fb57a141f4600c1)]:
-  - @webrtc-remote-control/core@0.2.0
+- Updated dependencies [[`0d3bab0`](https://github.com/topheman/webrtc-remote-control/commit/0d3bab061fc1c1acdb04681ed1245579fa5a73f6), [`82f8d1c`](https://github.com/topheman/webrtc-remote-control/commit/82f8d1cce5a3e2ea382d3acbfc72c20e13f5afa6), [`d88d683`](https://github.com/topheman/webrtc-remote-control/commit/d88d683d93918963495c1e7177e2cb62203541e7), [`da0bfd7`](https://github.com/topheman/webrtc-remote-control/commit/da0bfd78d485a91ed4fd7f54f320b64edecf1e85), [`421fa5a`](https://github.com/topheman/webrtc-remote-control/commit/421fa5aea8c848148e32523a542bb0aa8d72aa62), [`d2f998b`](https://github.com/topheman/webrtc-remote-control/commit/d2f998b33fc9784e49972c284fb57a141f4600c1), [`3c18036`](https://github.com/topheman/webrtc-remote-control/commit/3c180361ba110decee8ac0a20d9bc4f20aeefb91)]:
+  - @webrtc-remote-control/core@0.2.1
+
+## 0.2.0
+
+Published with a broken release pipeline and removed from the registry. The
+release script shelled out to `npm publish` on the raw package directory
+instead of `pnpm publish`, which never rewrites pnpm's `workspace:` protocol -
+so this version shipped with `"@webrtc-remote-control/core": "workspace:^"`
+literally in `dependencies`. No registry resolves that, so
+`npm install @webrtc-remote-control/react@0.2.0` failed outright for every
+consumer. The real content of this release, and the pipeline fix, are in
+**0.2.1** above.
 
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
