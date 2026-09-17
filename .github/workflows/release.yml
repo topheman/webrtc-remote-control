@@ -29,7 +29,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout 🛎
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -56,7 +56,7 @@ jobs:
       pull-requests: write # to open the "Version Packages" pull request
     steps:
       - name: Checkout 🛎
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -89,7 +89,7 @@ jobs:
       id-token: write # to mint the OIDC token npm trusted publishing exchanges for credentials
     steps:
       - name: Checkout 🛎
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 

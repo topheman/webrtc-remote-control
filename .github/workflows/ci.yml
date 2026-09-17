@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Vite+ ⚡️
         # Replaces pnpm/action-setup and actions/setup-node. The vp version comes
