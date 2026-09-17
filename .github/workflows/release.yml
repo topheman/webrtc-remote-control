@@ -105,6 +105,9 @@ jobs:
         run: |
           echo "raw shell env: $( [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && echo present || echo missing )"
           which node pnpm npm
+          node --version
+          npm --version
+          pnpm --version
           node -e "console.log('direct node sees it:', !!process.env.ACTIONS_ID_TOKEN_REQUEST_URL)"
           pnpm exec node -e "console.log('node spawned via pnpm sees it:', !!process.env.ACTIONS_ID_TOKEN_REQUEST_URL)"
 
@@ -112,3 +115,5 @@ jobs:
         uses: changesets/action/publish@v2.1.2
         with:
           script: pnpm run release
+        env:
+          NPM_CONFIG_LOGLEVEL: silly
