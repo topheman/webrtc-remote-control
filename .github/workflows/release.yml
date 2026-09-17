@@ -101,6 +101,13 @@ jobs:
           run-install: |
             args: [--frozen-lockfile]
 
+      - name: Debug OIDC env 🔍
+        run: |
+          echo "raw shell env: $( [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && echo present || echo missing )"
+          which node pnpm npm
+          node -e "console.log('direct node sees it:', !!process.env.ACTIONS_ID_TOKEN_REQUEST_URL)"
+          pnpm exec node -e "console.log('node spawned via pnpm sees it:', !!process.env.ACTIONS_ID_TOKEN_REQUEST_URL)"
+
       - name: Publish to npm 🚀
         uses: changesets/action/publish@v2.1.2
         with:
