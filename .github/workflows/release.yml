@@ -102,16 +102,6 @@ jobs:
           run-install: |
             args: [--frozen-lockfile]
 
-      - name: Debug OIDC token claims 🔍
-        run: |
-          RESP=$(curl -sf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=npm:registry.npmjs.org")
-          node -e '
-            const { value: token } = JSON.parse(process.argv[1]);
-            const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
-            const keys = ["repository","repository_owner","workflow_ref","job_workflow_ref","environment","ref","ref_type","sub","event_name","actor","repository_visibility"];
-            for (const k of keys) console.log(k + ":", payload[k]);
-          ' "$RESP"
-
       - name: Publish to npm 🚀
         uses: changesets/action/publish@v2.1.2
         with:
