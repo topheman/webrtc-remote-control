@@ -84,6 +84,7 @@ jobs:
     if: needs.select-mode.outputs.mode == 'publish'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    environment: Production
     permissions:
       contents: write # to push git tags and create GitHub releases
       id-token: write # to mint the OIDC token npm trusted publishing exchanges for credentials
