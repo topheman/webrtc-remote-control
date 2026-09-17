@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.2.1
+
+### Patch Changes
+
+- [`3c18036`](https://github.com/topheman/webrtc-remote-control/commit/3c180361ba110decee8ac0a20d9bc4f20aeefb91) Thanks [@topheman](https://github.com/topheman)! - Fix the release pipeline so published tarballs no longer carry literal pnpm protocol strings.
+  
+  `0.2.0` shipped with `vite` and `vite-plus` still pinned to `catalog:` in `devDependencies`, because the release script shelled out to `npm publish` on the raw package directory instead of `pnpm publish`, and npm's publish path never rewrites pnpm's `workspace:`/`catalog:` protocols. This is cosmetic for `@webrtc-remote-control/core` - `devDependencies` are never installed by a consumer - but it is wrong metadata on the published package. `pnpm publish` performs that rewrite natively, so this release restores it.
+
 ## 0.2.0
 
 ### Minor Changes
