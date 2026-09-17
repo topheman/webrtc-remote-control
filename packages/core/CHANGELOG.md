@@ -2,14 +2,6 @@
 
 ## 0.2.1
 
-### Patch Changes
-
-- [`3c18036`](https://github.com/topheman/webrtc-remote-control/commit/3c180361ba110decee8ac0a20d9bc4f20aeefb91) Thanks [@topheman](https://github.com/topheman)! - Fix the release pipeline so published tarballs no longer carry literal pnpm protocol strings.
-  
-  `0.2.0` shipped with `vite` and `vite-plus` still pinned to `catalog:` in `devDependencies`, because the release script shelled out to `npm publish` on the raw package directory instead of `pnpm publish`, and npm's publish path never rewrites pnpm's `workspace:`/`catalog:` protocols. This is cosmetic for `@webrtc-remote-control/core` - `devDependencies` are never installed by a consumer - but it is wrong metadata on the published package. `pnpm publish` performs that rewrite natively, so this release restores it.
-
-## 0.2.0
-
 ### Minor Changes
 
 - [#27](https://github.com/topheman/webrtc-remote-control/pull/27) [`0d3bab0`](https://github.com/topheman/webrtc-remote-control/commit/0d3bab061fc1c1acdb04681ed1245579fa5a73f6) Thanks [@topheman](https://github.com/topheman)! - Replace microbundle with `vp pack` (tsdown) and ship ES modules only.
@@ -97,6 +89,10 @@
 
 ### Patch Changes
 
+- [`3c18036`](https://github.com/topheman/webrtc-remote-control/commit/3c180361ba110decee8ac0a20d9bc4f20aeefb91) Thanks [@topheman](https://github.com/topheman)! - Fix the release pipeline so published tarballs no longer carry literal pnpm protocol strings.
+
+  `0.2.0` shipped with `vite` and `vite-plus` still pinned to `catalog:` in `devDependencies`, because the release script shelled out to `npm publish` on the raw package directory instead of `pnpm publish`, and npm's publish path never rewrites pnpm's `workspace:`/`catalog:` protocols. This is cosmetic for `@webrtc-remote-control/core` - `devDependencies` are never installed by a consumer - but it is wrong metadata on the published package. `pnpm publish` performs that rewrite natively, so this release restores it.
+
 - [#36](https://github.com/topheman/webrtc-remote-control/pull/36) [`82f8d1c`](https://github.com/topheman/webrtc-remote-control/commit/82f8d1cce5a3e2ea382d3acbfc72c20e13f5afa6) Thanks [@topheman](https://github.com/topheman)! - Known issues carried over on purpose, to be fixed in 0.3.0.
   
   This release is the TypeScript port and the toolchain move, and it was held to a
@@ -163,6 +159,17 @@
   is a release-tooling fix with no runtime difference from 1.5.4, and the demo now
   loads that version, so the copy-pasteable snippet matches what the demo actually
   runs.
+
+## 0.2.0
+
+Published with a broken release pipeline and removed from the registry. The
+release script shelled out to `npm publish` on the raw package directory
+instead of `pnpm publish`, which never rewrites pnpm's `workspace:`/`catalog:`
+protocols - so this version shipped with `vite` and `vite-plus` pinned to the
+literal string `catalog:` in `devDependencies`. Cosmetic only, since
+`devDependencies` are never installed by a consumer, but it was wrong metadata
+on a published package. The real content of this release, and the pipeline
+fix, are in **0.2.1** above.
 
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
