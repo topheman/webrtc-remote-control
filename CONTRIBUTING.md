@@ -205,15 +205,22 @@ WebRTC (and other APIs like the accelerometer) only work on secure origins (loca
 
 However, if you try to access the app from your local ip (like 192.168.1.1) from your laptop or your mobile, it won't work, since the domain will be recognized as unsecure.
 
-So to test on multiple devices, you'll need to tunnel the app with a utility like [localhost.run](https://localhost.run/) that will open an ssh tunnel and forward traffic on https.
+So to test on multiple devices, you'll need an https tunnel: a utility that exposes your local dev server on a public address and forwards traffic to it over https.
 
-Some tasks are available:
+The repo provides no task for this - starting the tunnel is up to you, because the right choice depends on what you already have installed and whether you want an account. Any of these work:
 
-- `pnpm run dev:forward`: same as `pnpm run dev` with forwarding
-- `pnpm run preview:forward`: same as `pnpm run preview` with forwarding (you have to build before)
-- `pnpm run demo:forward`: will forward `localhost:3000`
+- [ngrok](https://ngrok.com/) - needs a free account and an auth token, once
+- [`cloudflared tunnel --url`](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/) - no account
+- [`tailscale funnel`](https://tailscale.com/kb/1223/funnel) - if you already run Tailscale
 
-The public https temporary address will be outputted on your terminal (keep in mind you won't access your website through your local network but through the internet, which can take longer - use that only to test WebRTC on mobile devices).
+Start the app on port 3000 first, then point the tunnel at it. With ngrok:
+
+```bash
+pnpm run dev       # or: pnpm run build && pnpm run preview
+ngrok http 3000    # in a second terminal
+```
+
+The public https address is printed in your terminal. Keep in mind you won't reach your app over your local network but through the internet, which can take longer - use it only to test WebRTC on mobile devices.
 
 ## e2e tests
 
