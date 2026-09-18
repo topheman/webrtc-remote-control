@@ -26,6 +26,9 @@ describe("remote", () => {
   afterEach(() => {
     restoreConsole();
     sessionStorage.clear();
+    // Only the reconnection tests install fake timers, but leaving them on
+    // would silently freeze every test that runs after one of them.
+    vi.useRealTimers();
   });
 
   interface MakeWrcRemoteOptions {
@@ -206,6 +209,97 @@ describe("remote", () => {
         ["remote.disconnect", { id: "remote-peer-id" }],
         ["remote.reconnect", { id: "remote-peer-id" }],
       ]);
+    });
+
+    it("should keep retrying while the master stays unreachable, waiting longer each time", async () => {
+      // The production failure this pins: reload the master and its peer id is
+      // unregistered for a moment. The remote's reconnection attempt lands in
+      // that window, and peerjs answers `peer-unavailable` on the *peer* - the
+      // connection it handed back never opens and never closes, so a retry
+      // loop driven by "close" alone stops here and the remote stays dead until
+      // the user reloads it. Attempts are therefore abandoned on a deadline.
+      vi.useFakeTimers();
+      const { peer, wrc } = await connect();
+      const onReconnect = vi.fn<(payload: { id: string }) => void>();
+      wrc.on("remote.reconnect", onReconnect);
+
+      peer.lastConnection().emitClose();
+
+      // The first retry is immediate, which is what it has always been.
+      expect(peer.connect).toHaveBeenCalledTimes(2);
+
+      // None of these attempts open. Each is dropped once its deadline passes
+      // and the next one waits twice as long: 1s, 2s, 4s, then the 8s cap.
+      await vi.advanceTimersByTimeAsync(999);
+      expect(peer.connect).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(peer.connect).toHaveBeenCalledTimes(3);
+
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(peer.connect).toHaveBeenCalledTimes(4);
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(peer.connect).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(8000);
+      expect(peer.connect).toHaveBeenCalledTimes(6);
+      await vi.advanceTimersByTimeAsync(8000);
+      expect(peer.connect).toHaveBeenCalledTimes(7);
+
+      // The whole outage is one disconnection, not one per attempt.
+      expect(onReconnect).not.toHaveBeenCalled();
+
+      // The master comes back and the attempt in flight opens.
+      peer.lastConnection().emitOpen();
+      expect(onReconnect).toHaveBeenCalledTimes(1);
+
+      // Once connected, the loop is idle: no attempt is abandoned under it.
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(peer.connect).toHaveBeenCalledTimes(7);
+    });
+
+    it("should emit `remote.disconnect` once for an outage, not once per attempt", async () => {
+      vi.useFakeTimers();
+      const { peer, wrc } = await connect();
+      const onDisconnect = vi.fn<(payload: { id: string }) => void>();
+      wrc.on("remote.disconnect", onDisconnect);
+
+      peer.lastConnection().emitClose();
+      await vi.advanceTimersByTimeAsync(30000);
+
+      expect(peer.connect.mock.calls.length).toBeGreaterThan(2);
+      expect(onDisconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it("should start the backoff from the beginning at each new outage", async () => {
+      vi.useFakeTimers();
+      const { peer } = await connect();
+
+      peer.lastConnection().emitClose();
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(peer.connect).toHaveBeenCalledTimes(3);
+      peer.lastConnection().emitOpen();
+
+      // A later outage waits 1s again rather than resuming at the 2s step.
+      peer.lastConnection().emitClose();
+      expect(peer.connect).toHaveBeenCalledTimes(4);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(peer.connect).toHaveBeenCalledTimes(5);
+    });
+
+    it("should send through the connection that finally opened", async () => {
+      vi.useFakeTimers();
+      const { peer, wrc } = await connect();
+
+      peer.lastConnection().emitClose();
+      await vi.advanceTimersByTimeAsync(3000);
+      const opened = peer.lastConnection();
+      opened.emitOpen();
+
+      wrc.send({ type: "MOVE" });
+
+      expect(opened.send).toHaveBeenCalledWith({ type: "MOVE" });
+      peer.connections
+        .filter((conn) => conn !== opened)
+        .forEach((conn) => expect(conn.send).not.toHaveBeenCalled());
     });
 
     it("should keep reconnecting on every subsequent close", async () => {

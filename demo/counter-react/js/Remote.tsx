@@ -26,6 +26,11 @@ export default function Remote() {
   };
   const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
     logger.log({ event: "remote.reconnect", payload });
+    // `onPeerError` nulled `peerId` and put an error on screen, which disables
+    // every control. Reconnecting has to undo both, or a remote that came back
+    // is indistinguishable from one that never did.
+    setPeerId(payload.id);
+    setErrors(null);
     if (name) {
       api!.send({ type: "REMOTE_SET_NAME", name });
     }

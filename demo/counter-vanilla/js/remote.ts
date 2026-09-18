@@ -75,6 +75,12 @@ async function init() {
   });
   wrcRemote.on("remote.reconnect", (payload) => {
     logger.log({ event: "remote.reconnect", payload });
+    // The `peer-unavailable` that a reconnection attempt loses its race to left
+    // the controls disabled and the error on screen. Now that the retry loop
+    // gets far enough to come back, that state has to be cleared - otherwise a
+    // reconnected remote looks exactly like a dead one.
+    setConnected(true);
+    setErrors([]);
     if (initialName) {
       wrcRemote.send({ type: "REMOTE_SET_NAME", name: initialName });
     }

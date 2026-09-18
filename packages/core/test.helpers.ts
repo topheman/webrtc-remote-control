@@ -31,6 +31,7 @@ export function disableConsole(
  */
 export type FakeConnection = DataConnection & {
   send: Mock;
+  close: Mock;
   disconnect: Mock;
   emitOpen: () => boolean;
   emitData: (data: unknown) => boolean;
@@ -82,6 +83,13 @@ export function makeFakeConnection(
     on: ee.on.bind(ee),
     off: ee.off.bind(ee),
     send: vi.fn<DataConnection["send"]>(),
+    // Real peerjs emits "close" from `close()`, and the reconnection backoff
+    // relies on that: an attempt that never opened is abandoned by closing it,
+    // and the resulting event has to be ignored rather than treated as a fresh
+    // disconnection.
+    close: vi.fn<DataConnection["close"]>(() => {
+      ee.emit("close");
+    }),
     // peerjs's `DataConnection` has no `disconnect`; the fake keeps one because
     // the library's `beforeunload` handler still looks for it. See the note on
     // that handler in src/remote.ts.

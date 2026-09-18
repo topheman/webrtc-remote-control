@@ -125,6 +125,35 @@ export async function expectRemoteCounters(
 }
 
 /**
+ * The same assertion, without depending on the order the master lists remotes
+ * in. After the master reloads, its remotes rejoin in whatever order they win
+ * the race in, so only an unordered comparison is stable there.
+ */
+export async function expectRemoteCountersUnordered(
+  masterPage: Page,
+  remotes: RemotePeer[],
+  counters: number[],
+): Promise<void> {
+  const byPeerId = (a: { peerId: string }, b: { peerId: string }) =>
+    a.peerId.localeCompare(b.peerId);
+  const expected = remotes
+    .slice(0, counters.length)
+    .map((remote, index) => ({
+      counter: counters[index],
+      peerId: remote.peerId,
+    }))
+    .sort(byPeerId);
+  await expect
+    .poll(async () => {
+      const actual = await readRemotesList(masterPage);
+      return Array.isArray(actual)
+        ? [...(actual as { peerId: string }[])].sort(byPeerId)
+        : actual;
+    })
+    .toEqual(expected);
+}
+
+/**
  * Every peer is its own tab of one browser context, which is how the Jest suite
  * ran too: Chromium keeps sessionStorage per tab, so each peer gets its own
  * stored id even though they share a context.
