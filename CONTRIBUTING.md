@@ -188,7 +188,11 @@ add a GitHub Actions publisher with:
 | Organization/user | `topheman`              |
 | Repository        | `webrtc-remote-control` |
 | Workflow filename | `release.yml`           |
-| Environment       | leave empty             |
+| Environment       | `Production`            |
+
+The publish job declares `environment: Production`, so the OIDC token it mints carries that
+environment in its claims. npm checks the claim against the trusted publisher, so the field has to
+match exactly - leaving it empty makes npm reject a token that names an environment.
 
 Until that is configured, the publish job will fail to authenticate. Versioning and the release pull
 request work regardless.
