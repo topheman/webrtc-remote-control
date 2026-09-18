@@ -3,6 +3,7 @@ import {
   expectLatestEvents,
   expectLatestEventsUnordered,
   expectRemoteCounters,
+  expectRemoteCountersUnordered,
   test,
   waitForPeerId,
 } from "./fixtures";
@@ -100,4 +101,28 @@ test("reconnects peers after a reload", async ({ demo }) => {
       { event: "remote.disconnect", payload: { id: remote.peerId } },
     ]);
   }
+
+  // `remote.reconnect` firing is not the same thing as a usable remote: the
+  // error a lost reconnection race puts on screen disables every control, so a
+  // remote can come back on the wire and still be dead to the person holding
+  // it. Driving the counter is what tells the two apart.
+  //
+  // Be honest about the reach of this, though. It does not gate that fix, and
+  // it passes with the fix reverted - Chromium here wins the race the retry
+  // used to lose, so `peer-unavailable` never fires and the control-disabling
+  // state is never entered. Same blind spot as the reconnection scenario
+  // itself. What it does guard is the cheaper direction: that a reconnected
+  // remote still reaches the master at all.
+  const [first, second, third] = demo.remotes;
+  if (!first || !second || !third) {
+    throw new Error("the background did not connect three remotes");
+  }
+  await click(first, "increment", 1);
+  await click(third, "decrement", 1);
+
+  await expectRemoteCountersUnordered(
+    demo.masterPage,
+    demo.remotes,
+    [1, 0, -1],
+  );
 });
