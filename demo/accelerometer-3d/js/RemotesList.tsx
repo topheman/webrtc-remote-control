@@ -13,7 +13,7 @@ export default function RemotesList({ list }: RemotesListProps) {
   if (list && list.length) {
     return (
       <ul>
-        {list.map(({ peerId, alpha, beta, gamma, scale }) => (
+        {list.map(({ peerId, alpha, beta, gamma, scale, color }) => (
           <li key={peerId}>
             <span>{peerId}</span>
             <div style={{ display: "flex" }}>
@@ -24,6 +24,7 @@ export default function RemotesList({ list }: RemotesListProps) {
                   height={150}
                   peerId={peerId}
                   scale={scale}
+                  color={color}
                 />
               </Suspense>
               <ul>

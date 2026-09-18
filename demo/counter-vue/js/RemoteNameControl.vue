@@ -5,12 +5,7 @@
     @submit="
       (e) => {
         e.preventDefault();
-        // `e.target` is the form, and the input carries no `name` attribute, so
-        // `e.target.name` has always been undefined and this argument has always
-        // been `undefined`. `onConfirmName` ignores its argument and reads the
-        // name off the store, so nothing is lost - preserved as it behaved, the
-        // fix belongs in its own pull request.
-        onConfirmName?.(undefined);
+        onConfirmName?.();
       }
     "
     :disabled="disabled"
@@ -31,7 +26,7 @@
 <script setup lang="ts">
 defineProps<{
   onChangeName?: (value: string) => void;
-  onConfirmName?: (value?: string) => void;
+  onConfirmName?: () => void;
   name?: string;
   disabled?: boolean;
 }>();
