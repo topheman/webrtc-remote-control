@@ -31,6 +31,26 @@ export interface PrepareRemoteUtils {
   setPeerIdToSessionStorage: SetPeerIdToSessionStorageType;
 }
 
+/**
+ * How long an attempt that has not opened is given before it is abandoned and
+ * retried, doubling each time up to the cap.
+ *
+ * The first retry after a close stays immediate - that is what it has always
+ * been, and it is the one that succeeds whenever the master is still there.
+ * The schedule only governs what happens when that attempt lands while the
+ * master is unreachable, which is the case that used to leave a remote dead
+ * until the user reloaded it.
+ */
+const RECONNECT_FIRST_DELAY_MS = 1000;
+const RECONNECT_MAX_DELAY_MS = 8000;
+
+function reconnectDelay(attempt: number): number {
+  return Math.min(
+    RECONNECT_FIRST_DELAY_MS * 2 ** attempt,
+    RECONNECT_MAX_DELAY_MS,
+  );
+}
+
 function makePeerConnection(
   peer: Peer,
   masterPeerId: string,
@@ -83,17 +103,70 @@ export default function prepare({
           on: ee.on.bind(ee),
           off: ee.off.bind(ee),
         };
+        let retryTimer: ReturnType<typeof setTimeout> | null = null;
+        let attempt = 0;
+        // Bumped whenever an attempt is superseded. An abandoned attempt still
+        // holds listeners on a connection peerjs may yet fire "open" or
+        // "close" on, and neither must be mistaken for the current one.
+        let generation = 0;
+
+        const clearRetryTimer = () => {
+          if (retryTimer !== null) {
+            clearTimeout(retryTimer);
+            retryTimer = null;
+          }
+        };
+
         const createPeerConnectionWithReconnectOnClose = (
           onConnectionOpened?: () => void,
+          { retryUntilOpen = false } = {},
         ) => {
+          const myGeneration = (generation += 1);
+          const isCurrent = () => myGeneration === generation;
           conn = null;
-          conn = makePeerConnection(peer, masterPeerId, ee, onConnectionOpened);
-          conn.on("close", () => {
-            ee.emit("remote.disconnect", { id: peer.id });
-            createPeerConnectionWithReconnectOnClose(() => {
-              ee.emit("remote.reconnect", { id: peer.id });
-            });
+          const attemptConn = makePeerConnection(peer, masterPeerId, ee, () => {
+            if (!isCurrent()) {
+              return;
+            }
+            // Connected: the outage is over, so the loop stops and the next
+            // one starts from the first delay again.
+            clearRetryTimer();
+            attempt = 0;
+            if (typeof onConnectionOpened === "function") {
+              onConnectionOpened();
+            }
           });
+          conn = attemptConn;
+          attemptConn.on("close", () => {
+            if (!isCurrent()) {
+              return;
+            }
+            clearRetryTimer();
+            attempt = 0;
+            ee.emit("remote.disconnect", { id: peer.id });
+            reconnect();
+          });
+          if (retryUntilOpen) {
+            retryTimer = setTimeout(() => {
+              retryTimer = null;
+              // This attempt never opened. Retiring its generation first means
+              // the "close" that `close()` triggers is read as the abandonment
+              // it is, rather than as a fresh disconnection.
+              generation += 1;
+              attempt += 1;
+              attemptConn.close();
+              reconnect();
+            }, reconnectDelay(attempt));
+          }
+        };
+
+        const reconnect = () => {
+          createPeerConnectionWithReconnectOnClose(
+            () => {
+              ee.emit("remote.reconnect", { id: peer.id });
+            },
+            { retryUntilOpen: true },
+          );
         };
         peer.on("open", (peerId) => {
           setPeerIdToSessionStorage(peerId);
