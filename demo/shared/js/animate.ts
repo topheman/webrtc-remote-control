@@ -19,23 +19,28 @@ function sleep(ms = 0): Promise<void> {
 }
 
 // `elm` is whatever `document.querySelector` returned, null included. The
-// accelerometer demo's page has no `.framework-icon`, so `play()` throws there
-// the first time a remote calls it - preserved rather than guarded, because
-// swallowing it would hide a missing icon on the pages that do have one.
+// accelerometer demo's page has no `.framework-icon`, so `play()` is a no-op
+// there instead of animating a missing element.
 function makeAnimate(elm: Element | null, duration = 1500): PlayAnimation {
+  if (!elm) {
+    return async function play() {
+      return () => {};
+    };
+  }
+  const el = elm;
   let timerId: ReturnType<typeof setTimeout> | undefined;
   return async function play() {
     function rewind() {
       clearTimeout(timerId);
-      elm!.classList.remove("animate");
+      el.classList.remove("animate");
     }
     // begin by rewinding the transition (whether it's started or not)
-    if (elm!.classList.contains("animate")) {
+    if (el.classList.contains("animate")) {
       rewind();
       await sleep(1000);
     }
     // start the transition
-    elm!.classList.add("animate");
+    el.classList.add("animate");
     // rewind the transition after `duration` (rewindable meanwhile)
     timerId = setTimeout(() => {
       rewind();

@@ -1,6 +1,6 @@
 export interface RemoteNameControlProps {
   onChangeName: (name: string) => void;
-  onConfirmName: (name?: string) => void;
+  onConfirmName: () => void;
   name?: string;
   disabled?: boolean;
 }
@@ -17,12 +17,7 @@ export default function RemoteNameControl({
       action="."
       onSubmit={(e) => {
         e.preventDefault();
-        // The pre-TypeScript version passed `e.target.name.value` here. The
-        // input carries no `name` attribute, so `e.target.name` was the form's
-        // own `name` property - a string - and `.value` on it was `undefined`.
-        // The only caller ignores the argument and reads its own state, so
-        // this is spelled as what it always evaluated to.
-        onConfirmName(undefined);
+        onConfirmName();
       }}
       // `disabled` is not a valid attribute on `<form>`, but React renders it
       // and the pre-TypeScript component set it. Kept through a spread so the

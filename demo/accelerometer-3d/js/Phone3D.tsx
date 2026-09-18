@@ -25,6 +25,7 @@ export interface Phone3DProps {
   height?: number | string;
   rotation: Rotation;
   peerId?: string | null;
+  color?: string;
   colorHover?: string;
   scale?: number;
   onPointerEnter?: (event: ThreeEvent<PointerEvent>) => void;
@@ -40,6 +41,7 @@ export default function Phone3D({
   height = 150,
   rotation,
   peerId,
+  color,
   colorHover,
   scale,
   onPointerEnter,
@@ -69,7 +71,7 @@ export default function Phone3D({
         <Box
           position={[0, 0, 0]}
           rotation={[y, z, 0]}
-          color={hover ? colorHover : phoneColor}
+          color={hover ? colorHover : (color ?? phoneColor)}
           scale={scale}
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
