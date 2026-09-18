@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it } from "vite-plus/test";
+import { afterEach, describe, expect, expectTypeOf, it } from "vite-plus/test";
 import {
   makeStoreAccessor,
   makeConnectionFilterUtilities,
   makeHumanizeError,
+  makeReconnectNotice,
   prepareUtils,
 } from "./common.js";
 
@@ -135,17 +136,99 @@ describe("common", () => {
       expect(humanizeError({})).toBe("An error occured");
     });
   });
+  describe("makeReconnectNotice", () => {
+    const attempt = (nextDelayMs: number, n = 1) => ({
+      id: "remote-peer-id",
+      attempt: n,
+      nextDelayMs,
+    });
+
+    it("should hold a quiet notice while the delay is still growing", () => {
+      const reconnectNotice = makeReconnectNotice();
+
+      expect(reconnectNotice(attempt(1000))).toBe(
+        "Lost connection to the peer, reconnecting...",
+      );
+      expect(reconnectNotice(attempt(4000, 3))).toBe(
+        "Lost connection to the peer, reconnecting...",
+      );
+    });
+
+    it("should escalate once the delay reaches the ceiling", () => {
+      const reconnectNotice = makeReconnectNotice();
+
+      // The ceiling is the library's number, which is the whole point: a
+      // consumer picks the wording, never the threshold.
+      expect(reconnectNotice(attempt(8000, 4))).toContain("4 attempts");
+      expect(reconnectNotice(attempt(8000, 9))).toContain("try reloading");
+    });
+
+    it("should take an override as a value or as a function of the payload", () => {
+      const reconnectNotice = makeReconnectNotice({
+        reconnecting: "hold on",
+        stalled: ({ attempt: n }) => `gave up after ${n}`,
+      });
+
+      expect(reconnectNotice(attempt(2000))).toBe("hold on");
+      expect(reconnectNotice(attempt(8000, 6))).toBe("gave up after 6");
+    });
+
+    it("should keep core's wording for the side that was not overridden", () => {
+      const reconnectNotice = makeReconnectNotice({ stalled: "gone" });
+
+      expect(reconnectNotice(attempt(1000))).toBe(
+        "Lost connection to the peer, reconnecting...",
+      );
+      expect(reconnectNotice(attempt(8000, 4))).toBe("gone");
+    });
+
+    it("should infer a richer message type from the overrides", () => {
+      // Nothing here is a string, and no annotation or cast was needed at the
+      // call site - the type parameters come from the options.
+      const reconnectNotice = makeReconnectNotice({
+        reconnecting: { level: "info" as const, retrying: true },
+        stalled: ({ attempt: n }) => ({ level: "warn" as const, tries: n }),
+      });
+
+      expect(reconnectNotice(attempt(1000))).toEqual({
+        level: "info",
+        retrying: true,
+      });
+      expect(reconnectNotice(attempt(8000, 4))).toEqual({
+        level: "warn",
+        tries: 4,
+      });
+      expectTypeOf(reconnectNotice(attempt(1000))).toEqualTypeOf<
+        { level: "info"; retrying: boolean } | { level: "warn"; tries: number }
+      >();
+    });
+  });
+
   describe("prepareUtils", () => {
     afterEach(() => {
       sessionStorage.clear();
     });
-    it("should expose the four utilities the master and remote sides need", () => {
+    it("should expose the utilities the master and remote sides need", () => {
       expect(Object.keys(prepareUtils()).sort()).toEqual([
         "getPeerId",
         "humanizeError",
         "isConnectionFromRemote",
+        "reconnectNotice",
         "setPeerIdToSessionStorage",
       ]);
+    });
+    it("should wire reconnectNotice to the overrides it was given", () => {
+      const { reconnectNotice } = prepareUtils({
+        reconnectNotice: { reconnecting: "hold on" },
+      });
+
+      expect(reconnectNotice({ id: "a", attempt: 1, nextDelayMs: 1000 })).toBe(
+        "hold on",
+      );
+      // The stalled side was not overridden, so it still comes from core.
+      expect(
+        reconnectNotice({ id: "a", attempt: 4, nextDelayMs: 8000 }),
+      ).toContain("4 attempts");
     });
     it("should wire the store accessor to the default key", () => {
       const { getPeerId, setPeerIdToSessionStorage } = prepareUtils();

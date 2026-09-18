@@ -6,8 +6,9 @@ import * as core from "./index.js";
  * shape of the root entry point, which is what re-exports the other two.
  */
 describe("index", () => {
-  it("should expose master, remote and prepareUtils", () => {
+  it("should expose master, remote and the two factories", () => {
     expect(Object.keys(core).sort()).toEqual([
+      "makeReconnectNotice",
       "master",
       "prepareUtils",
       "remote",

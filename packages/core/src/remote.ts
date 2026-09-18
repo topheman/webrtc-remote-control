@@ -1,14 +1,15 @@
 import EventEmitter from "eventemitter3";
 import type { DataConnection, Peer } from "peerjs";
 
-import { makeConnectionFilterUtilities } from "./common.js";
+import { makeConnectionFilterUtilities, reconnectDelay } from "./common.js";
 import type {
   GetPeerIdType,
   HumanizeErrorType,
+  ReconnectingPayload,
   SetPeerIdToSessionStorageType,
 } from "./common.js";
 
-export { prepareUtils } from "./common.js";
+export { makeReconnectNotice, prepareUtils } from "./common.js";
 
 /**
  * The events a remote emits. See the note on `WrcMasterEvents`.
@@ -27,11 +28,7 @@ export interface WrcRemoteEvents {
    * an application can show a quiet notice at first and escalate to "try
    * reloading" once the delay has reached its ceiling.
    */
-  "remote.reconnecting": (payload: {
-    id: string;
-    attempt: number;
-    nextDelayMs: number;
-  }) => void;
+  "remote.reconnecting": (payload: ReconnectingPayload) => void;
   "remote.reconnect": (payload: { id: string }) => void;
   data: (payload: { from: "master" }, data: unknown) => void;
 }
@@ -46,26 +43,6 @@ export interface PrepareRemoteUtils {
   humanizeError: HumanizeErrorType;
   getPeerId: GetPeerIdType;
   setPeerIdToSessionStorage: SetPeerIdToSessionStorageType;
-}
-
-/**
- * How long an attempt that has not opened is given before it is abandoned and
- * retried, doubling each time up to the cap.
- *
- * The first retry after a close stays immediate - that is what it has always
- * been, and it is the one that succeeds whenever the master is still there.
- * The schedule only governs what happens when that attempt lands while the
- * master is unreachable, which is the case that used to leave a remote dead
- * until the user reloaded it.
- */
-const RECONNECT_FIRST_DELAY_MS = 1000;
-const RECONNECT_MAX_DELAY_MS = 8000;
-
-function reconnectDelay(attempt: number): number {
-  return Math.min(
-    RECONNECT_FIRST_DELAY_MS * 2 ** attempt,
-    RECONNECT_MAX_DELAY_MS,
-  );
 }
 
 function makePeerConnection(

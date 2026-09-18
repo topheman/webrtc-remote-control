@@ -9,7 +9,10 @@ import ConsoleDisplay from "../../shared/js/components/ConsoleDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import { useLogger, useSessionStorage } from "../../shared/js/react-common";
-import { reconnectNotice } from "../../shared/js/reconnect-notice";
+import { makeReconnectNotice } from "@webrtc-remote-control/core";
+
+// The wording is the consumer's, the threshold core's.
+const reconnectNotice = makeReconnectNotice();
 
 export default function Remote() {
   const { logs, logger } = useLogger();

@@ -5,7 +5,6 @@ import { getPeerjsConfig } from "../../shared/js/common-peerjs";
 import { makeLogger } from "../../shared/js/common";
 import "../../shared/js/animate"; // todo
 import { render } from "./remote.view";
-import { reconnectNotice } from "../../shared/js/reconnect-notice";
 
 declare global {
   interface Window {
@@ -25,11 +24,11 @@ export function setRemoteNameToSessionStorage(remoteName: string): void {
 }
 
 async function init() {
-  const { bindConnection, getPeerId, humanizeError } = prepare(
-    prepareUtils({
-      sessionStorageKey: "webrtc-remote-control-peer-id-vanilla",
-    }),
-  );
+  const utils = prepareUtils({
+    sessionStorageKey: "webrtc-remote-control-peer-id-vanilla",
+  });
+  const { reconnectNotice } = utils;
+  const { bindConnection, getPeerId, humanizeError } = prepare(utils);
 
   const initialName = getRemoteNameFromSessionStorage();
   const { showLoader, setConnected, setEvents, setConsoleDisplay, setErrors } =
