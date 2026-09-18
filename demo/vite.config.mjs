@@ -29,6 +29,9 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: process.env.PORT || 3000,
+    // Allow ngrok's free-tier tunnels (random subdomain each run) without
+    // disabling Vite's DNS-rebinding host check entirely.
+    allowedHosts: [".ngrok-free.app"],
   },
   preview: {
     port: process.env.PORT || 3000,
