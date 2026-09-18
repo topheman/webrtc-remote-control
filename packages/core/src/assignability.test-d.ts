@@ -85,9 +85,15 @@ expectTypeOf<
 expectTypeOf<CurrentMasterApi["on"]>()
   .parameter(0)
   .toEqualTypeOf<"remote.connect" | "remote.disconnect" | "data">();
+// `remote.reconnecting` is new in 0.3.0 and deliberately widens this set. The
+// legacy declaration typed `on` as eventemitter3's untyped signature, so it
+// accepted any event name and nothing narrows here - adding one is additive for
+// consumers, who cannot have been subscribing to a name that did not exist.
 expectTypeOf<CurrentRemoteApi["on"]>()
   .parameter(0)
-  .toEqualTypeOf<"remote.disconnect" | "remote.reconnect" | "data">();
+  .toEqualTypeOf<
+    "remote.disconnect" | "remote.reconnecting" | "remote.reconnect" | "data"
+  >();
 
 /**
  * 4. The root export declared everything in `common`, because `index.d.ts` did
@@ -95,6 +101,10 @@ expectTypeOf<CurrentRemoteApi["on"]>()
  *    `prepareUtils`. The declarations followed the file rather than the module,
  *    and the generated ones now follow the module.
  */
+// `makeReconnectNotice` is new in 0.3.0 and deliberately widens this set. The
+// point of the assertion is that the root export follows the *module* rather
+// than the file - a runtime export added on purpose is the case it is meant to
+// allow, as opposed to `export *` quietly dragging the whole of `common` back in.
 expectTypeOf<keyof typeof import("./index.js")>().toEqualTypeOf<
-  "master" | "remote" | "prepareUtils"
+  "master" | "remote" | "prepareUtils" | "makeReconnectNotice"
 >();

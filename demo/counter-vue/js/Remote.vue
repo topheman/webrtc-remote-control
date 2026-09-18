@@ -28,6 +28,7 @@ import { usePeer } from "@webrtc-remote-control/vue";
 import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
 import "../../shared/js/components/errors-display";
+import { makeReconnectNotice } from "@webrtc-remote-control/core";
 import "../../shared/js/components/console-display";
 
 import RemoteCountControl from "./RemoteCountControl.vue";
@@ -48,8 +49,19 @@ const { ready, api, peer, peerReady, humanizeError } = usePeer<"remote">();
 const onRemoteDisconnect: WrcRemoteEvents["remote.disconnect"] = (payload) => {
   logger.log({ event: "remote.disconnect", payload });
 };
+// The wording is the consumer's, the threshold core's.
+const reconnectNotice = makeReconnectNotice();
+const reconnecting = ref(false);
+const onRemoteReconnecting: WrcRemoteEvents["remote.reconnecting"] = (
+  payload,
+) => {
+  logger.log({ event: "remote.reconnecting", payload });
+  reconnecting.value = true;
+  errors.value = [reconnectNotice(payload)];
+};
 const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
   logger.log({ event: "remote.reconnect", payload });
+  reconnecting.value = false;
   // `onPeerError` nulled `peerId` and put an error on screen, which disables
   // every control. Reconnecting has to undo both, or a remote that came back
   // is indistinguishable from one that never did.
@@ -62,6 +74,16 @@ const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
 const onPeerError = (error: Error) => {
   peerId.value = null;
   logger.error({ event: "error", error });
+  // While the retry loop is running, a `peer-unavailable` is just the attempt
+  // that lost its race to the master re-registering. The reconnection notice
+  // already says so, and `humanizeError` would talk over it with advice to
+  // reload - the one thing the user does not need to do.
+  if (
+    reconnecting.value &&
+    (error as { type?: string }).type === "peer-unavailable"
+  ) {
+    return;
+  }
   errors.value = [humanizeError.value(error)];
 };
 const onData: WrcRemoteEvents["data"] = (_, data) => {
@@ -98,6 +120,7 @@ watch([ready], ([currentReady], [prevReady], onCleanup) => {
       payload: { id: peer.value!.id },
     });
     api!.value!.on("remote.disconnect", onRemoteDisconnect);
+    api!.value!.on("remote.reconnecting", onRemoteReconnecting);
     api!.value!.on("remote.reconnect", onRemoteReconnect);
     api!.value!.on("data", onData);
     if (name.value) {
@@ -108,6 +131,7 @@ watch([ready], ([currentReady], [prevReady], onCleanup) => {
     console.log("Remote.jsx.cleanup");
     if (ready.value) {
       api!.value!.off("remote.disconnect", onRemoteDisconnect);
+      api!.value!.off("remote.reconnecting", onRemoteReconnecting);
       api!.value!.off("remote.reconnect", onRemoteReconnect);
       api!.value!.off("data", onData);
     }

@@ -1,20 +1,34 @@
 import EventEmitter from "eventemitter3";
 import type { DataConnection, Peer } from "peerjs";
 
-import { makeConnectionFilterUtilities } from "./common.js";
+import { makeConnectionFilterUtilities, reconnectDelay } from "./common.js";
 import type {
   GetPeerIdType,
   HumanizeErrorType,
+  ReconnectingPayload,
   SetPeerIdToSessionStorageType,
 } from "./common.js";
 
-export { prepareUtils } from "./common.js";
+export { makeReconnectNotice, prepareUtils } from "./common.js";
 
 /**
  * The events a remote emits. See the note on `WrcMasterEvents`.
  */
 export interface WrcRemoteEvents {
   "remote.disconnect": (payload: { id: string }) => void;
+  /**
+   * A reconnection attempt is starting. Fired once per attempt, including the
+   * immediate one, and never for the first connection - which is not retried,
+   * so a `peer-unavailable` there really does mean "wrong or dead master id".
+   *
+   * This is what lets an application tell "coming back" from "gone". Without
+   * it the only signal is `peer-unavailable` on the `Peer`, which says nothing
+   * about whether anyone is still trying. `attempt` counts from 1 and
+   * `nextDelayMs` is how long this attempt is given before it is abandoned, so
+   * an application can show a quiet notice at first and escalate to "try
+   * reloading" once the delay has reached its ceiling.
+   */
+  "remote.reconnecting": (payload: ReconnectingPayload) => void;
   "remote.reconnect": (payload: { id: string }) => void;
   data: (payload: { from: "master" }, data: unknown) => void;
 }
@@ -29,26 +43,6 @@ export interface PrepareRemoteUtils {
   humanizeError: HumanizeErrorType;
   getPeerId: GetPeerIdType;
   setPeerIdToSessionStorage: SetPeerIdToSessionStorageType;
-}
-
-/**
- * How long an attempt that has not opened is given before it is abandoned and
- * retried, doubling each time up to the cap.
- *
- * The first retry after a close stays immediate - that is what it has always
- * been, and it is the one that succeeds whenever the master is still there.
- * The schedule only governs what happens when that attempt lands while the
- * master is unreachable, which is the case that used to leave a remote dead
- * until the user reloaded it.
- */
-const RECONNECT_FIRST_DELAY_MS = 1000;
-const RECONNECT_MAX_DELAY_MS = 8000;
-
-function reconnectDelay(attempt: number): number {
-  return Math.min(
-    RECONNECT_FIRST_DELAY_MS * 2 ** attempt,
-    RECONNECT_MAX_DELAY_MS,
-  );
 }
 
 function makePeerConnection(
@@ -161,6 +155,11 @@ export default function prepare({
         };
 
         const reconnect = () => {
+          ee.emit("remote.reconnecting", {
+            id: peer.id,
+            attempt: attempt + 1,
+            nextDelayMs: reconnectDelay(attempt),
+          });
           createPeerConnectionWithReconnectOnClose(
             () => {
               ee.emit("remote.reconnect", { id: peer.id });

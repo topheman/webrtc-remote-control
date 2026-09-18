@@ -1,5 +1,6 @@
 import {
   expect,
+  expectLatestEventSequence,
   expectLatestEvents,
   expectLatestEventsUnordered,
   expectRemoteCounters,
@@ -96,9 +97,16 @@ test("reconnects peers after a reload", async ({ demo }) => {
     })),
   );
   for (const remote of demo.remotes) {
+    // `remote.reconnecting` sits between the two now, which is the point of it:
+    // an application has something to show while the retry loop runs, instead
+    // of a `peer-unavailable` telling the user to reload mid-recovery.
+    await expectLatestEventSequence(remote.page, [
+      "remote.reconnect",
+      "remote.reconnecting",
+      "remote.disconnect",
+    ]);
     await expectLatestEvents(remote.page, [
       { event: "remote.reconnect", payload: { id: remote.peerId } },
-      { event: "remote.disconnect", payload: { id: remote.peerId } },
     ]);
   }
 

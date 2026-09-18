@@ -100,6 +100,30 @@ export async function expectLatestEventsUnordered(
     .toEqual(byId(expected));
 }
 
+/**
+ * Asserts the order the latest events arrived in, by name only.
+ *
+ * Runs of the same event are collapsed first, because how many
+ * `remote.reconnecting` entries an outage produces depends on how many
+ * attempts it took - one here, more on a loaded machine. The sequence is the
+ * meaningful part; pinning the count would only buy a flaky test. The payloads
+ * of that event are pinned precisely in core's unit tests instead.
+ */
+export async function expectLatestEventSequence(
+  page: Page,
+  expected: string[],
+): Promise<void> {
+  const collapse = (events: DemoEvent[]) =>
+    events
+      .map((event) => event.event)
+      .filter((name, index, names) => name !== names[index - 1]);
+  await expect
+    .poll(async () =>
+      collapse(await readEvents(page)).slice(0, expected.length),
+    )
+    .toEqual(expected);
+}
+
 /** Waits for a peer to open and returns the id it was given. */
 export async function waitForPeerId(page: Page): Promise<string> {
   await expect

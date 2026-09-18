@@ -24,9 +24,40 @@ export interface MakeHumanizeErrorOptions {
   withTechicalErrorMessage?: boolean;
 }
 
-export interface PrepareUtilsOptions {
+/**
+ * What `remote.reconnecting` carries. Declared here rather than in `remote.ts`
+ * so `makeReconnectNotice` can name it without the two modules importing each
+ * other.
+ */
+export interface ReconnectingPayload {
+  id: string;
+  attempt: number;
+  nextDelayMs: number;
+}
+
+/**
+ * A notice may be a plain value or a function of the payload, the way the
+ * `default` entry of the error mapping may be.
+ */
+export type ReconnectMessage<T> = T | ((payload: ReconnectingPayload) => T);
+
+export interface MakeReconnectNoticeOptions<
+  TReconnecting = string,
+  TStalled = string,
+> {
+  /** Shown while recovery is still plausible. */
+  reconnecting?: ReconnectMessage<TReconnecting>;
+  /** Shown once the backoff has reached its ceiling. */
+  stalled?: ReconnectMessage<TStalled>;
+}
+
+export interface PrepareUtilsOptions<
+  TReconnecting = string,
+  TStalled = string,
+> {
   sessionStorageKey?: string;
   humanErrors?: MakeHumanizeErrorOptions;
+  reconnectNotice?: MakeReconnectNoticeOptions<TReconnecting, TStalled>;
 }
 
 export function makeStoreAccessor(
@@ -101,16 +132,87 @@ export function makeHumanizeError(
   };
 }
 
-export function prepareUtils({
+/**
+ * How long a reconnection attempt that has not opened is given before it is
+ * abandoned, doubling each time up to the ceiling.
+ *
+ * These live here rather than in `remote.ts` because the retry loop is not the
+ * only thing that needs them: deciding when "reconnecting" stops being a
+ * plausible thing to tell a user means comparing against the ceiling, and that
+ * comparison is the library's job rather than every consumer's.
+ */
+export const RECONNECT_FIRST_DELAY_MS = 1000;
+export const RECONNECT_MAX_DELAY_MS = 8000;
+
+export function reconnectDelay(attempt: number): number {
+  return Math.min(
+    RECONNECT_FIRST_DELAY_MS * 2 ** attempt,
+    RECONNECT_MAX_DELAY_MS,
+  );
+}
+
+const builtinReconnectNotice = {
+  reconnecting: "Lost connection to the peer, reconnecting...",
+  stalled: ({ attempt }: ReconnectingPayload) =>
+    `Still no answer after ${attempt} attempts. The peer may be gone for good - try reloading.`,
+};
+
+function resolveReconnectMessage<T>(
+  message: ReconnectMessage<T>,
+  payload: ReconnectingPayload,
+): T {
+  return typeof message === "function"
+    ? (message as (payload: ReconnectingPayload) => T)(payload)
+    : message;
+}
+
+/**
+ * Builds the function that turns a `remote.reconnecting` payload into
+ * something to show, choosing between "still trying" and "probably gone".
+ *
+ * That choice is the point of it. It is made by comparing `nextDelayMs`
+ * against the backoff ceiling, and a consumer should not have to know that
+ * number - or notice when it changes - to tell a user whether waiting is still
+ * worth it.
+ *
+ * Both messages are overridable, and both may be a value or a function of the
+ * payload. The type parameters are inferred from whatever is passed, so
+ * returning something richer than a string - a React node, say - needs no
+ * annotation at the call site and no cast.
+ */
+export function makeReconnectNotice<TReconnecting = string, TStalled = string>({
+  reconnecting,
+  stalled,
+}: MakeReconnectNoticeOptions<TReconnecting, TStalled> = {}) {
+  return function reconnectNotice(
+    payload: ReconnectingPayload,
+  ): TReconnecting | TStalled {
+    if (payload.nextDelayMs >= RECONNECT_MAX_DELAY_MS) {
+      return stalled === undefined
+        ? // Only reachable while `TStalled` is its `string` default: supplying a
+          // different one means supplying the message that produces it.
+          (builtinReconnectNotice.stalled(payload) as TStalled)
+        : resolveReconnectMessage(stalled, payload);
+    }
+    return reconnecting === undefined
+      ? (builtinReconnectNotice.reconnecting as TReconnecting)
+      : resolveReconnectMessage(reconnecting, payload);
+  };
+}
+
+export function prepareUtils<TReconnecting = string, TStalled = string>({
   sessionStorageKey,
   humanErrors,
-}: PrepareUtilsOptions = {}) {
+  reconnectNotice: reconnectNoticeOptions,
+}: PrepareUtilsOptions<TReconnecting, TStalled> = {}) {
   const humanizeError = makeHumanizeError(humanErrors);
+  const reconnectNotice = makeReconnectNotice(reconnectNoticeOptions);
   const { isConnectionFromRemote } = makeConnectionFilterUtilities();
   const { getPeerId, setPeerIdToSessionStorage } =
     makeStoreAccessor(sessionStorageKey);
   return {
     humanizeError,
+    reconnectNotice,
     isConnectionFromRemote,
     getPeerId,
     setPeerIdToSessionStorage,
@@ -123,6 +225,9 @@ export type HumanizeErrorType = ReturnType<
 export type IsConnectionFromRemoteType = ReturnType<
   typeof prepareUtils
 >["isConnectionFromRemote"];
+export type ReconnectNoticeType = ReturnType<
+  typeof prepareUtils
+>["reconnectNotice"];
 export type GetPeerIdType = ReturnType<typeof prepareUtils>["getPeerId"];
 export type SetPeerIdToSessionStorageType = ReturnType<
   typeof prepareUtils

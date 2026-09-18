@@ -302,6 +302,61 @@ describe("remote", () => {
         .forEach((conn) => expect(conn.send).not.toHaveBeenCalled());
     });
 
+    it("should announce every attempt, with a delay that grows then holds at the cap", async () => {
+      vi.useFakeTimers();
+      const { peer, wrc } = await connect();
+      const attempts: { id: string; attempt: number; nextDelayMs: number }[] =
+        [];
+      wrc.on("remote.reconnecting", (payload) => attempts.push(payload));
+
+      peer.lastConnection().emitClose();
+      await vi.advanceTimersByTimeAsync(30000);
+
+      // The first entry lands with the immediate retry, so an application has
+      // something to show straight away rather than after the first second.
+      expect(attempts.slice(0, 5)).toEqual([
+        { id: "remote-peer-id", attempt: 1, nextDelayMs: 1000 },
+        { id: "remote-peer-id", attempt: 2, nextDelayMs: 2000 },
+        { id: "remote-peer-id", attempt: 3, nextDelayMs: 4000 },
+        { id: "remote-peer-id", attempt: 4, nextDelayMs: 8000 },
+        { id: "remote-peer-id", attempt: 5, nextDelayMs: 8000 },
+      ]);
+    });
+
+    it("should not announce a reconnection for the first connection", async () => {
+      // The first connection is not retried: `peer-unavailable` there means the
+      // master id is wrong or gone, and "try reloading" is the honest advice.
+      const { peer, promise } = makeWrcRemote();
+      const onReconnecting =
+        vi.fn<
+          (payload: {
+            id: string;
+            attempt: number;
+            nextDelayMs: number;
+          }) => void
+        >();
+      peer.emitOpen();
+      peer.lastConnection().emitOpen();
+      const wrc = await promise;
+      wrc.on("remote.reconnecting", onReconnecting);
+
+      expect(onReconnecting).not.toHaveBeenCalled();
+    });
+
+    it("should count attempts from one again after a successful reconnection", async () => {
+      vi.useFakeTimers();
+      const { peer, wrc } = await connect();
+      const attempts: number[] = [];
+      wrc.on("remote.reconnecting", ({ attempt }) => attempts.push(attempt));
+
+      peer.lastConnection().emitClose();
+      await vi.advanceTimersByTimeAsync(1000);
+      peer.lastConnection().emitOpen();
+      peer.lastConnection().emitClose();
+
+      expect(attempts).toEqual([1, 2, 1]);
+    });
+
     it("should keep reconnecting on every subsequent close", async () => {
       const { peer, wrc } = await connect();
       const onReconnect = vi.fn<(payload: { id: string }) => void>();
