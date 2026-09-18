@@ -110,17 +110,15 @@ halves have to agree - a build pointed at `0.peerjs.com` against a local signali
 connects to nothing - which is why the env var is pinned in the script rather than left to
 the caller.
 
-`vp` manages Node.js and the package manager itself; the versions come from
-`.node-version` and `packageManager` in the root `package.json`. A global `vp` is not
-required: `vite-plus` is a normal dependency, so `pnpm install` links `node_modules/.bin/vp`
-and every `pnpm run` script resolves it from there. That is how Vercel and any contributor
+The Node.js version CI uses comes from `.node-version`, and the package manager from
+`packageManager` in the root `package.json`. How a given machine arrives at those versions is
+that developer's business - `vp` can manage them, but so can any version manager, so do not
+document one arrangement as the project's. A global `vp` is not required for anything scripted:
+`vite-plus` is a normal dependency, so `pnpm install` links `node_modules/.bin/vp` and every
+`pnpm run` script resolves it from there. A bare `vp ...` command does need it on the PATH,
+or `pnpm exec`. That is how Vercel and any contributor
 without the toolchain installed still build. Postinstall scripts are opt-in: `pnpm-workspace.yaml` has an `allowBuilds` block, and a new dependency that needs
 one has to be added there (`pnpm approve-builds` writes it).
-
-`.npmrc` sets `min-release-age=2`, so a dependency published less than two days ago is not
-installed. pnpm's response to a range that can only be satisfied by a too-new version is to
-add it to `minimumReleaseAgeExclude` in `pnpm-workspace.yaml` and install it anyway, which
-defeats the setting. Pin the range to the newest version that passes instead.
 
 The demo deploys to Vercel, whose project settings live in the dashboard rather than in
 the repo. The one exception is `vercel.json`, which pins `installCommand` to pnpm: the
