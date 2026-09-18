@@ -1,11 +1,12 @@
 # AGENTS.md
 
 Guidance for AI agents working in this repository. It describes the repo **as it stands
-today**, not what it is being migrated toward.
+today**.
 
-> If `plan.local/modernization-plan.md` exists in your checkout, read it before changing
-> anything about the build, test or lint configuration. It is gitignored working state,
-> so outside contributors will not have it.
+> If `plan.local/post-merge-followups.md` exists in your checkout, read it before starting
+> work near what it tracks - it lists 0.3.0 fixes and open questions left over from the
+> 0.2.0 port that have not shipped yet. It is gitignored working state, so outside
+> contributors will not have it.
 
 ## What this is
 
@@ -43,14 +44,6 @@ packages/core/
   test.helpers.ts    # fake peer/connection + a console silencer
   vite.config.ts     # the `pack` block for this package
 ```
-
-Until Phase 4 `master/` and `remote/` each carried a `package.json` of their own. Those
-were load-bearing in two ways, not one: they gave microbundle a build root, and - because
-`files` shipped the directories - they let pre-`exports` resolvers (webpack 4, TypeScript
-`moduleResolution: "node"`) reach the subpaths by walking into the directory. Collapsing
-them drops that second group, which is why the change carries a major-ish note in the
-changeset. Everything that reads the `exports` map is unaffected, so
-`import ... from "@webrtc-remote-control/core/master"` is unchanged for current consumers.
 
 Everything is TypeScript: the three published packages, the demo, and the end-to-end suite
 under `demo/e2e`. There is no Jest and no Babel left in the repo. The declarations
@@ -204,15 +197,12 @@ everything runs from the root. Two things are easy to trip over:
 
 `no-console` is an error in the published packages - a library has no business writing to
 the console of the application embedding it - with `warn` and `error` allowed. The demo is
-an application and logs on purpose, so a `demo/**` override keeps it at `warn`, which is
-what the whole repo reported before the packages were cleaned up.
+an application and logs on purpose, so a `demo/**` override keeps it at `warn`.
 
-Linting is Oxlint. The old airbnb-base / react / react-hooks / jsx-a11y ESLint stack was
-mapped across by hand: `vp migrate` only converts ESLint automatically from a v9 flat
-config, and this repo was on v8 with `.eslintrc.js`. Oxlint's `vue` plugin covers the
-script block of an SFC, not the template, so the seven components under
-`demo/counter-vue` are only half linted - `eslint-plugin-vue`'s template rules have no
-equivalent. Their templates are type checked, though, by the `vue-tsc` step above.
+Linting is Oxlint. Its `vue` plugin covers the script block of an SFC, not the template, so
+the seven components under `demo/counter-vue` are only half linted - `eslint-plugin-vue`'s
+template rules have no equivalent. Their templates are type checked, though, by the
+`vue-tsc` step above.
 
 Git hooks go through the Vite+ dispatcher rather than husky. `.vite-hooks/pre-commit` runs
 `vp staged`, which applies the `staged` block; `.vite-hooks/commit-msg` runs commitlint.
