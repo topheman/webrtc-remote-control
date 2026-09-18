@@ -28,7 +28,7 @@ import { usePeer } from "@webrtc-remote-control/vue";
 import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
 import "../../shared/js/components/errors-display";
-import { reconnectNotice } from "../../shared/js/reconnect-notice";
+import { makeReconnectNotice } from "@webrtc-remote-control/core";
 import "../../shared/js/components/console-display";
 
 import RemoteCountControl from "./RemoteCountControl.vue";
@@ -49,6 +49,8 @@ const { ready, api, peer, peerReady, humanizeError } = usePeer<"remote">();
 const onRemoteDisconnect: WrcRemoteEvents["remote.disconnect"] = (payload) => {
   logger.log({ event: "remote.disconnect", payload });
 };
+// The wording is the consumer's, the threshold core's.
+const reconnectNotice = makeReconnectNotice();
 const reconnecting = ref(false);
 const onRemoteReconnecting: WrcRemoteEvents["remote.reconnecting"] = (
   payload,
