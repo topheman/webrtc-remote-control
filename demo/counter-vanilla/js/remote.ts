@@ -5,6 +5,7 @@ import { getPeerjsConfig } from "../../shared/js/common-peerjs";
 import { makeLogger } from "../../shared/js/common";
 import "../../shared/js/animate"; // todo
 import { render } from "./remote.view";
+import { reconnectNotice } from "../../shared/js/reconnect-notice";
 
 declare global {
   interface Window {
@@ -56,11 +57,19 @@ async function init() {
       payload: { id: peerId },
     });
   });
+  // While the retry loop is running, a `peer-unavailable` is just the attempt
+  // that lost its race to the master re-registering. The reconnection notice
+  // already says so, and `humanizeError` would talk over it with advice to
+  // reload - the one thing the user does not need to do.
+  let reconnecting = false;
   peer.on("error", (error) => {
     showLoader(false);
     setConnected(false);
-    setErrors([humanizeError(error)]);
     logger.error({ event: "error", error });
+    if (reconnecting && error.type === "peer-unavailable") {
+      return;
+    }
+    setErrors([humanizeError(error)]);
   });
   peer.on("disconnected", (id) => {
     showLoader(false);
@@ -73,8 +82,14 @@ async function init() {
   wrcRemote.on("remote.disconnect", (payload) => {
     logger.log({ event: "remote.disconnect", payload });
   });
+  wrcRemote.on("remote.reconnecting", (payload) => {
+    logger.log({ event: "remote.reconnecting", payload });
+    reconnecting = true;
+    setErrors([reconnectNotice(payload)]);
+  });
   wrcRemote.on("remote.reconnect", (payload) => {
     logger.log({ event: "remote.reconnect", payload });
+    reconnecting = false;
     // The `peer-unavailable` that a reconnection attempt loses its race to left
     // the controls disabled and the error on screen. Now that the retry loop
     // gets far enough to come back, that state has to be cleared - otherwise a

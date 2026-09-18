@@ -85,9 +85,15 @@ expectTypeOf<
 expectTypeOf<CurrentMasterApi["on"]>()
   .parameter(0)
   .toEqualTypeOf<"remote.connect" | "remote.disconnect" | "data">();
+// `remote.reconnecting` is new in 0.3.0 and deliberately widens this set. The
+// legacy declaration typed `on` as eventemitter3's untyped signature, so it
+// accepted any event name and nothing narrows here - adding one is additive for
+// consumers, who cannot have been subscribing to a name that did not exist.
 expectTypeOf<CurrentRemoteApi["on"]>()
   .parameter(0)
-  .toEqualTypeOf<"remote.disconnect" | "remote.reconnect" | "data">();
+  .toEqualTypeOf<
+    "remote.disconnect" | "remote.reconnecting" | "remote.reconnect" | "data"
+  >();
 
 /**
  * 4. The root export declared everything in `common`, because `index.d.ts` did

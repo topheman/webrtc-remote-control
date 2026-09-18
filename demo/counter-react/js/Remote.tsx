@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePeer } from "@webrtc-remote-control/react";
 import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
@@ -9,6 +9,7 @@ import ConsoleDisplay from "../../shared/js/components/ConsoleDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import { useLogger, useSessionStorage } from "../../shared/js/react-common";
+import { reconnectNotice } from "../../shared/js/reconnect-notice";
 
 export default function Remote() {
   const { logs, logger } = useLogger();
@@ -24,8 +25,19 @@ export default function Remote() {
   ) => {
     logger.log({ event: "remote.disconnect", payload });
   };
+  // A ref, not state: `onPeerError` is registered in an effect keyed on `peer`
+  // and would otherwise close over whatever this was on first render.
+  const reconnecting = useRef(false);
+  const onRemoteReconnecting: WrcRemoteEvents["remote.reconnecting"] = (
+    payload,
+  ) => {
+    logger.log({ event: "remote.reconnecting", payload });
+    reconnecting.current = true;
+    setErrors([reconnectNotice(payload)]);
+  };
   const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
     logger.log({ event: "remote.reconnect", payload });
+    reconnecting.current = false;
     // `onPeerError` nulled `peerId` and put an error on screen, which disables
     // every control. Reconnecting has to undo both, or a remote that came back
     // is indistinguishable from one that never did.
@@ -38,6 +50,16 @@ export default function Remote() {
   const onPeerError = (error: Error) => {
     setPeerId(null);
     logger.error({ event: "error", error });
+    // While the retry loop is running, a `peer-unavailable` is just the attempt
+    // that lost its race to the master re-registering. The reconnection notice
+    // already says so, and `humanizeError` would talk over it with advice to
+    // reload - the one thing the user does not need to do.
+    if (
+      reconnecting.current &&
+      (error as { type?: string }).type === "peer-unavailable"
+    ) {
+      return;
+    }
     setErrors([humanizeError(error)]);
   };
   const onData: WrcRemoteEvents["data"] = (_, data) => {
@@ -68,6 +90,7 @@ export default function Remote() {
         payload: { id: peer!.id },
       });
       api!.on("remote.disconnect", onRemoteDisconnect);
+      api!.on("remote.reconnecting", onRemoteReconnecting);
       api!.on("remote.reconnect", onRemoteReconnect);
       api!.on("data", onData);
       if (name) {
@@ -78,6 +101,7 @@ export default function Remote() {
       console.log("Remote.tsx.cleanup");
       if (ready) {
         api!.off("remote.disconnect", onRemoteDisconnect);
+        api!.off("remote.reconnecting", onRemoteReconnecting);
         api!.off("remote.reconnect", onRemoteReconnect);
         api!.off("data", onData);
       }
