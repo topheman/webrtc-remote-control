@@ -44,7 +44,7 @@ const errors = ref<string[] | null>(null);
 const reversedLogs = computed(() => [...logs.value].reverse());
 
 // see the note in `Master.vue` about `ready` and the assertions below
-const { ready, api, peer, peerReady, humanizeError } = usePeer<"remote">();
+const { ready, api, peer, humanizeError } = usePeer<"remote">();
 
 const onRemoteDisconnect: WrcRemoteEvents["remote.disconnect"] = (payload) => {
   logger.log({ event: "remote.disconnect", payload });
@@ -93,17 +93,18 @@ const onData: WrcRemoteEvents["data"] = (_, data) => {
   }
 };
 
-watch([peerReady], (_, __, onCleanup) => {
-  // always true - see the note on the same guard in `Master.vue`
-  if (peer) {
-    peer.value!.on("error", onPeerError);
-  }
-  onCleanup(() => {
-    if (peer) {
-      peer.value!.off("error", onPeerError);
+watch(
+  peer,
+  (currentPeer, _, onCleanup) => {
+    if (currentPeer) {
+      currentPeer.on("error", onPeerError);
+      onCleanup(() => {
+        currentPeer.off("error", onPeerError);
+      });
     }
-  });
-});
+  },
+  { immediate: true },
+);
 
 watch([ready], ([currentReady], [prevReady], onCleanup) => {
   console.log(
