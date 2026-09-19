@@ -251,5 +251,132 @@ describe("master", () => {
       expect(first.send).not.toHaveBeenCalled();
       expect(second.send).toHaveBeenCalledWith({ ping: true });
     });
+
+    it("should close and disconnect a superseded connection as soon as its replacement arrives", async () => {
+      const { peer, promise } = makeWrcMaster();
+      peer.emitOpen();
+      const wrc = await promise;
+      const onDisconnect = vi.fn<(payload: { id: string }) => void>();
+      wrc.on("remote.disconnect", onDisconnect);
+
+      const first = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(first);
+      first.emitOpen();
+
+      // The replacement connecting is what makes `first` stale - real peerjs
+      // can take an indeterminate time to notice on its own, which is what
+      // let a reconnecting remote go silently undelivered-to in production.
+      const second = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(second);
+
+      expect(first.close).toHaveBeenCalledTimes(1);
+      expect(onDisconnect).toHaveBeenCalledWith({ id: "remote-1" });
+    });
+
+    it("should not let a superseded connection's belated close evict its replacement", async () => {
+      const { peer, promise } = makeWrcMaster();
+      peer.emitOpen();
+      const wrc = await promise;
+      const onDisconnect = vi.fn<(payload: { id: string }) => void>();
+      wrc.on("remote.disconnect", onDisconnect);
+
+      const first = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(first);
+      first.emitOpen();
+
+      const second = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(second);
+      second.emitOpen();
+      onDisconnect.mockClear();
+
+      // A second "close" on a connection the master already closed itself.
+      // Real peerjs 1.5.5 only emits "close" once, and only for a connection
+      // that was open, so this is a defensive guard rather than a path the
+      // CI flake took - the fake emits on demand, which is what makes the
+      // guard observable here.
+      first.emitClose();
+
+      expect(onDisconnect).not.toHaveBeenCalled();
+      expect(wrc.sendTo("remote-1", { ping: true })).not.toBe(null);
+      expect(second.send).toHaveBeenCalledWith({ ping: true });
+    });
+
+    it("should emit `remote.disconnect` for the old connection before `remote.connect` for its replacement", async () => {
+      const { peer, promise } = makeWrcMaster();
+      peer.emitOpen();
+      const wrc = await promise;
+      const calls: string[] = [];
+      wrc.on("remote.connect", () => calls.push("connect"));
+      wrc.on("remote.disconnect", () => calls.push("disconnect"));
+
+      const first = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(first);
+      first.emitOpen();
+
+      // The e2e reload scenario reads this order off the master's event log:
+      // the drop is announced when the replacement arrives, the reconnect
+      // when the replacement opens, never the other way round.
+      const second = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(second);
+      second.emitOpen();
+
+      expect(calls).toEqual(["connect", "disconnect", "connect"]);
+    });
+
+    it("should announce a connection once even if peerjs fires `open` on it twice", async () => {
+      const { peer, promise } = makeWrcMaster();
+      peer.emitOpen();
+      const wrc = await promise;
+      const onConnect = vi.fn<(payload: { id: string }) => void>();
+      wrc.on("remote.connect", onConnect);
+
+      const conn = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(conn);
+      conn.emitOpen();
+      conn.emitOpen();
+
+      expect(onConnect).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not announce a superseded connection that opens after its replacement arrived", async () => {
+      const { peer, promise } = makeWrcMaster();
+      peer.emitOpen();
+      const wrc = await promise;
+      const onConnect = vi.fn<(payload: { id: string }) => void>();
+      const onDisconnect = vi.fn<(payload: { id: string }) => void>();
+      wrc.on("remote.connect", onConnect);
+      wrc.on("remote.disconnect", onDisconnect);
+
+      // Two connections for the same id arrive before either opens - what a
+      // signaling server replaying queued offers to a master that just came
+      // back can produce. Only the one the master kept may announce itself.
+      const first = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(first);
+      const second = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(second);
+      first.emitOpen();
+      second.emitOpen();
+
+      expect(onConnect).toHaveBeenCalledTimes(1);
+      expect(onDisconnect).not.toHaveBeenCalled();
+      wrc.sendTo("remote-1", { ping: true });
+      expect(first.send).not.toHaveBeenCalled();
+      expect(second.send).toHaveBeenCalledWith({ ping: true });
+    });
+
+    it("should not emit `remote.disconnect` for a connection that never opened", async () => {
+      const { peer, promise } = makeWrcMaster();
+      peer.emitOpen();
+      const wrc = await promise;
+      const onDisconnect = vi.fn<(payload: { id: string }) => void>();
+      wrc.on("remote.disconnect", onDisconnect);
+
+      const conn = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(conn);
+      conn.emitClose();
+
+      expect(onDisconnect).not.toHaveBeenCalled();
+      expect(wrc.sendTo("remote-1", { ping: true })).toBe(null);
+    });
   });
 });
