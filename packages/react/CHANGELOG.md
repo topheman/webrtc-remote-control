@@ -1,5 +1,22 @@
 # Change Log
 
+## 0.2.2
+
+### Patch Changes
+
+- [#56](https://github.com/topheman/webrtc-remote-control/pull/56) [`2cf8f8f`](https://github.com/topheman/webrtc-remote-control/commit/2cf8f8f86fe751ad9f2fcd46b12a079af687f6aa) Thanks [@topheman](https://github.com/topheman)! - The provider no longer rebuilds the peer connection on every render. `utils` was
+  rebuilt each render and sat in the connection effect's dependencies, so any
+  re-render tore the connection down and called `init` again; `init` and
+  `humanErrors` were dependencies too, and both are normally written inline. The
+  connection is now established once per `mode`/`masterPeerId`/`sessionStorageKey`,
+  and the latest `init` and `humanErrors` are read when it is.
+  
+  The context value is also replaced rather than mutated in place. `usePeer`
+  returns the same shape and no longer waits on a microtask to notice the peer has
+  arrived, so `ready` flips on the render that follows the connection resolving.
+- Updated dependencies [[`3653ddd`](https://github.com/topheman/webrtc-remote-control/commit/3653ddd1e75caa0b4dbb37845ab31b3d26c48426), [`d953051`](https://github.com/topheman/webrtc-remote-control/commit/d95305190e1add0364aef6d2179ea21130c5be6d), [`85141d3`](https://github.com/topheman/webrtc-remote-control/commit/85141d3a65dffdda92d93765826959476a7d32d7), [`9ffcfdf`](https://github.com/topheman/webrtc-remote-control/commit/9ffcfdf03434dcf5adc5e76926219ac5558cac92), [`acc08e1`](https://github.com/topheman/webrtc-remote-control/commit/acc08e1f9661a6cd5395b96a7eb470569bd0c9e1)]:
+  - @webrtc-remote-control/core@0.3.0
+
 ## 0.2.1
 
 ### Minor Changes
