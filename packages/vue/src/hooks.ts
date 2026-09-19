@@ -1,68 +1,38 @@
-import { computed, inject, reactive, ref, toRefs, unref } from "vue";
-import type { ToRefs, UnwrapNestedRefs } from "vue";
-import type {
-  HumanizeErrorType,
-  IsConnectionFromRemoteType,
-  MasterBindConnectionApiResolved,
-  RemoteBindConnectionApiResolved,
-} from "@webrtc-remote-control/core";
+import { inject } from "vue";
 
-import { MyContext } from "./Provider.js";
-import type { WebRTCRemoteControlContextValue } from "./Provider.js";
+import { MasterContext, RemoteContext } from "./Provider.js";
+import type { UseMasterResult, UseRemoteResult } from "./Provider.js";
 
 /**
- * The reactive object `usePeer` builds: `ready` and the resolved core api, on
- * top of everything the provider put on the injected ref.
+ * The master side of the connection, from a component under one where
+ * `provideMaster` was called.
  *
- * `M` selects which side you are on, so `api` and `isConnectionFromRemote` are
- * typed for it. It defaults to neither, matching what the hook can actually
- * prove at runtime - it reads the mode off the injected value and has no way to
- * tell the compiler which one it found.
+ * There is nothing to resolve here: the provider owns the peer and the api and
+ * provides the finished value, so the composable is a lookup. Which side you are
+ * on comes from which provider is above you, not from a type argument, so `api`
+ * and `isConnectionFromRemote` are typed without anything being asserted - and
+ * `if (state.value.ready)` narrows `api` and `peer` on its own.
+ *
+ * The utilities come back as plain values and only `state` is a ref, because
+ * only `state` ever changes.
  */
-export interface UsePeerState<
-  M extends "remote" | "master",
-> extends WebRTCRemoteControlContextValue {
-  ready: boolean;
-  api?: M extends "remote"
-    ? RemoteBindConnectionApiResolved
-    : MasterBindConnectionApiResolved;
-  mode: "remote" | "master";
-  humanizeError: HumanizeErrorType;
-  isConnectionFromRemote: M extends "master"
-    ? IsConnectionFromRemoteType
-    : undefined;
+export function useMaster(): UseMasterResult {
+  const value = inject(MasterContext);
+  if (!value) {
+    throw new Error(
+      "`useMaster` must be called under a component that called `provideMaster`.",
+    );
+  }
+  return value;
 }
 
-/** What `usePeer` returns: every member of the state above, as its own ref. */
-export type UsePeerResult<M extends "remote" | "master"> = ToRefs<
-  UnwrapNestedRefs<UsePeerState<M>>
->;
-
-export function usePeer<
-  M extends "remote" | "master" = "remote" | "master",
->(): UsePeerResult<M> {
-  const context = inject(MyContext);
-  /**
-   * `provideWebTCRemoteControl`'s effect runs synchronously while the
-   * provider's own `setup()` runs, and Vue always finishes a parent's
-   * `setup()` before a child's starts - so `context` already carries the
-   * resolved `peer` and `promise` by the time this hook runs. Only the
-   * promise's own resolution is genuinely asynchronous, so that is the only
-   * thing left to wait on.
-   */
-  const api = ref<
-    MasterBindConnectionApiResolved | RemoteBindConnectionApiResolved | null
-  >(null);
-  void context?.value.promise?.then((wrcApi) => {
-    api.value = wrcApi;
-  });
-  const result = reactive({
-    ...unref(context),
-    api,
-    ready: computed(() => api.value !== null),
-  });
-  // The conditional members of `UsePeerState` are keyed on `M`, which the caller
-  // chooses; the hook reads the mode off the injected value at runtime and
-  // cannot narrow to it, so the assembled object is asserted once here.
-  return toRefs(result) as unknown as UsePeerResult<M>;
+/** The remote side of {@link useMaster}, under a `provideRemote`. */
+export function useRemote(): UseRemoteResult {
+  const value = inject(RemoteContext);
+  if (!value) {
+    throw new Error(
+      "`useRemote` must be called under a component that called `provideRemote`.",
+    );
+  }
+  return value;
 }

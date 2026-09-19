@@ -1,10 +1,16 @@
-import React, { createContext, useEffect, useRef, useState } from "react";
+// `React` itself is used: `pack` compiles JSX with the classic runtime, so the
+// providers below emit `React.createElement` and need the default import in
+// scope. Dropping it builds fine and throws in the browser.
+import React, {
+  createContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ReactElement, ReactNode } from "react";
 import { master, prepareUtils, remote } from "@webrtc-remote-control/core";
 import type {
-  GetPeerIdType,
-  HumanizeErrorType,
-  IsConnectionFromRemoteType,
   MakeHumanizeErrorOptions,
   MasterBindConnectionApiResolved,
   RemoteBindConnectionApiResolved,
@@ -20,140 +26,211 @@ export type PeerInstance = Parameters<
   ReturnType<typeof master.default>["bindConnection"]
 >[0];
 
-/** The utilities the `init` callback is handed. */
-export interface ProviderInitOptions {
-  humanizeError: HumanizeErrorType;
-  getPeerId: GetPeerIdType;
-  /** Master mode only: the remote side has no use for the filter. */
-  isConnectionFromRemote?: IsConnectionFromRemoteType;
-}
+/** What `prepareUtils` hands out, before a side has been picked. */
+type PreparedUtils = ReturnType<typeof prepareUtils>;
 
-export interface ProviderProps {
-  children: ReactNode;
+/**
+ * The utilities the master side works with: core's own per-mode bundle, minus
+ * the function that opens the connection.
+ *
+ * One type does two jobs on purpose. It is what `init` is handed, and it is the
+ * constant half of what `useMaster` returns - the provider gives a consumer
+ * exactly what it gives the callback. Deriving it from `master.default` rather
+ * than writing the members out means core stays the only place they are named.
+ */
+export type MasterUtils = Omit<
+  ReturnType<typeof master.default>,
+  "bindConnection"
+> & { mode: "master" };
+
+/** The remote side's half of {@link MasterUtils}. It has no connection filter. */
+export type RemoteUtils = Omit<
+  ReturnType<typeof remote.default>,
+  "bindConnection"
+> & { mode: "remote"; masterPeerId: string };
+
+/**
+ * The part that changes over the life of a provider, as a union rather than a
+ * flag: `ready` is what tells the compiler whether `api` is there.
+ *
+ * `ready: false` covers two runtime states - the first render, before the
+ * connection effect has built a peer, and the wait for the api to resolve - so
+ * `peer` is nullable there and known present once `ready` is true.
+ */
+export type Connection<TApi> =
+  | { ready: false; peer: PeerInstance | null; api: undefined }
+  | { ready: true; peer: PeerInstance; api: TApi };
+
+/** What `useMaster` returns, and what the master context carries. */
+export type UseMasterResult = MasterUtils &
+  Connection<MasterBindConnectionApiResolved>;
+
+/** What `useRemote` returns, and what the remote context carries. */
+export type UseRemoteResult = RemoteUtils &
+  Connection<RemoteBindConnectionApiResolved>;
+
+export const MasterContext = createContext<UseMasterResult | undefined>(
+  undefined,
+);
+export const RemoteContext = createContext<UseRemoteResult | undefined>(
+  undefined,
+);
+
+/** The options both sides share, minus what only a component needs. */
+interface ConnectionOptions {
   sessionStorageKey?: string;
   humanErrors?: MakeHumanizeErrorOptions;
-  mode: "master" | "remote";
-  masterPeerId?: string;
-  init: (options: ProviderInitOptions) => PeerInstance;
+}
+
+interface ProviderPropsBase extends ConnectionOptions {
+  children: ReactNode;
+}
+
+export interface MasterProviderProps extends ProviderPropsBase {
+  init: (utils: MasterUtils) => PeerInstance;
+}
+
+export interface RemoteProviderProps extends ProviderPropsBase {
+  masterPeerId: string;
+  init: (utils: RemoteUtils) => PeerInstance;
 }
 
 /**
- * What the provider puts on the context, and what `usePeer` spreads into its
- * result. Everything but `mode` and `masterPeerId` is filled in by the effect,
- * so the value starts out mostly empty and is replaced once the peer exists.
+ * How a side wires core up: what the utilities look like once the side is
+ * picked, and how to open the connection. Declared at module scope so the two
+ * are stable values rather than something rebuilt every render.
  */
-export interface WebRTCRemoteControlContextValue {
-  peer: PeerInstance | null;
-  promise: Promise<
-    MasterBindConnectionApiResolved | RemoteBindConnectionApiResolved
-  > | null;
-  mode: "master" | "remote";
-  masterPeerId?: string;
-  humanizeError?: HumanizeErrorType;
-  isConnectionFromRemote?: IsConnectionFromRemoteType;
-}
+type Wire<TUtils, TApi, TMasterPeerId extends string | undefined> = (
+  prepared: PreparedUtils,
+  masterPeerId: TMasterPeerId,
+) => { utils: TUtils; connect: (peer: PeerInstance) => Promise<TApi> };
 
-export const MyContext = createContext<
-  WebRTCRemoteControlContextValue | undefined
->(undefined);
+const wireMaster: Wire<
+  MasterUtils,
+  MasterBindConnectionApiResolved,
+  undefined
+> = (prepared) => {
+  const { bindConnection, ...utils } = master.default(prepared);
+  return {
+    utils: { ...utils, mode: "master" },
+    connect: (peer) => bindConnection(peer),
+  };
+};
 
-export function Provider({
-  children,
-  sessionStorageKey,
-  humanErrors,
-  mode,
+const wireRemote: Wire<RemoteUtils, RemoteBindConnectionApiResolved, string> = (
+  prepared,
   masterPeerId,
-  init,
-}: ProviderProps): ReactElement | null {
-  const allowedMode = ["master", "remote"] as const;
-  // TypeScript rules these three out for typed callers. They stay because the
-  // package is consumed from JavaScript too, and the messages are what the
-  // behavioral tests assert.
-  if (!allowedMode.includes(mode)) {
-    throw new Error(
-      `Unsupported "${mode}" mode. Only ${allowedMode
-        .map((a) => `"${a}"`)
-        .join(", ")} accepted.`,
-    );
-  }
-  if (mode === "master" && masterPeerId) {
-    throw new Error(
-      `\`masterPeerId\` prop not allowed in "master" mode - "${masterPeerId}" was passed.`,
-    );
-  }
-  if (mode === "remote" && !masterPeerId) {
-    throw new Error(`\`masterPeerId\` prop required in "remote" mode.`);
-  }
+) => {
+  const { bindConnection, ...utils } = remote.default(prepared);
+  return {
+    utils: { ...utils, mode: "remote", masterPeerId },
+    connect: (peer) => bindConnection(peer, masterPeerId),
+  };
+};
+
+/**
+ * The shared half of both providers. The split is in the public surface, not
+ * in the implementation: the two sides differ only in the `Wire` they hand in.
+ */
+function useWrcConnection<
+  TUtils,
+  TApi,
+  TMasterPeerId extends string | undefined,
+>(
+  wire: Wire<TUtils, TApi, TMasterPeerId>,
+  init: (utils: TUtils) => PeerInstance,
+  masterPeerId: TMasterPeerId,
+  { sessionStorageKey, humanErrors }: ConnectionOptions,
+): TUtils & Connection<TApi> {
   /**
-   * `init` and `humanErrors` are read by the connection effect but deliberately
-   * kept out of its dependencies: a caller writing `init={({ getPeerId }) => ...}`
-   * inline hands a fresh function every render, and re-running the effect on that
-   * would tear the peer down and rebuild it. The connection belongs to a
-   * `mode`/`masterPeerId` pair, not to a callback identity, so the latest value is
-   * mirrored onto a ref instead. This effect is declared first, so on mount it runs
-   * before the one below.
+   * `humanErrors` describes the messages, not the connection. A caller writing
+   * it inline hands a fresh object every render, and rebuilding the utilities
+   * on that would hand every consumer a new `humanizeError` each time. It is
+   * read when the utilities are built and later edits to it are not picked up.
+   */
+  const [initialHumanErrors] = useState(humanErrors);
+  const { utils, connect } = useMemo(
+    () =>
+      wire(
+        prepareUtils({ sessionStorageKey, humanErrors: initialHumanErrors }),
+        masterPeerId,
+      ),
+    [wire, masterPeerId, sessionStorageKey, initialHumanErrors],
+  );
+  /**
+   * `init` is read by the connection effect but deliberately kept out of its
+   * dependencies: a caller writing `init={({ getPeerId }) => ...}` inline hands
+   * a fresh function every render, and re-running the effect on that would tear
+   * the peer down and rebuild it. The connection belongs to the utilities it
+   * was opened with, not to a callback identity, so the latest value is
+   * mirrored onto a ref instead. This effect is declared first, so on mount it
+   * runs before the one below.
    */
   const initRef = useRef(init);
-  const humanErrorsRef = useRef(humanErrors);
   useEffect(() => {
     initRef.current = init;
-    humanErrorsRef.current = humanErrors;
   });
-  /**
-   * The context value is replaced, never mutated: the provider used to hand out a
-   * ref's `.current` and write onto it from the effect, which meant consumers had
-   * no way to learn the peer had arrived - `usePeer` compensated with a state flag
-   * it flipped on a microtask. Setting state here makes the arrival a normal
-   * render, and `usePeer` can just wait on the promise it is given.
-   */
-  const [contextValue, setContextValue] =
-    useState<WebRTCRemoteControlContextValue>(() => ({
-      peer: null,
-      promise: null,
-      mode,
-      masterPeerId,
-    }));
+  const [connection, setConnection] = useState<Connection<TApi>>({
+    ready: false,
+    peer: null,
+    api: undefined,
+  });
   useEffect(() => {
-    // Built here rather than during render: `prepareUtils` returns a fresh object
-    // every call, and keeping it out of render keeps it out of the dependencies.
-    const utils = prepareUtils({
-      sessionStorageKey,
-      humanErrors: humanErrorsRef.current,
-    });
-    const isConnectionFromRemote =
-      mode === "master" ? utils.isConnectionFromRemote : undefined;
-
     // init callback that should return a peer instance like:
     // `({ getPeerId }) => new Peer(getPeerId())`
-    const peer = initRef.current({
-      humanizeError: utils.humanizeError,
-      getPeerId: utils.getPeerId,
-      isConnectionFromRemote,
-    });
-
-    // The two sides take different arguments, so typing them forces the branch
-    // apart. `masterPeerId` is guaranteed in remote mode by the guard above, which
-    // TypeScript cannot carry into this callback.
-    const promise =
-      mode === "master"
-        ? master.default(utils).bindConnection(peer)
-        : remote.default(utils).bindConnection(peer, masterPeerId as string);
-    // start resolving the promise as soon as possible (it will be used in `usePeer`)
-    void promise.then(() => {});
-
-    setContextValue({
-      peer,
-      promise,
-      mode,
-      masterPeerId,
-      humanizeError: utils.humanizeError,
-      isConnectionFromRemote,
+    const peer = initRef.current(utils);
+    setConnection({ ready: false, peer, api: undefined });
+    let current = true;
+    void connect(peer).then((api) => {
+      if (current) {
+        setConnection({ ready: true, peer, api });
+      }
     });
     return () => {
+      // The api this promise resolves to belongs to a peer that is about to be
+      // disconnected, so a late resolution must not be published.
+      current = false;
       peer.disconnect();
     };
-  }, [mode, masterPeerId, sessionStorageKey]);
+  }, [utils, connect]);
+  return connection.ready
+    ? { ...utils, ready: true, peer: connection.peer, api: connection.api }
+    : { ...utils, ready: false, peer: connection.peer, api: undefined };
+}
+
+export function MasterProvider({
+  children,
+  init,
+  sessionStorageKey,
+  humanErrors,
+}: MasterProviderProps): ReactElement {
+  const value = useWrcConnection(wireMaster, init, undefined, {
+    sessionStorageKey,
+    humanErrors,
+  });
   return (
-    <MyContext.Provider value={contextValue}>{children}</MyContext.Provider>
+    <MasterContext.Provider value={value}>{children}</MasterContext.Provider>
+  );
+}
+
+export function RemoteProvider({
+  children,
+  init,
+  masterPeerId,
+  sessionStorageKey,
+  humanErrors,
+}: RemoteProviderProps): ReactElement {
+  // TypeScript rules this out for typed callers - the prop is required. It
+  // stays because the package is consumed from JavaScript too, and connecting
+  // to `undefined` fails later and less clearly.
+  if (!masterPeerId) {
+    throw new Error("`masterPeerId` prop required by `RemoteProvider`.");
+  }
+  const value = useWrcConnection(wireRemote, init, masterPeerId, {
+    sessionStorageKey,
+    humanErrors,
+  });
+  return (
+    <RemoteContext.Provider value={value}>{children}</RemoteContext.Provider>
   );
 }

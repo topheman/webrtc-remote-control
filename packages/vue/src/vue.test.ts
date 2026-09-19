@@ -11,10 +11,12 @@ import { defineComponent, h } from "vue";
 import type { Component } from "vue";
 import { cleanup, render, waitFor } from "@testing-library/vue";
 
-import { provideWebTCRemoteControl, usePeer } from "./vue.js";
+import { provideMaster, provideRemote, useMaster, useRemote } from "./vue.js";
 import type {
-  ProvideInitOptions,
-  ProvideWebRTCRemoteControlOptions,
+  MasterUtils,
+  ProvideOptions,
+  ProvideRemoteOptions,
+  RemoteUtils,
 } from "./vue.js";
 import { disableConsole, makeFakePeer } from "../../core/test.helpers.js";
 
@@ -22,7 +24,8 @@ import { disableConsole, makeFakePeer } from "../../core/test.helpers.js";
  * Behavioral baseline for the vue binding.
  *
  * Same contract as the react binding, expressed through provide/inject instead of
- * context: three constructor guards, then the resolved-api path against a fake peer.
+ * context: one composable and one hook per side, then the resolved-api path
+ * against a fake peer.
  */
 describe("vue", () => {
   let restoreConsole: () => void = () => {};
@@ -45,40 +48,70 @@ describe("vue", () => {
     document.body.innerHTML = "";
   });
 
-  const Consumer = defineComponent({
+  const MasterConsumer = defineComponent({
     setup() {
-      const { ready, api, mode, masterPeerId } = usePeer();
-      return { ready, api, mode, masterPeerId };
+      const { state, mode } = useMaster();
+      return { state, mode };
+    },
+    render() {
+      // No assertion on `api`: reading `ready` off the same value narrows it.
+      return h(
+        "div",
+        { "data-testid": "out" },
+        this.state.ready
+          ? [this.mode, Object.keys(this.state.api).sort().join("|")].join(" ")
+          : "not-ready",
+      );
+    },
+  });
+
+  const RemoteConsumer = defineComponent({
+    setup() {
+      const { state, mode, masterPeerId } = useRemote();
+      return { state, mode, masterPeerId };
     },
     render() {
       return h(
         "div",
         { "data-testid": "out" },
-        this.ready
+        this.state.ready
           ? [
               this.mode,
-              this.masterPeerId || "-",
-              Object.keys(this.api ?? {})
-                .sort()
-                .join("|"),
+              this.masterPeerId,
+              Object.keys(this.state.api).sort().join("|"),
             ].join(" ")
           : "not-ready",
       );
     },
   });
 
-  type Init = (options: ProvideInitOptions) => ReturnType<typeof makeFakePeer>;
+  type MasterInit = (utils: MasterUtils) => ReturnType<typeof makeFakePeer>;
+  type RemoteInit = (utils: RemoteUtils) => ReturnType<typeof makeFakePeer>;
 
-  /** Root component that installs the provider, so the child can inject it. */
-  function makeRoot(
-    init: Init,
-    mode: "master" | "remote",
-    options?: ProvideWebRTCRemoteControlOptions,
-    child: Component = Consumer,
+  /** Root component that installs the master provider, so the child can inject it. */
+  function makeMasterRoot(
+    init: MasterInit,
+    options?: ProvideOptions,
+    child: Component = MasterConsumer,
   ) {
     return defineComponent({
       setup() {
-        provideWebTCRemoteControl(init, mode, options);
+        provideMaster(init, options);
+      },
+      render() {
+        return h(child);
+      },
+    });
+  }
+
+  function makeRemoteRoot(
+    init: RemoteInit,
+    options: ProvideRemoteOptions,
+    child: Component = RemoteConsumer,
+  ) {
+    return defineComponent({
+      setup() {
+        provideRemote(init, options);
       },
       render() {
         return h(child);
@@ -89,55 +122,48 @@ describe("vue", () => {
   /**
    * Guard tests render an inert child rather than the consumer. Vue still mounts the
    * subtree after a setup error, and a consumer mounted without a provider blows up
-   * asynchronously inside `usePeer`, which would mask the assertion under test.
+   * asynchronously inside the hook, which would mask the assertion under test.
    */
   const Inert = defineComponent({ render: () => h("div") });
 
-  describe("constructor guards", () => {
-    it("should reject an unsupported mode", () => {
+  describe("guards", () => {
+    it("should require `masterPeerId` on `provideRemote`", () => {
       expect(() =>
         render(
-          makeRoot(
+          makeRemoteRoot(
             () => makeFakePeer(),
-            // The guard defends JavaScript callers - TypeScript ones cannot
-            // write this - so the unsupported value has to be forced past the
-            // compiler.
-            "peer" as "master",
-            undefined,
+            // The guard defends JavaScript callers - the option is required, so
+            // a TypeScript one cannot write this.
+            { masterPeerId: undefined as unknown as string },
             Inert,
           ),
         ),
-      ).toThrow('Unsupported "peer" mode. Only "master", "remote" accepted.');
+      ).toThrow("`masterPeerId` option required by `provideRemote`.");
     });
 
-    it("should reject `masterPeerId` in master mode", () => {
-      expect(() =>
-        render(
-          makeRoot(
-            () => makeFakePeer(),
-            "master",
-            { masterPeerId: "master-peer-id" },
-            Inert,
-          ),
-        ),
-      ).toThrow(
-        '`masterPeerId` prop not allowed in "master" mode - "master-peer-id" was passed.',
+    it("should reject a hook called outside its provider", () => {
+      expect(() => render(MasterConsumer)).toThrow(
+        "`useMaster` must be called under a component that called `provideMaster`.",
       );
     });
 
-    it("should require `masterPeerId` in remote mode", () => {
+    it("should reject the other side's hook", () => {
+      // The two sides have their own injection key, so this is caught rather
+      // than handing back a master api typed as a remote one.
       expect(() =>
-        render(makeRoot(() => makeFakePeer(), "remote", undefined, Inert)),
-      ).toThrow('`masterPeerId` prop required in "remote" mode.');
+        render(makeMasterRoot(() => makeFakePeer(), undefined, RemoteConsumer)),
+      ).toThrow(
+        "`useRemote` must be called under a component that called `provideRemote`.",
+      );
     });
   });
 
-  describe("master mode", () => {
+  describe("master side", () => {
     it("should call `init` with the core utils and expose the resolved api", async () => {
       const peer = makeFakePeer({ id: "master-peer-id" });
-      const init = vi.fn<Init>(() => peer);
+      const init = vi.fn<MasterInit>(() => peer);
 
-      const { getByTestId } = render(makeRoot(init, "master"));
+      const { getByTestId } = render(makeMasterRoot(init));
 
       expect(init).toHaveBeenCalledTimes(1);
       const initArgs = init.mock.calls[0]?.[0];
@@ -145,6 +171,7 @@ describe("vue", () => {
         "getPeerId",
         "humanizeError",
         "isConnectionFromRemote",
+        "mode",
       ]);
       expect(getByTestId("out").textContent).toBe("not-ready");
 
@@ -152,14 +179,14 @@ describe("vue", () => {
 
       await waitFor(() => {
         expect(getByTestId("out").textContent).toBe(
-          "master - off|on|sendAll|sendTo",
+          "master off|on|sendAll|sendTo",
         );
       });
     });
 
     it("should disconnect the peer on unmount", () => {
       const peer = makeFakePeer({ id: "master-peer-id" });
-      const { unmount } = render(makeRoot(() => peer, "master"));
+      const { unmount } = render(makeMasterRoot(() => peer));
 
       unmount();
 
@@ -167,17 +194,23 @@ describe("vue", () => {
     });
   });
 
-  describe("remote mode", () => {
+  describe("remote side", () => {
     it("should connect to the master and expose the resolved api", async () => {
       const peer = makeFakePeer({ id: "remote-peer-id" });
-      const init = vi.fn<Init>(() => peer);
+      const init = vi.fn<RemoteInit>(() => peer);
 
       const { getByTestId } = render(
-        makeRoot(init, "remote", { masterPeerId: "master-peer-id" }),
+        makeRemoteRoot(init, { masterPeerId: "master-peer-id" }),
       );
 
-      // the remote side has no use for the filter, so it is not handed one
-      expect(init.mock.calls[0]?.[0].isConnectionFromRemote).toBeUndefined();
+      // The remote side has no use for the connection filter, so it is not
+      // offered one - it is not on the type, and not on the value either.
+      expect(Object.keys(init.mock.calls[0]?.[0] ?? {}).sort()).toEqual([
+        "getPeerId",
+        "humanizeError",
+        "masterPeerId",
+        "mode",
+      ]);
 
       peer.emitOpen("remote-peer-id");
       expect(peer.connect).toHaveBeenCalledWith("master-peer-id", {
@@ -196,10 +229,10 @@ describe("vue", () => {
 
   describe("options", () => {
     it("should forward sessionStorageKey and humanErrors to the core utils", () => {
-      const init = vi.fn<Init>(() => makeFakePeer());
+      const init = vi.fn<MasterInit>(() => makeFakePeer());
 
       render(
-        makeRoot(init, "master", {
+        makeMasterRoot(init, {
           sessionStorageKey: "my-key",
           humanErrors: { mapping: { network: "My custom message" } },
         }),

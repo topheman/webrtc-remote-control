@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { usePeer } from "@webrtc-remote-control/react";
+import { useRemote } from "@webrtc-remote-control/react";
 import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
 import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
@@ -20,8 +20,8 @@ export default function Remote() {
   const [name, setName] = useSessionStorage<string>("remote-name", "");
   const [errors, setErrors] = useState<string[] | null>(null);
 
-  // see the note in `Master.tsx` about `ready` and the assertions below
-  const { ready, api, peer, humanizeError } = usePeer<"remote">();
+  // see the note in `Master.tsx` about `ready` narrowing `api` and `peer`
+  const { ready, api, peer, humanizeError } = useRemote();
 
   const onRemoteDisconnect: WrcRemoteEvents["remote.disconnect"] = (
     payload,
@@ -46,8 +46,10 @@ export default function Remote() {
     // is indistinguishable from one that never did.
     setPeerId(payload.id);
     setErrors(null);
-    if (name) {
-      api!.send({ type: "REMOTE_SET_NAME", name });
+    // `ready` narrows where it is read, and this callback is not that place:
+    // it closes over the destructured value, so it has to branch for itself.
+    if (ready && name) {
+      api.send({ type: "REMOTE_SET_NAME", name });
     }
   };
   const onPeerError = (error: Error) => {
@@ -86,27 +88,27 @@ export default function Remote() {
 
   useEffect(() => {
     if (ready) {
-      setPeerId(peer!.id);
+      setPeerId(peer.id);
       logger.log({
         event: "open",
         comment: "Remote connected",
-        payload: { id: peer!.id },
+        payload: { id: peer.id },
       });
-      api!.on("remote.disconnect", onRemoteDisconnect);
-      api!.on("remote.reconnecting", onRemoteReconnecting);
-      api!.on("remote.reconnect", onRemoteReconnect);
-      api!.on("data", onData);
+      api.on("remote.disconnect", onRemoteDisconnect);
+      api.on("remote.reconnecting", onRemoteReconnecting);
+      api.on("remote.reconnect", onRemoteReconnect);
+      api.on("data", onData);
       if (name) {
-        api!.send({ type: "REMOTE_SET_NAME", name });
+        api.send({ type: "REMOTE_SET_NAME", name });
       }
     }
     return () => {
       console.log("Remote.tsx.cleanup");
       if (ready) {
-        api!.off("remote.disconnect", onRemoteDisconnect);
-        api!.off("remote.reconnecting", onRemoteReconnecting);
-        api!.off("remote.reconnect", onRemoteReconnect);
-        api!.off("data", onData);
+        api.off("remote.disconnect", onRemoteDisconnect);
+        api.off("remote.reconnecting", onRemoteReconnecting);
+        api.off("remote.reconnect", onRemoteReconnect);
+        api.off("data", onData);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -114,12 +116,12 @@ export default function Remote() {
 
   function onIncrement() {
     if (ready) {
-      api!.send({ type: "COUNTER_INCREMENT" });
+      api.send({ type: "COUNTER_INCREMENT" });
     }
   }
   function onDecrement() {
     if (ready) {
-      api!.send({ type: "COUNTER_DECREMENT" });
+      api.send({ type: "COUNTER_DECREMENT" });
     }
   }
   function onChangeName(value: string) {
@@ -127,7 +129,7 @@ export default function Remote() {
   }
   function onConfirmName() {
     if (ready) {
-      api!.send({ type: "REMOTE_SET_NAME", name });
+      api.send({ type: "REMOTE_SET_NAME", name });
     }
   }
   return (

@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { usePeer } from "@webrtc-remote-control/vue";
+import { useMaster } from "@webrtc-remote-control/vue";
 import type { WrcMasterEvents } from "@webrtc-remote-control/core/master";
 
 import "../../shared/js/components/errors-display";
@@ -66,9 +66,11 @@ const remotesList = ref<RemoteCounter[]>([]);
 const errors = ref<string[] | null>(null);
 const reversedLogs = computed(() => [...logs.value].reverse());
 
-// `ready` guards every use of `api` and `peer`, but it is a boolean the
-// compiler cannot tie to them, hence the assertions below.
-const { ready, api, peer, humanizeError } = usePeer<"master">();
+// `humanizeError` is a plain function: it is built with the connection and
+// never changes, so only the part that does is a ref. `state.value.ready` is
+// the discriminant of that ref's union, so reading it narrows `api` and `peer`
+// on the same value - nothing below needs an assertion.
+const { state, humanizeError } = useMaster();
 
 const onRemoteConnect: WrcMasterEvents["remote.connect"] = ({ id }) => {
   const countersFromStorage = getCountersFromStorage();
@@ -98,11 +100,11 @@ const onData: WrcMasterEvents["data"] = ({ id }, data) => {
 const onPeerError = (error: Error) => {
   peerId.value = null;
   logger.error({ event: "error", error });
-  errors.value = [humanizeError.value(error)];
+  errors.value = [humanizeError(error)];
 };
 
 watch(
-  peer,
+  () => state.value.peer,
   (currentPeer, _, onCleanup) => {
     if (currentPeer) {
       currentPeer.on("error", onPeerError);
@@ -114,47 +116,45 @@ watch(
   { immediate: true },
 );
 
-watch([ready], ([currentReady], [prevReady], onCleanup) => {
-  console.log(
-    "Master.watchEffect",
-    { currentReady, prevReady },
-    ready.value,
-    api!.value!.on,
-  );
-  if (ready.value) {
-    peerId.value = peer.value!.id;
-    logger.log({
-      event: "open",
-      comment: "Master connected",
-      payload: { id: peer.value!.id },
-    });
-    api!.value!.on("remote.connect", onRemoteConnect);
-    api!.value!.on("remote.disconnect", onRemoteDisconnect);
-    api!.value!.on("data", onData);
+watch(state, (current, _, onCleanup) => {
+  // One branch for the whole body: `current` is the union, so this is where
+  // both `api` and `peer` become known to be there.
+  if (!current.ready) {
+    return;
   }
+  const { api, peer } = current;
+  peerId.value = peer.id;
+  logger.log({
+    event: "open",
+    comment: "Master connected",
+    payload: { id: peer.id },
+  });
+  api.on("remote.connect", onRemoteConnect);
+  api.on("remote.disconnect", onRemoteDisconnect);
+  api.on("data", onData);
   onCleanup(() => {
     console.log("Master.vue.cleanup");
-    if (ready.value) {
-      api!.value!.off("remote.connect", onRemoteConnect);
-      api!.value!.off("remote.disconnect", onRemoteDisconnect);
-      api!.value!.off("data", onData);
-    }
+    api.off("remote.connect", onRemoteConnect);
+    api.off("remote.disconnect", onRemoteDisconnect);
+    api.off("data", onData);
   });
 });
 
 // manage `ping` / `ping all` buttons
 
 const onPingAll = () => {
-  if (ready.value) {
-    api!.value!.sendAll({
+  const current = state.value;
+  if (current.ready) {
+    current.api.sendAll({
       type: "PING",
       date: new Date(),
     });
   }
 };
 const onPing = ({ detail: { id } }: HTMLElementEventMap["ping"]) => {
-  if (ready.value) {
-    api!.value!.sendTo(id!, {
+  const current = state.value;
+  if (current.ready) {
+    current.api.sendTo(id!, {
       type: "PING",
       date: new Date(),
     });
