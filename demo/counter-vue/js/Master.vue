@@ -68,7 +68,7 @@ const reversedLogs = computed(() => [...logs.value].reverse());
 
 // `ready` guards every use of `api` and `peer`, but it is a boolean the
 // compiler cannot tie to them, hence the assertions below.
-const { ready, api, peer, peerReady, humanizeError } = usePeer<"master">();
+const { ready, api, peer, humanizeError } = usePeer<"master">();
 
 const onRemoteConnect: WrcMasterEvents["remote.connect"] = ({ id }) => {
   const countersFromStorage = getCountersFromStorage();
@@ -101,18 +101,18 @@ const onPeerError = (error: Error) => {
   errors.value = [humanizeError.value(error)];
 };
 
-watch([peerReady], (_, __, onCleanup) => {
-  // `peer` is the ref itself, never reassigned, so this guard is always true.
-  // Preserved as written.
-  if (peer) {
-    peer.value!.on("error", onPeerError);
-  }
-  onCleanup(() => {
-    if (peer) {
-      peer.value!.off("error", onPeerError);
+watch(
+  peer,
+  (currentPeer, _, onCleanup) => {
+    if (currentPeer) {
+      currentPeer.on("error", onPeerError);
+      onCleanup(() => {
+        currentPeer.off("error", onPeerError);
+      });
     }
-  });
-});
+  },
+  { immediate: true },
+);
 
 watch([ready], ([currentReady], [prevReady], onCleanup) => {
   console.log(

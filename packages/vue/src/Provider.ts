@@ -36,8 +36,9 @@ export interface ProvideWebRTCRemoteControlOptions {
 
 /**
  * What the provider puts on the injected ref, and what `usePeer` spreads into
- * its result. The ref is shallow and mutated in place, so everything but `mode`
- * and `masterPeerId` is filled in by the effect rather than at construction.
+ * its result. Everything but `mode` and `masterPeerId` is filled in by the
+ * effect, so the value starts out mostly empty and is replaced once the peer
+ * exists.
  */
 export interface WebRTCRemoteControlContextValue {
   peer: PeerInstance | null;
@@ -97,43 +98,39 @@ export function provideWebTCRemoteControl(
   provide(MyContext, providerValue);
 
   watchEffect((onCleanup) => {
-    providerValue.value.mode = mode;
-    providerValue.value.humanizeError = utils.humanizeError;
-    if (mode === "master") {
-      providerValue.value.isConnectionFromRemote = utils.isConnectionFromRemote;
-    }
+    const isConnectionFromRemote =
+      mode === "master" ? utils.isConnectionFromRemote : undefined;
 
     // init callback that should return a peer instance like:
     // `({ getPeerId }) => new Peer(getPeerId())`
     const peer = init({
       humanizeError: utils.humanizeError,
       getPeerId: utils.getPeerId,
-      isConnectionFromRemote:
-        mode === "master" ? utils.isConnectionFromRemote : undefined,
+      isConnectionFromRemote,
     });
-    providerValue.value.peer = peer;
 
-    // Before the port this was one expression, and it passed
-    // `remote ? masterPeerId : undefined` as the second argument. `remote` is an
-    // imported module, so that test was always true and the argument was always
-    // `masterPeerId` - harmless, because master mode guarantees it is undefined
-    // and master's `bindConnection` ignores a second argument anyway. The two
-    // sides take different arguments, so typing them forces the branch apart;
-    // what reaches peerjs is unchanged. `masterPeerId` is guaranteed here by the
-    // guard above, which TypeScript cannot carry into this callback.
-    providerValue.value.promise =
+    // The two sides take different arguments, so typing them forces the branch
+    // apart. `masterPeerId` is guaranteed here by the guard above, which
+    // TypeScript cannot carry into this callback.
+    const promise =
       mode === "master"
         ? master.default(utils).bindConnection(peer)
         : remote.default(utils).bindConnection(peer, masterPeerId as string);
     // start resolving the promise as soon as possible (it will be used in `usePeer`)
-    void providerValue.value.promise.then(() => {});
-    // register cleanup
+    void promise.then(() => {});
+
+    // Replaced, never mutated: a shallow ref only notifies watchers when its
+    // `.value` is reassigned, not when a member of it is written to.
+    providerValue.value = {
+      peer,
+      promise,
+      mode,
+      masterPeerId,
+      humanizeError: utils.humanizeError,
+      isConnectionFromRemote,
+    };
     onCleanup(() => {
-      // The ref itself is never reassigned, so this guard is always true. It is
-      // preserved as written; `peer` is the instance built just above.
-      if (providerValue.value) {
-        peer.disconnect();
-      }
+      peer.disconnect();
     });
   });
 }

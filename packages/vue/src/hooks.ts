@@ -1,4 +1,4 @@
-import { inject, reactive, toRefs, unref, watchEffect } from "vue";
+import { computed, inject, reactive, ref, toRefs, unref } from "vue";
 import type { ToRefs, UnwrapNestedRefs } from "vue";
 import type {
   HumanizeErrorType,
@@ -11,8 +11,8 @@ import { MyContext } from "./Provider.js";
 import type { WebRTCRemoteControlContextValue } from "./Provider.js";
 
 /**
- * The reactive object `usePeer` builds: the two readiness flags and the
- * resolved core api, on top of everything the provider put on the injected ref.
+ * The reactive object `usePeer` builds: `ready` and the resolved core api, on
+ * top of everything the provider put on the injected ref.
  *
  * `M` selects which side you are on, so `api` and `isConnectionFromRemote` are
  * typed for it. It defaults to neither, matching what the hook can actually
@@ -22,8 +22,6 @@ import type { WebRTCRemoteControlContextValue } from "./Provider.js";
 export interface UsePeerState<
   M extends "remote" | "master",
 > extends WebRTCRemoteControlContextValue {
-  /** True once the peer instance the provider built is readable. */
-  peerReady: boolean;
   ready: boolean;
   api?: M extends "remote"
     ? RemoteBindConnectionApiResolved
@@ -44,26 +42,24 @@ export function usePeer<
   M extends "remote" | "master" = "remote" | "master",
 >(): UsePeerResult<M> {
   const context = inject(MyContext);
+  /**
+   * `provideWebTCRemoteControl`'s effect runs synchronously while the
+   * provider's own `setup()` runs, and Vue always finishes a parent's
+   * `setup()` before a child's starts - so `context` already carries the
+   * resolved `peer` and `promise` by the time this hook runs. Only the
+   * promise's own resolution is genuinely asynchronous, so that is the only
+   * thing left to wait on.
+   */
+  const api = ref<
+    MasterBindConnectionApiResolved | RemoteBindConnectionApiResolved | null
+  >(null);
+  void context?.value.promise?.then((wrcApi) => {
+    api.value = wrcApi;
+  });
   const result = reactive({
     ...unref(context),
-    // track if the peer object is ready (to allow consumer to subscribe to error event)
-    peerReady: false,
-    // track if the hook is fully ready
-    ready: false,
-    api: null as
-      | MasterBindConnectionApiResolved
-      | RemoteBindConnectionApiResolved
-      | null,
-  });
-  watchEffect(() => {
-    // run on next tick (ensure the `then` of the Provider has executed + retrieve the api from the resolve promise)
-    void Promise.resolve().then(() => {
-      result.peerReady = true;
-      void context?.value.promise?.then((wrcApi) => {
-        result.ready = true;
-        result.api = wrcApi;
-      });
-    });
+    api,
+    ready: computed(() => api.value !== null),
   });
   // The conditional members of `UsePeerState` are keyed on `M`, which the caller
   // chooses; the hook reads the mode off the injected value at runtime and

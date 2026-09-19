@@ -45,13 +45,15 @@ expectTypeOf<ReturnType<typeof currentProvide>>().toEqualTypeOf<
 >();
 
 // The refs a consumer holds after calling the hook, on each side. Everything
-// the old result offered is still there, with the same types.
-expectTypeOf<ReturnType<typeof currentUsePeer<"master">>>().toExtend<
-  ReturnType<typeof legacyUsePeer<"master">>
->();
-expectTypeOf<ReturnType<typeof currentUsePeer<"remote">>>().toExtend<
-  ReturnType<typeof legacyUsePeer<"remote">>
->();
+// the old result offered is still there, with the same types - except
+// `peerReady`, which is excluded because it no longer exists. See the
+// deviation below.
+expectTypeOf<
+  Omit<ReturnType<typeof currentUsePeer<"master">>, "peerReady">
+>().toExtend<Omit<ReturnType<typeof legacyUsePeer<"master">>, "peerReady">>();
+expectTypeOf<
+  Omit<ReturnType<typeof currentUsePeer<"remote">>, "peerReady">
+>().toExtend<Omit<ReturnType<typeof legacyUsePeer<"remote">>, "peerReady">>();
 
 /**
  * One deliberate deviation, asserted rather than left implicit. It is the same
@@ -69,3 +71,19 @@ expectTypeOf<CurrentOptions["humanErrors"]>().toEqualTypeOf<
 expectTypeOf<LegacyOptions["humanErrors"]>().not.toEqualTypeOf<
   CurrentOptions["humanErrors"]
 >();
+
+/**
+ * The other deliberate deviation. `peerReady` flipped once the injected `peer`
+ * existed - back when the context was a ref mutated in place, so a flag
+ * flipped from an effect was the only way a consumer could learn something
+ * had changed. The provider now replaces the injected value wholesale once
+ * the peer exists, so `peer` itself is already on the context by the time
+ * `usePeer` runs; a consumer that wants to know when it exists can watch
+ * `peer` directly and does not need a second flag for it.
+ */
+expectTypeOf<ReturnType<typeof legacyUsePeer<"master">>>().toHaveProperty(
+  "peerReady",
+);
+expectTypeOf<ReturnType<typeof currentUsePeer<"master">>>().not.toHaveProperty(
+  "peerReady",
+);
