@@ -251,16 +251,6 @@ opening the master page and connecting three remotes - and the assertion helpers
 - **Vitest's default `include` matches `*.spec.ts`.** The demo's Vitest project excludes
   `e2e/**` for that reason - without it, `vp test` collects the Playwright suite and fails.
 
-## Things that are already broken by age
-
-- `packages/react/src/Provider.tsx` lists `utils` in its `useEffect` dependencies, and
-  `utils` is rebuilt every render, so the effect re-runs every render - tearing the
-  connection down and calling `init` again each time. `src/react.test.tsx` pins the
-  behaviour so the fix cannot land unnoticed. Oxlint's React Compiler rules also flag the
-  provider for handing out a ref's `.current` during render, which is the same design
-  knot. Both are left as warnings rather than silenced; fixing them is a behaviour change
-  and belongs in its own pull request.
-
 ## Conventions
 
 - Commits follow Conventional Commits; commitlint runs on the commit-msg hook.

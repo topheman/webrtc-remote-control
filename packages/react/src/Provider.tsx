@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useRef } from "react";
+import React, { createContext, useEffect, useRef, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { master, prepareUtils, remote } from "@webrtc-remote-control/core";
 import type {
@@ -39,8 +39,8 @@ export interface ProviderProps {
 
 /**
  * What the provider puts on the context, and what `usePeer` spreads into its
- * result. It is a ref that is mutated in place, so everything but `mode` is
- * filled in by the effect rather than at construction.
+ * result. Everything but `mode` and `masterPeerId` is filled in by the effect,
+ * so the value starts out mostly empty and is replaced once the peer exists.
  */
 export interface WebRTCRemoteControlContextValue {
   peer: PeerInstance | null;
@@ -84,64 +84,76 @@ export function Provider({
   if (mode === "remote" && !masterPeerId) {
     throw new Error(`\`masterPeerId\` prop required in "remote" mode.`);
   }
-  const utils = prepareUtils({
-    sessionStorageKey,
-    humanErrors,
-  });
-  const providerValue = useRef<WebRTCRemoteControlContextValue>({
-    peer: null,
-    promise: null,
-    mode,
-    masterPeerId,
-  });
+  /**
+   * `init` and `humanErrors` are read by the connection effect but deliberately
+   * kept out of its dependencies: a caller writing `init={({ getPeerId }) => ...}`
+   * inline hands a fresh function every render, and re-running the effect on that
+   * would tear the peer down and rebuild it. The connection belongs to a
+   * `mode`/`masterPeerId` pair, not to a callback identity, so the latest value is
+   * mirrored onto a ref instead. This effect is declared first, so on mount it runs
+   * before the one below.
+   */
+  const initRef = useRef(init);
+  const humanErrorsRef = useRef(humanErrors);
   useEffect(() => {
-    // expose the following on the ref forwarded to the provider
-    providerValue.current.mode = mode;
-    providerValue.current.humanizeError = utils.humanizeError;
-    if (mode === "master") {
-      providerValue.current.isConnectionFromRemote =
-        utils.isConnectionFromRemote;
-    }
+    initRef.current = init;
+    humanErrorsRef.current = humanErrors;
+  });
+  /**
+   * The context value is replaced, never mutated: the provider used to hand out a
+   * ref's `.current` and write onto it from the effect, which meant consumers had
+   * no way to learn the peer had arrived - `usePeer` compensated with a state flag
+   * it flipped on a microtask. Setting state here makes the arrival a normal
+   * render, and `usePeer` can just wait on the promise it is given.
+   */
+  const [contextValue, setContextValue] =
+    useState<WebRTCRemoteControlContextValue>(() => ({
+      peer: null,
+      promise: null,
+      mode,
+      masterPeerId,
+    }));
+  useEffect(() => {
+    // Built here rather than during render: `prepareUtils` returns a fresh object
+    // every call, and keeping it out of render keeps it out of the dependencies.
+    const utils = prepareUtils({
+      sessionStorageKey,
+      humanErrors: humanErrorsRef.current,
+    });
+    const isConnectionFromRemote =
+      mode === "master" ? utils.isConnectionFromRemote : undefined;
 
     // init callback that should return a peer instance like:
     // `({ getPeerId }) => new Peer(getPeerId())`
-    const peer = init({
+    const peer = initRef.current({
       humanizeError: utils.humanizeError,
       getPeerId: utils.getPeerId,
-      isConnectionFromRemote:
-        mode === "master" ? utils.isConnectionFromRemote : undefined,
+      isConnectionFromRemote,
     });
-    providerValue.current.peer = peer;
 
-    // Before the port this was one expression, and it passed
-    // `remote ? masterPeerId : undefined` as the second argument. `remote` is an
-    // imported module, so that test was always true and the argument was always
-    // `masterPeerId` - harmless, because master mode guarantees it is undefined
-    // and master's `bindConnection` ignores a second argument anyway. The two
-    // sides take different arguments, so typing them forces the branch apart;
-    // what reaches peerjs is unchanged. `masterPeerId` is guaranteed here by the
-    // guard above, which TypeScript cannot carry into this callback.
-    providerValue.current.promise =
+    // The two sides take different arguments, so typing them forces the branch
+    // apart. `masterPeerId` is guaranteed in remote mode by the guard above, which
+    // TypeScript cannot carry into this callback.
+    const promise =
       mode === "master"
         ? master.default(utils).bindConnection(peer)
         : remote.default(utils).bindConnection(peer, masterPeerId as string);
     // start resolving the promise as soon as possible (it will be used in `usePeer`)
-    void providerValue.current.promise.then(() => {});
+    void promise.then(() => {});
+
+    setContextValue({
+      peer,
+      promise,
+      mode,
+      masterPeerId,
+      humanizeError: utils.humanizeError,
+      isConnectionFromRemote,
+    });
     return () => {
-      // The ref itself is never reassigned, so this guard is always true. It is
-      // preserved as written; `peer` is the instance built just above.
-      if (providerValue.current) {
-        peer.disconnect();
-      }
+      peer.disconnect();
     };
-    // KNOWN QUIRK, preserved on purpose: `utils` is rebuilt on every render, so
-    // this effect tears the connection down and calls `init` again on every
-    // re-render. `src/react.test.tsx` pins it. Fixing it is a behavior change
-    // and belongs in its own pull request.
-  }, [mode, masterPeerId, init, utils]);
+  }, [mode, masterPeerId, sessionStorageKey]);
   return (
-    <MyContext.Provider value={providerValue.current}>
-      {children}
-    </MyContext.Provider>
+    <MyContext.Provider value={contextValue}>{children}</MyContext.Provider>
   );
 }
