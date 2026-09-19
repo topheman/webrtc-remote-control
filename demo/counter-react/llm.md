@@ -117,14 +117,10 @@ const init = ({ getPeerId }) =>
   });
 ```
 
-Two things are worth knowing before you copy PeerJS's defaults. Its default
+One thing is worth knowing before you copy PeerJS's defaults: its default
 `iceServers` pairs that STUN server with two TURN hosts that no longer resolve,
-so every connection attempt logs an ICE failure for them - listing only the STUN
-entry is quieter and connects just as well on a local network. And its default
-host, `0.peerjs.com`, hangs indefinitely on some mobile carriers
-([peers/peerjs#948](https://github.com/peers/peerjs/issues/948#issuecomment-1107437915)),
-which is a real risk for this library specifically: the remote side is usually a
-phone.
+so every connection attempt logs an ICE failure for them. Listing only the STUN
+entry is quieter and connects just as well on a local network.
 
 ### 2. Master Component Implementation
 

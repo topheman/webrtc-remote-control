@@ -16,9 +16,8 @@ export function getPeerjsConfig(): PeerOptions {
       config: { iceServers: ICE_SERVERS },
     };
   }
-  // default case, we use the alternate server since on some mobile carriers (orange - France)
-  // the default host 0.peerjs.com hangs on forever - see https://github.com/peers/peerjs/issues/948#issuecomment-1107437915
-  // todo what if this fix triggers the same kind of problem on other carriers ? implement some kind of balancing ?
+  // default case: PeerJS's own public server, spelled out rather than left to
+  // the library's defaults so the `iceServers` above apply.
   return {
     host: "0.peerjs.com",
     port: 443,
