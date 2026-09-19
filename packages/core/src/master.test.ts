@@ -289,14 +289,38 @@ describe("master", () => {
       second.emitOpen();
       onDisconnect.mockClear();
 
-      // Simulate peerjs finally noticing the first connection failed, well
-      // after it was already superseded - the scenario the CI flake in
-      // `reconnects peers after a reload` traced back to.
+      // A second "close" on a connection the master already closed itself.
+      // Real peerjs 1.5.5 only emits "close" once, and only for a connection
+      // that was open, so this is a defensive guard rather than a path the
+      // CI flake took - the fake emits on demand, which is what makes the
+      // guard observable here.
       first.emitClose();
 
       expect(onDisconnect).not.toHaveBeenCalled();
       expect(wrc.sendTo("remote-1", { ping: true })).not.toBe(null);
       expect(second.send).toHaveBeenCalledWith({ ping: true });
+    });
+
+    it("should emit `remote.disconnect` for the old connection before `remote.connect` for its replacement", async () => {
+      const { peer, promise } = makeWrcMaster();
+      peer.emitOpen();
+      const wrc = await promise;
+      const calls: string[] = [];
+      wrc.on("remote.connect", () => calls.push("connect"));
+      wrc.on("remote.disconnect", () => calls.push("disconnect"));
+
+      const first = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(first);
+      first.emitOpen();
+
+      // The e2e reload scenario reads this order off the master's event log:
+      // the drop is announced when the replacement arrives, the reconnect
+      // when the replacement opens, never the other way round.
+      const second = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(second);
+      second.emitOpen();
+
+      expect(calls).toEqual(["connect", "disconnect", "connect"]);
     });
 
     it("should announce a connection once even if peerjs fires `open` on it twice", async () => {
