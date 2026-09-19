@@ -253,12 +253,6 @@ opening the master page and connecting three remotes - and the assertion helpers
 
 ## Things that are already broken by age
 
-- `remote.ts` installs a `beforeunload` handler that calls `conn.disconnect()` if it
-  exists. `disconnect` is a method of peerjs's `Peer`, not of `DataConnection`, so against
-  real peerjs the guard has never been true and the handler does nothing. TypeScript
-  surfaced it during the port; it is preserved, annotated on both sides, and pinned by a
-  test that only passes because the fake connection has a `disconnect`. Fixing it means
-  calling `conn.close()`, which really does change what happens on page unload.
 - `packages/react/src/Provider.tsx` lists `utils` in its `useEffect` dependencies, and
   `utils` is rebuilt every render, so the effect re-runs every render - tearing the
   connection down and calling `init` again each time. `src/react.test.tsx` pins the
