@@ -1,5 +1,26 @@
 # Change Log
 
+## 0.3.0
+
+### Minor Changes
+
+- [#57](https://github.com/topheman/webrtc-remote-control/pull/57) [`a08506c`](https://github.com/topheman/webrtc-remote-control/commit/a08506c5f15d91e470e1576a2e41c40f21220c0e) Thanks [@topheman](https://github.com/topheman)! - The injected context is now replaced rather than mutated in place: `usePeer`
+  no longer waits on a `Promise.resolve()` microtask to notice the peer has
+  arrived, and `ready` is now derived directly from whether the resolved api is
+  there instead of being flipped by a separate effect.
+  
+  `peerReady` is removed from `usePeer`'s result. It existed only to tell a
+  consumer the injected `peer` had become non-null, which was needed because the
+  old context was a `shallowRef` mutated in place - `peer` itself never
+  triggered reactivity. Now that the context is replaced wholesale once the peer
+  exists, `peer` is available (and reactive) on its own; a consumer that
+  watched `peerReady` should watch `peer` directly instead.
+
+### Patch Changes
+
+- Updated dependencies [[`3653ddd`](https://github.com/topheman/webrtc-remote-control/commit/3653ddd1e75caa0b4dbb37845ab31b3d26c48426), [`d953051`](https://github.com/topheman/webrtc-remote-control/commit/d95305190e1add0364aef6d2179ea21130c5be6d), [`85141d3`](https://github.com/topheman/webrtc-remote-control/commit/85141d3a65dffdda92d93765826959476a7d32d7), [`9ffcfdf`](https://github.com/topheman/webrtc-remote-control/commit/9ffcfdf03434dcf5adc5e76926219ac5558cac92), [`acc08e1`](https://github.com/topheman/webrtc-remote-control/commit/acc08e1f9661a6cd5395b96a7eb470569bd0c9e1)]:
+  - @webrtc-remote-control/core@0.3.0
+
 ## 0.2.1
 
 ### Minor Changes
