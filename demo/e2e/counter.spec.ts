@@ -78,7 +78,10 @@ test("reconnects peers after a reload", async ({ demo }) => {
   }
 
   // A remote that reloads comes back on the same peer id, and the master sees
-  // it drop and rejoin.
+  // it drop and rejoin. `expectLatestEvents` reads newest-first, so this
+  // array is chronologically disconnect-then-connect: the master closes the
+  // stale connection itself as soon as the reconnect arrives, rather than
+  // waiting on peerjs's own failure detection, so the drop is deterministic.
   await reloaded.page.reload();
   expect(await waitForPeerId(reloaded.page)).toBe(reloaded.peerId);
   await expectLatestEvents(demo.masterPage, [

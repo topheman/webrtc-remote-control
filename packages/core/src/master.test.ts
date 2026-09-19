@@ -251,5 +251,52 @@ describe("master", () => {
       expect(first.send).not.toHaveBeenCalled();
       expect(second.send).toHaveBeenCalledWith({ ping: true });
     });
+
+    it("should close and disconnect a superseded connection as soon as its replacement arrives", async () => {
+      const { peer, promise } = makeWrcMaster();
+      peer.emitOpen();
+      const wrc = await promise;
+      const onDisconnect = vi.fn<(payload: { id: string }) => void>();
+      wrc.on("remote.disconnect", onDisconnect);
+
+      const first = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(first);
+      first.emitOpen();
+
+      // The replacement connecting is what makes `first` stale - real peerjs
+      // can take an indeterminate time to notice on its own, which is what
+      // let a reconnecting remote go silently undelivered-to in production.
+      const second = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(second);
+
+      expect(first.close).toHaveBeenCalledTimes(1);
+      expect(onDisconnect).toHaveBeenCalledWith({ id: "remote-1" });
+    });
+
+    it("should not let a superseded connection's belated close evict its replacement", async () => {
+      const { peer, promise } = makeWrcMaster();
+      peer.emitOpen();
+      const wrc = await promise;
+      const onDisconnect = vi.fn<(payload: { id: string }) => void>();
+      wrc.on("remote.disconnect", onDisconnect);
+
+      const first = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(first);
+      first.emitOpen();
+
+      const second = makeFakeConnection({ peer: "remote-1" });
+      peer.emitConnection(second);
+      second.emitOpen();
+      onDisconnect.mockClear();
+
+      // Simulate peerjs finally noticing the first connection failed, well
+      // after it was already superseded - the scenario the CI flake in
+      // `reconnects peers after a reload` traced back to.
+      first.emitClose();
+
+      expect(onDisconnect).not.toHaveBeenCalled();
+      expect(wrc.sendTo("remote-1", { ping: true })).not.toBe(null);
+      expect(second.send).toHaveBeenCalledWith({ ping: true });
+    });
   });
 });

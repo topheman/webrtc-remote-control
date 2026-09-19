@@ -76,7 +76,13 @@ export default function prepare({
           if (!isConnectionFromRemote(conn)) {
             return;
           }
-          // if this is a reconnect from the same peer, replace connection with the latest one
+          // A reconnect under the same peer id supersedes whatever this master
+          // was still holding for it. Closing that connection now, rather than
+          // waiting for peerjs's own failure detection to notice it went
+          // stale, keeps `remote.disconnect` prompt instead of racing an
+          // indeterminate amount of time behind the reconnection that caused
+          // it.
+          connections.get(conn.peer)?.close();
           connections.set(conn.peer, conn);
           conn.on("open", () => {
             ee.emit("remote.connect", { id: conn.peer });
@@ -85,6 +91,13 @@ export default function prepare({
             ee.emit("data", { id: conn.peer, from: "remote" }, data);
           });
           conn.on("close", () => {
+            // A connection already superseded in the map must not evict its
+            // replacement, nor announce a disconnect for a peer that never
+            // actually left - this is what a stale connection's belated
+            // close would otherwise do.
+            if (connections.get(conn.peer) !== conn) {
+              return;
+            }
             connections.delete(conn.peer);
             ee.emit("remote.disconnect", { id: conn.peer });
           });
