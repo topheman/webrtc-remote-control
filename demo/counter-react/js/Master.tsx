@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { usePeer } from "@webrtc-remote-control/react";
+import { useMaster } from "@webrtc-remote-control/react";
 import type { WrcMasterEvents } from "@webrtc-remote-control/core/master";
 
 import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
@@ -41,9 +41,9 @@ export default function Master() {
   const [remotesList, setRemotesList] = useState<RemoteCounter[]>([]);
   const [errors, setErrors] = useState<string[] | null>(null);
 
-  // `ready` guards every use of `api` and `peer`, but it is a boolean the
-  // compiler cannot tie to them, hence the assertions below.
-  const { ready, api, peer, humanizeError } = usePeer<"master">();
+  // `ready` is the discriminant of the union the hook returns, so it narrows
+  // `api` and `peer` on its own - nothing below needs an assertion.
+  const { ready, api, peer, humanizeError } = useMaster();
 
   const onRemoteConnect: WrcMasterEvents["remote.connect"] = ({ id }) => {
     const countersFromStorage = getCountersFromStorage();
@@ -91,22 +91,22 @@ export default function Master() {
 
   useEffect(() => {
     if (ready) {
-      setPeerId(peer!.id);
+      setPeerId(peer.id);
       logger.log({
         event: "open",
         comment: "Master connected",
-        payload: { id: peer!.id },
+        payload: { id: peer.id },
       });
-      api!.on("remote.connect", onRemoteConnect);
-      api!.on("remote.disconnect", onRemoteDisconnect);
-      api!.on("data", onData);
+      api.on("remote.connect", onRemoteConnect);
+      api.on("remote.disconnect", onRemoteDisconnect);
+      api.on("data", onData);
     }
     return () => {
       console.log("Master.tsx.cleanup");
       if (ready) {
-        api!.off("remote.connect", onRemoteConnect);
-        api!.off("remote.disconnect", onRemoteDisconnect);
-        api!.off("data", onData);
+        api.off("remote.connect", onRemoteConnect);
+        api.off("remote.disconnect", onRemoteDisconnect);
+        api.off("data", onData);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,7 +123,7 @@ export default function Master() {
         data={remotesList}
         onPingAll={() => {
           if (ready) {
-            api!.sendAll({
+            api.sendAll({
               type: "PING",
               date: new Date(),
             });
@@ -131,7 +131,7 @@ export default function Master() {
         }}
         onPing={(id) => {
           if (ready) {
-            api!.sendTo(id!, {
+            api.sendTo(id!, {
               type: "PING",
               date: new Date(),
             });

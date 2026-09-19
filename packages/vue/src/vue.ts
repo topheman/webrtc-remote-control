@@ -1,10 +1,13 @@
-export { provideWebTCRemoteControl } from "./Provider.js";
-export { usePeer } from "./hooks.js";
+export { provideMaster, provideRemote } from "./Provider.js";
+export { useMaster, useRemote } from "./hooks.js";
 
 export type {
+  Connection,
+  MasterUtils,
   PeerInstance,
-  ProvideInitOptions,
-  ProvideWebRTCRemoteControlOptions,
-  WebRTCRemoteControlContextValue,
+  ProvideOptions,
+  ProvideRemoteOptions,
+  RemoteUtils,
+  UseMasterResult,
+  UseRemoteResult,
 } from "./Provider.js";
-export type { UsePeerResult, UsePeerState } from "./hooks.js";
