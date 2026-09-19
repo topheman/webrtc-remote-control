@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import type {
   HumanizeErrorType,
   IsConnectionFromRemoteType,
@@ -8,6 +8,11 @@ import type {
 
 import { MyContext } from "./Provider.js";
 import type { WebRTCRemoteControlContextValue } from "./Provider.js";
+
+/** The promise the provider puts on the context, once it is there. */
+type ResolvedApiPromise = NonNullable<
+  WebRTCRemoteControlContextValue["promise"]
+>;
 
 /**
  * What `usePeer` returns: the readiness flag and the resolved core api, plus
@@ -35,33 +40,40 @@ export interface UsePeerResult<
 export function usePeer<
   M extends "remote" | "master" = "remote" | "master",
 >(): UsePeerResult<M> {
-  // track if the hook is fully ready
-  const [ready, setReady] = useState(false);
-  // track if the peer object is ready (to allow consumer to subscribe to error event)
-  const [, setPeerReady] = useState(false);
   const context = useContext(MyContext);
-  const resolvedWrcApi = useRef<
-    MasterBindConnectionApiResolved | RemoteBindConnectionApiResolved | null
-  >(null);
+  const promise = context?.promise;
+  /**
+   * The resolved api is stored next to the promise it came from. A new promise
+   * means the provider rebuilt the connection, so the previous api belongs to a
+   * peer that has been disconnected; comparing the two during render drops it
+   * without an extra effect and an extra render to do the resetting.
+   */
+  const [resolved, setResolved] = useState<{
+    promise: ResolvedApiPromise;
+    api: MasterBindConnectionApiResolved | RemoteBindConnectionApiResolved;
+  } | null>(null);
   useEffect(() => {
-    // run on next tick (ensure the `then` of the Provider has executed + retrieve the api from the resolve promise)
-    void Promise.resolve().then(() => {
-      setPeerReady(true); // peer object is not null anymore
-      void context?.promise?.then((wrcApi) => {
-        resolvedWrcApi.current = wrcApi;
-        setReady(true);
-      });
+    if (!promise) {
+      return;
+    }
+    let current = true;
+    void promise.then((api) => {
+      if (current) {
+        setResolved({ promise, api });
+      }
     });
-    // Mount only, on purpose: the provider resolves its promise once, and
-    // re-subscribing on every render would reset `ready`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => {
+      current = false;
+    };
+  }, [promise]);
+  const api =
+    resolved !== null && resolved.promise === promise ? resolved.api : null;
   // The conditional members of `UsePeerResult` are keyed on `M`, which the
   // caller chooses; the hook reads the mode off the context at runtime and
   // cannot narrow to it, so the assembled object is asserted once here.
   return {
-    ready,
-    api: resolvedWrcApi.current,
+    ready: api !== null,
+    api,
     ...context,
   } as unknown as UsePeerResult<M>;
 }

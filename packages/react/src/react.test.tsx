@@ -178,9 +178,7 @@ describe("react", () => {
   });
 
   describe("re-render", () => {
-    // KNOWN QUIRK, pinned on purpose: `utils` is rebuilt on every render and sits in the
-    // effect's dependency array, so any re-render tears the peer down and calls `init` again.
-    it("should re-run `init` on every re-render", () => {
+    it("should not re-run `init` when the provider re-renders", () => {
       const init = vi.fn<ProviderProps["init"]>(() => makeFakePeer());
       const { rerender } = render(
         <WebRTCRemoteControlProvider mode="master" init={init}>
@@ -196,7 +194,61 @@ describe("react", () => {
         </WebRTCRemoteControlProvider>,
       );
 
+      expect(init).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not re-run `init` when the `init` prop is a fresh inline function", () => {
+      // What every consumer actually writes: `init={({ getPeerId }) => new Peer(...)}`.
+      // A new identity every render is the normal case, not an abuse.
+      const peer = makeFakePeer();
+      const calls: number[] = [];
+      const renderWith = (n: number) => (
+        <WebRTCRemoteControlProvider
+          mode="master"
+          init={() => {
+            calls.push(n);
+            return peer;
+          }}
+        >
+          <Consumer />
+        </WebRTCRemoteControlProvider>
+      );
+      const { rerender } = render(renderWith(1));
+
+      expect(calls).toEqual([1]);
+
+      rerender(renderWith(2));
+      rerender(renderWith(3));
+
+      expect(calls).toEqual([1]);
+      expect(peer.disconnect).not.toHaveBeenCalled();
+    });
+
+    it("should rebuild the connection when `mode` changes", () => {
+      const first = makeFakePeer({ id: "master-peer-id" });
+      const second = makeFakePeer({ id: "remote-peer-id" });
+      const init = vi
+        .fn<ProviderProps["init"]>()
+        .mockReturnValueOnce(first)
+        .mockReturnValueOnce(second);
+      const { rerender } = render(
+        <WebRTCRemoteControlProvider mode="master" init={init}>
+          <Consumer />
+        </WebRTCRemoteControlProvider>,
+      );
+
+      rerender(
+        <WebRTCRemoteControlProvider
+          mode="remote"
+          masterPeerId="master-peer-id"
+          init={init}
+        >
+          <Consumer />
+        </WebRTCRemoteControlProvider>,
+      );
+
       expect(init).toHaveBeenCalledTimes(2);
+      expect(first.disconnect).toHaveBeenCalledTimes(1);
     });
   });
 });
