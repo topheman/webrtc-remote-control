@@ -63,7 +63,7 @@ The library handles the WebRTC connections. What is left to you:
 You should initialize the WebRTC context like this:
 
 ```tsx
-const init = ({ getPeerId }) => new Peer(getPeerId(), getPeerjsConfig());
+const init = ({ getPeerId }) => new Peer(getPeerId());
 const SESSION_STORAGE_KEY = "webrtc-remote-control-peer-id-react";
 
 const masterPeerId = window.location.hash.replace("#", "");
@@ -93,10 +93,38 @@ What those props carry:
   writable.
 - `init` returns the PeerJS peer. Both providers hand it their own utilities, so
   the same callback works for both as long as it only reads what they share.
+  `getPeerId()` gives you the id kept in session storage, or `undefined` the
+  first time round - PeerJS reads that as "allocate me one".
 - `sessionStorageKey` is what makes reconnection after a reload work. The peer id is stored
   under it, so a reloaded page asks PeerJS for the same id instead of being handed a new one.
   Give each mode of your app its own key, or two pages open side by side will fight over one
   id. Session storage is per tab, which is why it is the right place for this.
+
+### 1b. Pointing PeerJS somewhere else (optional)
+
+`new Peer` takes an options object as its second argument, and the library
+passes whatever you build straight through - it never looks at it. You only need
+this if the public signaling server is not what you want:
+
+```tsx
+const init = ({ getPeerId }) =>
+  new Peer(getPeerId(), {
+    // your own signaling server, rather than the public one
+    host: "localhost",
+    port: 9000,
+    path: "/myapp",
+    config: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] },
+  });
+```
+
+Two things are worth knowing before you copy PeerJS's defaults. Its default
+`iceServers` pairs that STUN server with two TURN hosts that no longer resolve,
+so every connection attempt logs an ICE failure for them - listing only the STUN
+entry is quieter and connects just as well on a local network. And its default
+host, `0.peerjs.com`, hangs indefinitely on some mobile carriers
+([peers/peerjs#948](https://github.com/peers/peerjs/issues/948#issuecomment-1107437915)),
+which is a real risk for this library specifically: the remote side is usually a
+phone.
 
 ### 2. Master Component Implementation
 
