@@ -42,8 +42,8 @@ async function init() {
 
   // create your own PeerJS connection
   const peer = new Peer(
-    // see the note in `master.ts` - a null id means "generate one"
-    getPeerId() as string,
+    // see the note in `master.ts` - an undefined id means "generate one"
+    getPeerId(),
     // line bellow is optional - you can rely on the signaling server exposed by peerjs
     getPeerjsConfig(),
   );

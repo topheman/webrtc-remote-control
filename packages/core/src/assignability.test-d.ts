@@ -61,11 +61,14 @@ expectTypeOf<
  * 1. `getPeerId` was declared to return `string`. It calls
  *    `sessionStorage.getItem`, which returns `null` when nothing is stored, so
  *    the old declaration was simply wrong and callers were not being told to
- *    handle the empty case.
+ *    handle the empty case. The empty case is spelled `undefined` rather than
+ *    `null` so that `new Peer(getPeerId())` type checks: peerjs's constructor
+ *    takes `string | undefined`, and both values already meant "allocate me
+ *    one" at runtime.
  */
 expectTypeOf<
   ReturnType<typeof currentPrepareUtils>["getPeerId"]
->().returns.toEqualTypeOf<string | null>();
+>().returns.toEqualTypeOf<string | undefined>();
 
 /**
  * 2. `bindConnection` took `peer: any`. It now takes peerjs's own `Peer`, which

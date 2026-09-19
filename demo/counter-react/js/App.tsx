@@ -22,9 +22,9 @@ export default function App() {
           mode={mode}
           init={({ getPeerId }) =>
             new Peer(
-              // see the note in the vanilla demo - a null id means
-              // "generate one", which peerjs's declaration does not admit
-              getPeerId() as string,
+              // see the note in the vanilla demo - an undefined id means
+              // "generate one"
+              getPeerId(),
               // line bellow is optional - you can rely on the signaling server exposed by peerjs
               getPeerjsConfig(),
             )

@@ -25,9 +25,9 @@ onBeforeMount(() => {
   provideWebTCRemoteControl(
     ({ getPeerId }) =>
       new Peer(
-        // `getPeerId` returns the id kept in session storage, or null the first
-        // time round - peerjs takes that as "allocate me one".
-        getPeerId() as string,
+        // `getPeerId` returns the id kept in session storage, or undefined the
+        // first time round - peerjs takes that as "allocate me one".
+        getPeerId(),
         // line bellow is optional - you can rely on the signaling server exposed by peerjs
         getPeerjsConfig(),
       ),
