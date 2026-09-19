@@ -373,17 +373,27 @@ describe("remote", () => {
   });
 
   describe("beforeunload", () => {
-    // KNOWN DEFECT, pinned here on purpose: this passes only because the fake
-    // connection has a `disconnect` method. A real peerjs `DataConnection` has
-    // `close`, not `disconnect`, so against real peerjs the handler does
-    // nothing. See the matching note in src/remote.ts.
-    it("should disconnect the connection when the page goes away", async () => {
+    it("should close the connection when the page goes away", async () => {
       const { peer } = await connect();
       const conn: FakeConnection = peer.lastConnection();
 
       window.dispatchEvent(new window.Event("beforeunload"));
 
-      expect(conn.disconnect).toHaveBeenCalledTimes(1);
+      expect(conn.close).toHaveBeenCalledTimes(1);
+    });
+
+    // The close a page teardown causes is not an outage: reconnecting from it
+    // would open a connection the master has to clean up again moments later,
+    // on a page that is going away regardless.
+    it("should not reconnect after closing on unload", async () => {
+      const { peer, wrc } = await connect();
+      const onReconnecting = vi.fn<() => void>();
+      wrc.on("remote.reconnecting", onReconnecting);
+
+      window.dispatchEvent(new window.Event("beforeunload"));
+
+      expect(onReconnecting).not.toHaveBeenCalled();
+      expect(peer.connect).toHaveBeenCalledTimes(1);
     });
   });
 });

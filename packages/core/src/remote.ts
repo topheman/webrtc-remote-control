@@ -173,23 +173,23 @@ export default function prepare({
           conn?.on("error", () => {
             // todo emit some error ? same on master ?
           });
-          // ensure to disconnect remote when the page is closed
+          // Close the connection when the page goes away, so the master hears
+          // about it at once instead of waiting for the data channel to time
+          // out on its own.
           //
-          // KNOWN DEFECT, preserved on purpose: `disconnect` is a method of
-          // peerjs's `Peer`, not of `DataConnection`, so this guard has never
-          // been true against a real connection and the handler has always
-          // been a no-op. TypeScript is what surfaced it. Fixing it means
-          // calling `conn.close()`, which really does change what happens on
-          // page unload, so it belongs in the follow-up that fixes the other
-          // latent bugs rather than in a port meant to change nothing.
-          const onBeforeUnloadPeerDisconnect = () => {
-            const disconnect = (conn as unknown as { disconnect?: () => void })
-              ?.disconnect;
-            if (disconnect) {
-              disconnect.call(conn);
-            }
+          // Retiring the generation first is what keeps this from fighting the
+          // reconnection loop: `close()` makes peerjs emit "close", and
+          // without this the handler would read its own teardown as an outage
+          // and start retrying on a page that is already unloading.
+          const onBeforeUnloadCloseConnection = () => {
+            generation += 1;
+            clearRetryTimer();
+            conn?.close();
           };
-          window.addEventListener("beforeunload", onBeforeUnloadPeerDisconnect);
+          window.addEventListener(
+            "beforeunload",
+            onBeforeUnloadCloseConnection,
+          );
         });
       });
     },
