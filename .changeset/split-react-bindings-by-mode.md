@@ -29,3 +29,15 @@ What changes for a consumer:
 - `humanizeError` is present from the first render. It used to be put on the
   context from inside the connection effect while being typed as always there,
   so it was `undefined` until that effect ran.
+
+The exported types are renamed to match. A JavaScript consumer is unaffected; a
+TypeScript one that imports any of these has to update the import:
+
+| Before                                                | Now                                          |
+| ----------------------------------------------------- | -------------------------------------------- |
+| `ProviderProps`                                       | `MasterProviderProps`, `RemoteProviderProps` |
+| `ProviderInitOptions`, what `init` is handed          | `MasterUtils`, `RemoteUtils`                 |
+| `WebRTCRemoteControlContextValue`, `UsePeerResult<M>` | `UseMasterResult`, `UseRemoteResult`         |
+
+`Connection<TApi>` is new: it is the `ready`/`api`/`peer` union both hook
+results are built from, exported so a consumer can name the narrowed value.

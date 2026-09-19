@@ -19,3 +19,15 @@ discriminated union: `if (state.value.ready)` narrows `state.value.api` and
 Also gone: `peerReady`, which only existed because the context used to be a ref
 mutated in place, and `masterPeerId` as an optional option - it is required by
 `provideRemote` and absent from `provideMaster`.
+
+The exported types are renamed to match. A JavaScript consumer is unaffected; a
+TypeScript one that imports any of these has to update the import:
+
+| Before                                                                   | Now                                      |
+| ------------------------------------------------------------------------ | ---------------------------------------- |
+| `ProvideWebRTCRemoteControlOptions`                                      | `ProvideOptions`, `ProvideRemoteOptions` |
+| `ProvideInitOptions`, what `init` is handed                              | `MasterUtils`, `RemoteUtils`             |
+| `WebRTCRemoteControlContextValue`, `UsePeerState<M>`, `UsePeerResult<M>` | `UseMasterResult`, `UseRemoteResult`     |
+
+`Connection<TApi>` is new: it is the `ready`/`api`/`peer` union `state` holds,
+exported so a consumer can name the narrowed value.
