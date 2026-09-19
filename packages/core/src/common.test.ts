@@ -14,7 +14,7 @@ describe("common", () => {
     });
     it("should persist state with default key", () => {
       const { getPeerId, setPeerIdToSessionStorage } = makeStoreAccessor();
-      expect(getPeerId()).toBeFalsy();
+      expect(getPeerId()).toBeUndefined();
 
       setPeerIdToSessionStorage("foo");
 
@@ -26,7 +26,7 @@ describe("common", () => {
     it("should persist state with default key", () => {
       const { getPeerId, setPeerIdToSessionStorage } =
         makeStoreAccessor("some-other-key");
-      expect(getPeerId()).toBeFalsy();
+      expect(getPeerId()).toBeUndefined();
 
       setPeerIdToSessionStorage("bar");
 

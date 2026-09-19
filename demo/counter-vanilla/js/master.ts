@@ -39,9 +39,9 @@ async function init() {
 
   // create your own PeerJS connection
   const peer = new Peer(
-    // `getPeerId` returns null on a first visit; peerjs treats any falsy id as
-    // "generate one for me", but its own declaration only admits `string`.
-    getPeerId() as string,
+    // `getPeerId` returns undefined on a first visit, which is how peerjs
+    // spells "generate one for me".
+    getPeerId(),
     // line bellow is optional - you can rely on the signaling server exposed by peerjs
     getPeerjsConfig(),
   );

@@ -60,7 +60,7 @@ You should initialize the WebRTC context like this:
 ```tsx
 <WebRTCRemoteControlProvider
   mode={mode}
-  init={({ getPeerId }) => new Peer(getPeerId() as string, getPeerjsConfig())}
+  init={({ getPeerId }) => new Peer(getPeerId(), getPeerjsConfig())}
   masterPeerId={window.location.hash?.replace("#", "") || undefined}
   sessionStorageKey="webrtc-remote-control-peer-id-react"
 >
