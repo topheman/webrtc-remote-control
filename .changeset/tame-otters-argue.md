@@ -16,3 +16,11 @@ application still showed as connected, and a `remote.disconnect` fired for a
 peer that had not actually left. The master now closes a superseded connection
 the moment it learns of its replacement, and ignores a stale connection's own
 close if something has already taken its place in the map.
+
+The master also enforces its own event contract now: exactly one
+`remote.connect` per tracked connection, none for a connection it has already
+replaced, and a `remote.disconnect` only for a connection it actually
+announced. Under a signaling server replaying queued offers to a master that
+just came back, peerjs could hand the master two connections for one remote and
+open both, which showed up as a duplicate `remote.connect` and, in an
+application keeping a list per event, a remote listed twice.

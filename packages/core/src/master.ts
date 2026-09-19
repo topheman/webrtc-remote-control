@@ -84,7 +84,17 @@ export default function prepare({
           // it.
           connections.get(conn.peer)?.close();
           connections.set(conn.peer, conn);
+          // Whether this connection has been announced with `remote.connect`.
+          // The contract is one `remote.connect` per `remote.disconnect` for a
+          // given id, and it is enforced here rather than trusted to peerjs:
+          // a connection this master no longer holds must not announce
+          // itself, and one that already did must not do it again.
+          let announced = false;
           conn.on("open", () => {
+            if (announced || connections.get(conn.peer) !== conn) {
+              return;
+            }
+            announced = true;
             ee.emit("remote.connect", { id: conn.peer });
           });
           conn.on("data", (data) => {
@@ -99,6 +109,9 @@ export default function prepare({
               return;
             }
             connections.delete(conn.peer);
+            if (!announced) {
+              return;
+            }
             ee.emit("remote.disconnect", { id: conn.peer });
           });
         });
