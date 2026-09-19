@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useSessionStorage } from "@vueuse/core";
-import { usePeer } from "@webrtc-remote-control/vue";
+import { useRemote } from "@webrtc-remote-control/vue";
 import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
 import "../../shared/js/components/errors-display";
@@ -43,8 +43,8 @@ const name = useSessionStorage("remote-name", "");
 const errors = ref<string[] | null>(null);
 const reversedLogs = computed(() => [...logs.value].reverse());
 
-// see the note in `Master.vue` about `ready` and the assertions below
-const { ready, api, peer, humanizeError } = usePeer<"remote">();
+// see the note in `Master.vue` about `state` narrowing `api` and `peer`
+const { state, humanizeError } = useRemote();
 
 const onRemoteDisconnect: WrcRemoteEvents["remote.disconnect"] = (payload) => {
   logger.log({ event: "remote.disconnect", payload });
@@ -67,8 +67,11 @@ const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
   // is indistinguishable from one that never did.
   peerId.value = payload.id;
   errors.value = null;
-  if (name.value) {
-    api!.value!.send({ type: "REMOTE_SET_NAME", name: name.value });
+  // This callback outlives the branch that registered it, so it reads `state`
+  // again rather than closing over an api that was narrowed back then.
+  const current = state.value;
+  if (current.ready && name.value) {
+    current.api.send({ type: "REMOTE_SET_NAME", name: name.value });
   }
 };
 const onPeerError = (error: Error) => {
@@ -84,7 +87,7 @@ const onPeerError = (error: Error) => {
   ) {
     return;
   }
-  errors.value = [humanizeError.value(error)];
+  errors.value = [humanizeError(error)];
 };
 const onData: WrcRemoteEvents["data"] = (_, data) => {
   logger.log({ event: "data", data });
@@ -94,7 +97,7 @@ const onData: WrcRemoteEvents["data"] = (_, data) => {
 };
 
 watch(
-  peer,
+  () => state.value.peer,
   (currentPeer, _, onCleanup) => {
     if (currentPeer) {
       currentPeer.on("error", onPeerError);
@@ -106,57 +109,52 @@ watch(
   { immediate: true },
 );
 
-watch([ready], ([currentReady], [prevReady], onCleanup) => {
-  console.log(
-    "Remote.watchEffect",
-    { currentReady, prevReady },
-    ready.value,
-    api!.value!.on,
-  );
-  if (ready.value) {
-    peerId.value = peer.value!.id;
-    logger.log({
-      event: "open",
-      comment: "Remote connected",
-      payload: { id: peer.value!.id },
-    });
-    api!.value!.on("remote.disconnect", onRemoteDisconnect);
-    api!.value!.on("remote.reconnecting", onRemoteReconnecting);
-    api!.value!.on("remote.reconnect", onRemoteReconnect);
-    api!.value!.on("data", onData);
-    if (name.value) {
-      api!.value!.send({ type: "REMOTE_SET_NAME", name: name.value });
-    }
+watch(state, (current, _, onCleanup) => {
+  if (!current.ready) {
+    return;
+  }
+  const { api, peer } = current;
+  peerId.value = peer.id;
+  logger.log({
+    event: "open",
+    comment: "Remote connected",
+    payload: { id: peer.id },
+  });
+  api.on("remote.disconnect", onRemoteDisconnect);
+  api.on("remote.reconnecting", onRemoteReconnecting);
+  api.on("remote.reconnect", onRemoteReconnect);
+  api.on("data", onData);
+  if (name.value) {
+    api.send({ type: "REMOTE_SET_NAME", name: name.value });
   }
   onCleanup(() => {
-    console.log("Remote.jsx.cleanup");
-    if (ready.value) {
-      api!.value!.off("remote.disconnect", onRemoteDisconnect);
-      api!.value!.off("remote.reconnecting", onRemoteReconnecting);
-      api!.value!.off("remote.reconnect", onRemoteReconnect);
-      api!.value!.off("data", onData);
-    }
+    console.log("Remote.vue.cleanup");
+    api.off("remote.disconnect", onRemoteDisconnect);
+    api.off("remote.reconnecting", onRemoteReconnecting);
+    api.off("remote.reconnect", onRemoteReconnect);
+    api.off("data", onData);
   });
 });
 
 const onIncrement = () => {
-  if (ready.value) {
-    api!.value!.send({ type: "COUNTER_INCREMENT" });
+  const current = state.value;
+  if (current.ready) {
+    current.api.send({ type: "COUNTER_INCREMENT" });
   }
 };
 const onDecrement = () => {
-  if (ready.value) {
-    api!.value!.send({ type: "COUNTER_DECREMENT" });
+  const current = state.value;
+  if (current.ready) {
+    current.api.send({ type: "COUNTER_DECREMENT" });
   }
 };
 const onChangeName = (value: string) => {
   name.value = value;
 };
 const onConfirmName = () => {
-  // `ready` is the ref object, so this guard is always true - preserved as
-  // written; the send below is what the remote has always done on submit.
-  if (ready) {
-    api!.value!.send({ type: "REMOTE_SET_NAME", name: name.value });
+  const current = state.value;
+  if (current.ready) {
+    current.api.send({ type: "REMOTE_SET_NAME", name: name.value });
   }
 };
 </script>

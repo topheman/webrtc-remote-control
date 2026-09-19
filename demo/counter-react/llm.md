@@ -22,10 +22,14 @@ The library handles the WebRTC communication, so the counter updates in real tim
 
 ```
 Root
-└── WebRTCRemoteControlProvider
-    ├── Master (displays QR code & counter)
+├── MasterProvider
+│   └── Master (displays QR code & counter)
+└── RemoteProvider
     └── Remote (shows + and - buttons)
 ```
+
+A page is one side or the other, never both, so it renders one of the two
+providers - which is also how the library knows which side it is on.
 
 ## Prerequisites
 
@@ -33,23 +37,24 @@ The library is a wrapper for [PeerJS](https://peerjs.com/), you will need to inc
 
 ## Mode Configuration
 
-You should determine the mode based on the URL:
+You should determine which side you are on from the URL, and render the matching
+provider:
 
-- `mode="master"`: When accessing the page directly
-- `mode="remote"`: When the URL contains a hash (peer ID)
+- `MasterProvider`: When accessing the page directly
+- `RemoteProvider`: When the URL contains a hash (the master's peer ID)
 
 For example:
 
-- `https://your-app.com` → Set `mode="master"`
-- `https://your-app.com#abc123` → Set `mode="remote"`
+- `https://your-app.com` → `MasterProvider`
+- `https://your-app.com#abc123` → `RemoteProvider`, dialing `abc123`
 
 ## Getting Started
 
 The library handles the WebRTC connections. What is left to you:
 
-1. Wrap your application with `WebRTCRemoteControlProvider`
+1. Wrap your application with `MasterProvider` or `RemoteProvider`
 2. Implement Master and Remote components
-3. Use the `usePeer` hook for WebRTC communication
+3. Use `useMaster` or `useRemote` for WebRTC communication
 
 ## Implementation Guide
 
@@ -58,19 +63,36 @@ The library handles the WebRTC connections. What is left to you:
 You should initialize the WebRTC context like this:
 
 ```tsx
-<WebRTCRemoteControlProvider
-  mode={mode}
-  init={({ getPeerId }) => new Peer(getPeerId(), getPeerjsConfig())}
-  masterPeerId={window.location.hash?.replace("#", "") || undefined}
-  sessionStorageKey="webrtc-remote-control-peer-id-react"
->
+const init = ({ getPeerId }) => new Peer(getPeerId(), getPeerjsConfig());
+const SESSION_STORAGE_KEY = "webrtc-remote-control-peer-id-react";
+
+const masterPeerId = window.location.hash.replace("#", "");
+
+masterPeerId ? (
+  <RemoteProvider
+    init={init}
+    masterPeerId={masterPeerId}
+    sessionStorageKey={SESSION_STORAGE_KEY}
+  >
+    <Remote />
+  </RemoteProvider>
+) : (
+  <MasterProvider init={init} sessionStorageKey={SESSION_STORAGE_KEY}>
+    <Master />
+  </MasterProvider>
+);
 ```
 
-Three of those props carry more weight than they look:
+What those props carry:
 
-- `mode` decides which side of the connection this page is, and comes from the URL - see
-  [Mode Configuration](#mode-configuration) above.
-- `masterPeerId` is the id a remote dials. On the master it is `undefined`.
+- Choosing the provider is how you choose the side - see
+  [Mode Configuration](#mode-configuration) above. There is no `mode` prop to keep
+  in step with anything.
+- `masterPeerId` is the id a remote dials. It is required by `RemoteProvider` and
+  does not exist on `MasterProvider`, so the two illegal combinations are not
+  writable.
+- `init` returns the PeerJS peer. Both providers hand it their own utilities, so
+  the same callback works for both as long as it only reads what they share.
 - `sessionStorageKey` is what makes reconnection after a reload work. The peer id is stored
   under it, so a reloaded page asks PeerJS for the same id instead of being handed a new one.
   Give each mode of your app its own key, or two pages open side by side will fight over one
@@ -103,27 +125,27 @@ interface RemoteCounter {
 }
 
 function Master() {
-  // the type parameter picks the side you are on, so `api` is the master api
-  const { ready, api, peer } = usePeer<"master">();
+  // which provider is above you is what types `api`, so nothing is asserted
+  const { ready, api, peer } = useMaster();
   const [remotesList, setRemotesList] = useState<RemoteCounter[]>([]);
 
   useEffect(() => {
-    // `ready` guards every use of `api`, but it is a boolean the compiler
-    // cannot tie to it, hence the `!` assertions below
+    // `ready` is the discriminant of the union the hook returns, so this
+    // branch is what makes `api` and `peer` known to be there
     if (ready) {
       // Handle remote connections
-      api!.on("remote.connect", ({ id }) => {
+      api.on("remote.connect", ({ id }) => {
         setRemotesList((prev) => [...prev, { id, counter: 0 }]);
       });
 
       // Handle remote disconnections
-      api!.on("remote.disconnect", ({ id }) => {
+      api.on("remote.disconnect", ({ id }) => {
         setRemotesList((prev) => prev.filter((remote) => remote.id !== id));
       });
 
       // Handle incoming counter commands. `data` is whatever the remote sent,
       // so it arrives as `unknown` and you narrow it yourself.
-      api!.on("data", ({ id }, data) => {
+      api.on("data", ({ id }, data) => {
         if ((data as { type?: string }).type === "COUNTER_INCREMENT") {
           setRemotesList((prev) =>
             prev.map((remote) =>
@@ -140,7 +162,7 @@ function Master() {
   return (
     <div>
       <h1>Master Counter</h1>
-      {peer?.id && <QRCode value={peer.id} />}
+      {peer && <QRCode value={peer.id} />}
 
       <h2>Connected Remotes ({remotesList.length})</h2>
       <ul>
@@ -180,11 +202,11 @@ Here's a minimal Remote component:
 
 ```tsx
 function Remote() {
-  const { ready, api } = usePeer<"remote">();
+  const { ready, api } = useRemote();
 
   const increment = () => {
     if (ready) {
-      api!.send({ type: "COUNTER_INCREMENT" });
+      api.send({ type: "COUNTER_INCREMENT" });
     }
   };
 
@@ -201,7 +223,7 @@ function Remote() {
 
 You should:
 
-- Use the `usePeer` hook for all WebRTC operations
+- Use `useMaster` or `useRemote` for all WebRTC operations
 - Implement proper error handling, using the `humanizeError` function
 - Clean up connections in useEffect
 - Make sure your application correctly behaves in reconnection scenarios

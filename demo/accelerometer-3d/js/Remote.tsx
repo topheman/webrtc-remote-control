@@ -1,5 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from "react";
-import { usePeer } from "@webrtc-remote-control/react";
+import { useRemote } from "@webrtc-remote-control/react";
 import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
 import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
@@ -21,8 +21,8 @@ export default function Remote() {
   const [errors, setErrors] = useState<string[] | null>(null);
   const [phoneScale, setPhoneScale] = useState(1);
 
-  // see the note in `Master.tsx` about `ready` and the assertions below
-  const { ready, api, peer, humanizeError } = usePeer<"remote">();
+  // see the note in `Master.tsx` about `ready` narrowing `api` and `peer`
+  const { ready, api, peer, humanizeError } = useRemote();
 
   const {
     orientation,
@@ -37,8 +37,10 @@ export default function Remote() {
   };
   const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
     console.log({ event: "remote.reconnect", payload });
-    if (name) {
-      api!.send({ type: "REMOTE_SET_NAME", name });
+    // see the note in `counter-react` - a callback closes over the destructured
+    // value, so it branches on `ready` itself.
+    if (ready && name) {
+      api.send({ type: "REMOTE_SET_NAME", name });
     }
   };
   const onPeerError = (error: Error) => {
@@ -67,25 +69,25 @@ export default function Remote() {
 
   useEffect(() => {
     if (ready) {
-      setPeerId(peer!.id);
+      setPeerId(peer.id);
       console.log({
         event: "open",
         comment: "Remote connected",
-        payload: { id: peer!.id },
+        payload: { id: peer.id },
       });
-      api!.on("remote.disconnect", onRemoteDisconnect);
-      api!.on("remote.reconnect", onRemoteReconnect);
-      api!.on("data", onData);
+      api.on("remote.disconnect", onRemoteDisconnect);
+      api.on("remote.reconnect", onRemoteReconnect);
+      api.on("data", onData);
       if (name) {
-        api!.send({ type: "REMOTE_SET_NAME", name });
+        api.send({ type: "REMOTE_SET_NAME", name });
       }
     }
     return () => {
       console.log("Remote.tsx.cleanup");
       if (ready) {
-        api!.off("remote.disconnect", onRemoteDisconnect);
-        api!.off("remote.reconnect", onRemoteReconnect);
-        api!.off("data", onData);
+        api.off("remote.disconnect", onRemoteDisconnect);
+        api.off("remote.reconnect", onRemoteReconnect);
+        api.off("data", onData);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,7 +95,7 @@ export default function Remote() {
 
   useEffect(() => {
     if (ready) {
-      api!.send({ type: "ORIENTATION", ...orientation });
+      api.send({ type: "ORIENTATION", ...orientation });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orientation]);
@@ -111,19 +113,19 @@ export default function Remote() {
           onPointerDown={() => {
             setPhoneScale(1.3);
             if (ready) {
-              api!.send({ type: "PING_DOWN" });
+              api.send({ type: "PING_DOWN" });
             }
           }}
           onPointerUp={() => {
             setPhoneScale(1);
             if (ready) {
-              api!.send({ type: "PING_UP" });
+              api.send({ type: "PING_UP" });
             }
           }}
           onPointerLeave={() => {
             setPhoneScale(1);
             if (ready) {
-              api!.send({ type: "PING_UP" });
+              api.send({ type: "PING_UP" });
             }
           }}
         />
