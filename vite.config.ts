@@ -86,10 +86,6 @@ export default defineConfig({
     ],
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
     options: { typeAware: true, typeCheck: true },
-    globals: {
-      // peerjs is loaded from a script tag in the vanilla demo pages
-      Peer: "readonly",
-    },
     rules: {
       "vite-plus/prefer-vite-plus-imports": "error",
       // None of the three published packages log any more, so this is an error

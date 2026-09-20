@@ -10,7 +10,7 @@
 import { provideMaster, provideRemote } from "@webrtc-remote-control/vue";
 import type { GetPeerIdType } from "@webrtc-remote-control/core";
 
-import { getPeerjsConfig } from "../../shared/js/common-peerjs";
+import { Peer, getPeerjsConfig } from "../../shared/js/common-peerjs";
 
 import "../../shared/js/components/footer-display";
 

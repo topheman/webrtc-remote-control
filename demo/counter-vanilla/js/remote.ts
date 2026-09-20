@@ -1,7 +1,7 @@
 import prepare, { prepareUtils } from "@webrtc-remote-control/core/remote";
 import type { WrcRemote } from "@webrtc-remote-control/core/remote";
 
-import { getPeerjsConfig } from "../../shared/js/common-peerjs";
+import { Peer, getPeerjsConfig } from "../../shared/js/common-peerjs";
 import { makeLogger } from "../../shared/js/common";
 import "../../shared/js/animate"; // todo
 import { render } from "./remote.view";
