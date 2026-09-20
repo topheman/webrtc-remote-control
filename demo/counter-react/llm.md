@@ -33,7 +33,36 @@ providers - which is also how the library knows which side it is on.
 
 ## Prerequisites
 
-The library is a wrapper for [PeerJS](https://peerjs.com/), you will need to include the PeerJS library in your project.
+The library is a wrapper for [PeerJS](https://peerjs.com/). Install it alongside
+the binding - it is a peer dependency, not something this package bundles:
+
+```sh
+npm install peerjs @webrtc-remote-control/react
+```
+
+Import `Peer` as a module. Do not reach for a `<script>` tag: older versions of
+these docs told you to, because peerjs did not bundle cleanly years ago, and
+that is no longer true.
+
+In TypeScript, one cast is needed and it is worth understanding rather than
+copying. `getPeerId()` returns `string | undefined` - `undefined` on a first
+visit, which peerjs reads as "allocate me an id from the brokering server". Its
+declarations do not describe that: it declares `()`, `(options)` and
+`(id: string, options?)`, and none of them admits an absent id alongside
+options. The gap is in the types only, so close it in the types - declare the
+missing overload once, rather than branching at runtime or asserting at every
+call site:
+
+```ts
+import { Peer as PeerJs } from "peerjs";
+import type { PeerOptions } from "peerjs";
+
+export const Peer = PeerJs as typeof PeerJs & {
+  new (id: string | undefined, options?: PeerOptions): PeerJs;
+};
+```
+
+Every example below assumes that `Peer`.
 
 ## Mode Configuration
 
@@ -63,7 +92,11 @@ The library handles the WebRTC connections. What is left to you:
 You should initialize the WebRTC context like this:
 
 ```tsx
-const init = ({ getPeerId }) => new Peer(getPeerId());
+import type { GetPeerIdType } from "@webrtc-remote-control/core";
+
+// `Peer` is the widened one from Prerequisites, not peerjs's own export
+const init = ({ getPeerId }: { getPeerId: GetPeerIdType }) =>
+  new Peer(getPeerId());
 const SESSION_STORAGE_KEY = "webrtc-remote-control-peer-id-react";
 
 const masterPeerId = window.location.hash.replace("#", "");
@@ -107,7 +140,7 @@ passes whatever you build straight through - it never looks at it. You only need
 this if the public signaling server is not what you want:
 
 ```tsx
-const init = ({ getPeerId }) =>
+const init = ({ getPeerId }: { getPeerId: GetPeerIdType }) =>
   new Peer(getPeerId(), {
     // your own signaling server, rather than the public one
     host: "localhost",
@@ -130,7 +163,6 @@ The library provides:
 - Peer discovery and connection
 - Real-time data transmission
 - Connection state handling
-- QR code generation for peer ID
 
 You should implement:
 
@@ -139,6 +171,27 @@ You should implement:
 - List of connected remotes and their individual counters
 - UI for the master view
 - Error handling specific to counter operations
+- The QR code, with a library of your choice - see below
+
+#### What the QR code has to encode
+
+The library does not generate QR codes, and `peer.id` on its own is not what you
+want in one: a phone that scans it gets a bare string and nothing to open. What
+the code has to carry is the **URL of your remote page with that id in the
+hash** - the same URL [Mode Configuration](#mode-configuration) describes, which
+is what makes the scanning device render `RemoteProvider`.
+
+Build it from `window.location`, never from a hardcoded host, so the same page
+works on localhost, on a LAN address, and behind a tunnel such as ngrok:
+
+```tsx
+function makeRemoteUrl(masterPeerId: string) {
+  return `${window.location.origin}${window.location.pathname}#${masterPeerId}`;
+}
+```
+
+Give the user a plain link to the same URL next to the code. A second tab on the
+laptop is how you try the whole thing without reaching for a phone.
 
 Here's a minimal Master component:
 
@@ -186,7 +239,9 @@ function Master() {
   return (
     <div>
       <h1>Master Counter</h1>
-      {peer && <QRCode value={peer.id} />}
+      {/* the URL of the remote page, not the bare id - see above */}
+      {ready && <QRCode value={makeRemoteUrl(peer.id)} />}
+      {ready && <a href={makeRemoteUrl(peer.id)}>open a remote</a>}
 
       <h2>Connected Remotes ({remotesList.length})</h2>
       <ul>
@@ -221,6 +276,7 @@ You should implement:
 - Remote device identification
 - Connection status display
 - Error handling specific to counter operations
+- Reconnection status display - see below
 
 Here's a minimal Remote component:
 
@@ -243,6 +299,80 @@ function Remote() {
 }
 ```
 
+#### Telling the user about a reconnection
+
+A remote that loses its master retries on a backoff - 1s, 2s, 4s, then 8s
+repeatedly - and emits `remote.reconnecting` before each attempt, then
+`remote.reconnect` once it is back. `useRemote` gives you `humanizeError` for
+errors, but it does **not** give you anything for these: build the notice from
+core yourself, at module scope, and call it in the handler.
+
+```tsx
+import { makeReconnectNotice } from "@webrtc-remote-control/core";
+
+// the wording is yours, the "is it still worth waiting" threshold is core's
+const reconnectNotice = makeReconnectNotice();
+
+function Remote() {
+  const { ready, api, peer, humanizeError } = useRemote();
+  const [errors, setErrors] = useState<string[] | null>(null);
+  // a ref, not state: `onPeerError` below closes over it from another effect
+  const reconnecting = useRef(false);
+
+  useEffect(() => {
+    if (ready) {
+      api.on("remote.reconnecting", (payload) => {
+        reconnecting.current = true;
+        setErrors([reconnectNotice(payload)]);
+      });
+      api.on("remote.reconnect", () => {
+        reconnecting.current = false;
+        setErrors(null);
+      });
+    }
+  }, [ready]);
+}
+```
+
+Two things are easy to get wrong here.
+
+`remote.reconnect` has to undo everything the disconnection did - clear the
+errors, restore the peer id, re-send whatever state the master needs. A remote
+that came back but still shows an error is indistinguishable from one that
+never did.
+
+And while the retry loop runs, peerjs emits `peer-unavailable` errors for the
+attempts that lose their race to the master re-registering. Passing those to
+`humanizeError` talks over the notice with advice to reload - the one thing the
+user does not need to do - so skip them while a reconnection is in flight:
+
+```tsx
+const onPeerError = (error: Error) => {
+  if (
+    reconnecting.current &&
+    (error as { type?: string }).type === "peer-unavailable"
+  ) {
+    return;
+  }
+  setErrors([humanizeError(error)]);
+};
+```
+
+Register that one on `peer`, not on `api`, in an effect keyed on `peer`.
+
+Both messages `makeReconnectNotice` produces are overridable, and either may be
+a value or a function of the payload - `{ id, attempt, nextDelayMs }`:
+
+```tsx
+const reconnectNotice = makeReconnectNotice({
+  reconnecting: ({ attempt }) => `Reconnecting (attempt ${attempt})...`,
+  stalled: "The other screen seems gone. Try reloading.",
+});
+```
+
+They are independently typed and inferred from what you pass, so returning a
+React node rather than a string needs no annotation and no cast.
+
 ## Best Practices
 
 You should:
@@ -250,7 +380,8 @@ You should:
 - Use `useMaster` or `useRemote` for all WebRTC operations
 - Implement proper error handling, using the `humanizeError` function
 - Clean up connections in useEffect
-- Make sure your application correctly behaves in reconnection scenarios
+- Make sure your application correctly behaves in reconnection scenarios - see
+  [Telling the user about a reconnection](#telling-the-user-about-a-reconnection)
 
 ## Technical Requirements
 
