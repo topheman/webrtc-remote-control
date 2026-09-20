@@ -18,11 +18,34 @@ This package is the core one. Implementations for popular frameworks such as rea
 
 ## Usage
 
-Add the peerjs library as a script tag in your html page. You'll have access to `Peer` constructor.
+peerjs is a peer dependency, so install it alongside this package and import it:
 
-```html
-<script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+```js
+import { Peer } from "peerjs";
 ```
+
+<details>
+<summary>In TypeScript, <code>new Peer(getPeerId())</code> needs one cast</summary>
+
+`getPeerId()` returns `string | undefined` - `undefined` on a first visit, which
+peerjs reads as "allocate me an id from the brokering server". Its declarations do
+not describe that: it declares `()`, `(options)` and `(id: string, options?)`, and
+none of them admits an absent id alongside options. The gap is in the types only,
+so fix it in the types - declare the missing overload once, rather than branching
+at runtime or asserting at every call site:
+
+```ts
+import { Peer as PeerJs } from "peerjs";
+import type { PeerOptions } from "peerjs";
+
+export const Peer = PeerJs as typeof PeerJs & {
+  new (id: string | undefined, options?: PeerOptions): PeerJs;
+};
+```
+
+The examples below assume that `Peer`.
+
+</details>
 
 Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-vanilla/master.html) source code: [master.ts](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vanilla/js/master.ts) / [remote.ts](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vanilla/js/remote.ts)
 
@@ -80,6 +103,66 @@ async function init() {
   api.send({ msg: "Hello master page" });
 }
 ```
+
+### Telling the user about a reconnection
+
+A remote that loses its master retries on a backoff - 1s, 2s, 4s, then 8s
+repeatedly - and emits `remote.reconnecting` before each attempt, then
+`remote.reconnect` once it is back. The payload carries `id`, the `attempt`
+number, and `nextDelayMs`, the wait before the next try.
+
+Deciding what to tell the user means knowing when "reconnecting" stops being a
+plausible thing to say, and that means comparing `nextDelayMs` against the
+backoff ceiling. That comparison is the library's job, so `prepareUtils` hands
+out a `reconnectNotice` that makes it for you:
+
+```js
+import prepare, { prepareUtils } from "@webrtc-remote-control/core/remote";
+
+const utils = prepareUtils();
+const { reconnectNotice } = utils;
+const { bindConnection, getPeerId, humanizeError } = prepare(utils);
+
+const api = await bindConnection(new Peer(getPeerId()), masterPeerId);
+
+api.on("remote.reconnecting", (payload) => {
+  setStatus(reconnectNotice(payload));
+});
+api.on("remote.reconnect", () => {
+  setStatus(null);
+});
+```
+
+Both messages are overridable, and either may be a value or a function of the
+payload:
+
+```js
+const utils = prepareUtils({
+  reconnectNotice: {
+    reconnecting: ({ attempt }) => `Reconnecting (attempt ${attempt})...`,
+    stalled: "The other screen seems gone. Try reloading.",
+  },
+});
+```
+
+`makeReconnectNotice` is the same factory on its own, for when you are not
+building the rest of the utilities - which is what the react and vue demos do,
+since their bindings do not pass this option through yet:
+
+```js
+import { makeReconnectNotice } from "@webrtc-remote-control/core";
+
+const reconnectNotice = makeReconnectNotice();
+```
+
+Its two messages are independently typed and inferred from what you pass, so
+returning something richer than a string - a React node, say - needs no
+annotation and no cast.
+
+One thing to handle alongside it: while the retry loop runs, peerjs emits
+`peer-unavailable` errors for the attempts that lose their race to the master
+re-registering. Passing those through `humanizeError` talks over the notice with
+advice to reload, so skip them while a reconnection is in flight.
 
 ## TypeScript
 
