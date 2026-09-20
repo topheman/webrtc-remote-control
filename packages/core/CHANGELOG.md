@@ -1,5 +1,145 @@
 # Change Log
 
+## 0.3.0
+
+### Minor Changes
+
+- [#54](https://github.com/topheman/webrtc-remote-control/pull/54) [`d953051`](https://github.com/topheman/webrtc-remote-control/commit/d95305190e1add0364aef6d2179ea21130c5be6d) Thanks [@topheman](https://github.com/topheman)! - Added a `remote.reconnecting` event and a `makeReconnectNotice` factory, so an
+  application can tell "coming back" from "gone" without knowing how the backoff
+  is tuned.
+  
+  Now that the remote retries a lost connection, `peer-unavailable` on the `Peer`
+  became misleading on its own: it fires on an attempt that lost its race to the
+  master re-registering, says nothing about whether anything is still trying, and
+  the built-in message for it advises reloading the page - which is the one thing
+  the user does not need to do while a retry is in flight.
+  
+  `remote.reconnecting` fires once per reconnection attempt, including the
+  immediate one, and carries `{ id, attempt, nextDelayMs }`. It is deliberately
+  **not** emitted for the first connection, which is not retried: a
+  `peer-unavailable` there really does mean the master id is wrong or gone, and
+  telling the user to reload is the honest answer - so the built-in message for
+  that error is unchanged.
+  
+  `makeReconnectNotice` turns that payload into something to show, and owns the
+  judgement of when "reconnecting" stops being plausible. It is built the same way
+  as `makeHumanizeError` - optional overrides, built-in defaults - and
+  `prepareUtils` now hands out a `reconnectNotice` alongside `humanizeError`:
+  
+  ```js
+  const { reconnectNotice } = prepareUtils();
+  wrcRemote.on("remote.reconnecting", (payload) => {
+    setStatus(reconnectNotice(payload));
+  });
+  wrcRemote.on("remote.reconnect", () => setStatus(null));
+  ```
+  
+  Either message can be overridden, as a value or as a function of the payload:
+  
+  ```js
+  makeReconnectNotice({
+    reconnecting: "Hold on...",
+    stalled: ({ attempt }) => `No answer after ${attempt} tries.`,
+  });
+  ```
+  
+  The threshold it switches on is the backoff ceiling, and it stays core's to
+  know. A consumer picks the wording, never the number - so retuning the backoff
+  in a later release cannot silently make anyone's copied comparison wrong. The
+  type parameters are inferred from the overrides, so returning something richer
+  than a string - a React node, say - needs no annotation and no cast.
+  
+  Additive throughout: subscribing to an event name that did not exist was not
+  possible before, and `prepareUtils` gained a key rather than changing one.
+
+- [#59](https://github.com/topheman/webrtc-remote-control/pull/59) [`85141d3`](https://github.com/topheman/webrtc-remote-control/commit/85141d3a65dffdda92d93765826959476a7d32d7) Thanks [@topheman](https://github.com/topheman)! - `getPeerId` returns `string | undefined` instead of `string | null`
+  
+  `getPeerId` reads the peer id kept in session storage and returns the empty case
+  on a first visit, which peerjs takes as "allocate me one". That empty case used
+  to be `null`, straight from `sessionStorage.getItem`. peerjs's constructor is
+  `(id?: string, options?)`, so `null` worked at runtime but not in the
+  declaration, and every `new Peer(getPeerId(), ...)` call site in TypeScript had
+  to assert the value back to `string` - asserting away exactly the case the type
+  existed to describe.
+  
+  It now returns `undefined`, so `new Peer(getPeerId(), getPeerjsConfig())` type
+  checks as written. Nothing changes at runtime: peerjs treats both as "generate
+  one".
+  
+  If you test the result for emptiness (`if (!id)`, `id ?? fallback`) or pass it
+  straight to `new Peer`, there is nothing to do. If you compare against `null`
+  explicitly - `getPeerId() === null` - switch to `undefined` or to a falsy check.
+  JavaScript consumers are unaffected.
+
+### Patch Changes
+
+- [#55](https://github.com/topheman/webrtc-remote-control/pull/55) [`3653ddd`](https://github.com/topheman/webrtc-remote-control/commit/3653ddd1e75caa0b4dbb37845ab31b3d26c48426) Thanks [@topheman](https://github.com/topheman)! - A remote now closes its data connection when its page goes away, so the master
+  learns a remote has left as soon as it happens.
+  
+  The `beforeunload` handler called `conn.disconnect()` behind an `if` guard, and
+  `disconnect` is a method of peerjs's `Peer`, not of `DataConnection` - so the
+  guard has never been true and the handler has never done anything. A master was
+  left waiting for the data channel to time out on its own before it saw
+  `remote.disconnect`. The handler now calls `conn.close()`, and abandons the
+  current connection generation first so the close it causes is read as the
+  teardown it is rather than as an outage worth retrying from a page that is
+  already unloading.
+
+- [#58](https://github.com/topheman/webrtc-remote-control/pull/58) [`9ffcfdf`](https://github.com/topheman/webrtc-remote-control/commit/9ffcfdf03434dcf5adc5e76926219ac5558cac92) Thanks [@topheman](https://github.com/topheman)! - A master now closes a remote's previous connection itself as soon as a
+  reconnect for the same peer id arrives, instead of waiting on peerjs's own
+  failure detection to notice it went stale.
+  
+  The old connection's `close` handler deleted the tracked connection by peer id
+  unconditionally, with no check that it was still the one the master was
+  holding for that id. When a remote reconnected - most commonly after a page
+  reload - and the stale connection's `close` arrived after the replacement had
+  already taken its place in the map, that belated close evicted the live
+  connection instead: `sendTo`/`sendAll` silently stopped reaching a remote the
+  application still showed as connected, and a `remote.disconnect` fired for a
+  peer that had not actually left. The master now closes a superseded connection
+  the moment it learns of its replacement, and ignores a stale connection's own
+  close if something has already taken its place in the map.
+  
+  The master also enforces its own event contract now: exactly one
+  `remote.connect` per tracked connection, none for a connection it has already
+  replaced, and a `remote.disconnect` only for a connection it actually
+  announced. A master coming back after a reload was seen receiving a second
+  connection from a remote that had made a single reconnect attempt, and opening
+  it too, which showed up as a duplicate `remote.connect` and, in an application
+  keeping a list per event, a remote listed twice. The master no longer lets
+  that reach the application, whichever way peerjs produces it.
+
+- [#51](https://github.com/topheman/webrtc-remote-control/pull/51) [`acc08e1`](https://github.com/topheman/webrtc-remote-control/commit/acc08e1f9661a6cd5395b96a7eb470569bd0c9e1) Thanks [@topheman](https://github.com/topheman)! - The remote now retries a lost connection with exponential backoff instead of
+  exactly once.
+  
+  Reloading a master used to be decided by a race. The remote saw its connection
+  close, rebuilt it immediately, and that single attempt landed while the master's
+  peer id was still unregistered with the signaling server. PeerJS answers that
+  with `peer-unavailable` on the `Peer`, so the connection it handed back never
+  opened and never closed - and a retry loop driven by `close` alone has nothing
+  left to react to. The remote stayed dead until the user reloaded it by hand.
+  
+  The first retry is still immediate, so the common case where the master is still
+  there is unchanged. What is new is that an attempt which has not opened is now
+  abandoned on a deadline and tried again, waiting 1s, 2s, 4s and then 8s between
+  attempts. An outage emits one `remote.disconnect`, however many attempts it
+  takes, and `remote.reconnect` when one of them opens; the delay resets so a
+  later outage starts from 1s again.
+  
+  Two deliberate differences from how 0.2.0 announced this fix:
+  
+  - **The retry is not bounded.** Giving up after N attempts leaves the remote in
+    the state the bug was reported for - dead until someone reloads the page. The
+    cap is on the delay instead, so a remote left open on a phone costs one
+    connection attempt every 8s and recovers on its own whenever the master comes
+    back.
+  - **The trigger is a deadline, not the `peer-unavailable` error.** That error
+    arrives on the `Peer`, which the consuming application owns and the library is
+    not otherwise a listener on, and it identifies the unreachable peer only in
+    its message text. A deadline covers `peer-unavailable` and an attempt that
+    stalls with no error at all, without the library reaching into an object it
+    was only lent.
+
 ## 0.2.1
 
 ### Minor Changes
