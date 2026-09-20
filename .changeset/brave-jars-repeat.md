@@ -9,6 +9,10 @@ re-render tore the connection down and called `init` again; `init` and
 connection is now established once per `mode`/`masterPeerId`/`sessionStorageKey`,
 and the latest `init` and `humanErrors` are read when it is.
 
-The context value is also replaced rather than mutated in place. `usePeer`
-returns the same shape and no longer waits on a microtask to notice the peer has
-arrived, so `ready` flips on the render that follows the connection resolving.
+The context value is also replaced rather than mutated in place, so `ready`
+flips on the render that follows the connection resolving instead of waiting on
+a microtask.
+
+Both fixes are described here against the provider this release replaces. The
+binding was split by mode in the same version, so what ships is
+`MasterProvider`/`RemoteProvider`; see that entry for the shape they hand back.
