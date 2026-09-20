@@ -1,6 +1,6 @@
 import prepare, { prepareUtils } from "@webrtc-remote-control/core/master";
 
-import { getPeerjsConfig } from "../../shared/js/common-peerjs";
+import { Peer, getPeerjsConfig } from "../../shared/js/common-peerjs";
 import { makeLogger } from "../../shared/js/common";
 import "../../shared/js/animate"; // todo
 import {

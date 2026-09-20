@@ -1,4 +1,17 @@
+import { Peer as PeerJs } from "peerjs";
 import type { PeerOptions } from "peerjs";
+
+// peerjs declares three constructor overloads - `()`, `(options)` and
+// `(id: string, options?)` - and none of them admits an absent id alongside
+// options. Its implementation does: it treats any falsy id as "allocate me one
+// from the brokering server", which is exactly what core's `getPeerId` returns
+// on a first visit, and every demo passes `getPeerjsConfig()` as the second
+// argument. Declaring the missing overload here, once, is what keeps
+// `new Peer(getPeerId(), getPeerjsConfig())` from having to assert the empty
+// case away at every call site.
+export const Peer = PeerJs as typeof PeerJs & {
+  new (id: string | undefined, options?: PeerOptions): PeerJs;
+};
 
 // PeerJS's own default config pairs this same STUN server with two TURN hosts
 // (eu-0.turn.peerjs.com, us-0.turn.peerjs.com) that have no DNS record, so every

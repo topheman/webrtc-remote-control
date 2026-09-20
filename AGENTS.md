@@ -164,15 +164,24 @@ for a few seconds. Unit tests are excluded from it: `vp check`
 already covers them, and including them would drag `demo/test.helpers.ts` and Node's
 globals into a project that otherwise only needs the DOM.
 
+The demo imports `peerjs` as a normal module and bundles it: it is a `dependency` of
+`demo`, and no page loads it from a `<script>` tag any more. It used to, because peerjs
+did not bundle cleanly years ago; that is no longer true, and the switch back is covered
+by the end-to-end suite in all three modes. What the import does not give you is a
+constructor signature the demo can call: peerjs declares `()`, `(options)` and
+`(id: string, options?)`, and none of them admits an absent id alongside options, which is
+exactly what core's `getPeerId` returns on a first visit. `demo/shared/js/common-peerjs.ts`
+re-exports `Peer` widened with that one missing overload, so the call sites still read
+`new Peer(getPeerId(), getPeerjsConfig())`. Import `Peer` from there rather than from
+`peerjs` directly. Resolving this at runtime instead - branching on whether the id is
+there, so each arm hits a declared overload - is not the trade to make: it turns a
+type-level gap into code that ships.
+
 `demo/types/` holds the ambient declarations the demo needs for things it does not import.
-`peerjs-global.d.ts` types the global `Peer` constructor: the demo loads peerjs from a CDN
-`<script>` tag, so `Peer` is only reachable as a global. `peerjs` is a devDependency of
-`demo` for its types only and is never bundled, and its range is kept in step with the
-version the `<script>` tags pin, so the types describe what actually loads. Do not "fix"
-the global by importing peerjs as a module - loading it from the CDN is a peerjs limitation
-and is deliberate. `qrcode-global.d.ts` does the same for qrcodejs, which is loaded the
-same way. `custom-elements-jsx.d.ts` declares the demo's web components as JSX intrinsics
-so the react pages can use them, and `device-orientation-permission.d.ts` carries the
+`qrcode-global.d.ts` types the global `QRCode` constructor, which is loaded from a CDN
+`<script>` tag: the package is unmaintained and ships no types.
+`custom-elements-jsx.d.ts` declares the demo's web components as JSX intrinsics so
+the react pages can use them, and `device-orientation-permission.d.ts` carries the
 iOS-only `requestPermission` static that lib.dom does not describe.
 
 The three published packages each add a `vite.config.ts` of their own, and those hold

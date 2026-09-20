@@ -254,6 +254,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.18.1
+      peerjs:
+        specifier: ^1.5.5
+        version: 1.5.5
       react:
         specifier: ^18.0.0
         version: 18.3.1
@@ -288,9 +291,6 @@ importers:
       '@vitejs/plugin-vue':
         specifier: 'catalog:'
         version: 6.0.8(@voidzero-dev/vite-plus-core@0.3.1(@arethetypeswrong/core@0.18.5)(@types/node@26.5.1)(publint@0.3.24)(terser@5.51.2)(typescript@6.0.3)(yaml@2.9.1))(vue@3.5.42(typescript@6.0.3))
-      peerjs:
-        specifier: ^1.5.5
-        version: 1.5.5
       vite:
         specifier: 'catalog:'
         version: '@voidzero-dev/vite-plus-core@0.3.1(@arethetypeswrong/core@0.18.5)(@types/node@26.5.1)(publint@0.3.24)(terser@5.51.2)(typescript@6.0.3)(yaml@2.9.1)'
