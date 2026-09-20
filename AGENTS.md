@@ -230,7 +230,27 @@ contributor's global Prettier silently takes over.
 End-to-end tests are Playwright, in `demo/e2e`, configured by `demo/playwright.config.ts`.
 `demo/e2e/fixtures.ts` holds the `demo` fixture - the Background of the old Gherkin feature,
 opening the master page and connecting three remotes - and the assertion helpers;
-`demo/e2e/counter.spec.ts` holds the three scenarios. A few things are load-bearing:
+`demo/e2e/counter.spec.ts` holds the three scenarios.
+
+The accelerometer demo has a suite of its own, `demo/e2e/accelerometer.spec.ts`, on
+`demo/e2e/accelerometer.fixtures.ts`. It needs a separate fixture because that page shares
+nothing with the counter demos on the surface the tests read: it has no
+`<console-display>` and no `<remotes-list>`, it logs its events to the console, and it
+renders its remotes as a plain list. Two things about it are load-bearing in the same way
+as the list below. Headless Chromium exposes `requestPermission` on
+`DeviceOrientationEvent` and `DeviceMotionEvent` but never settles the promise, so the
+fixture stubs both from an init script - without that the demo's permission gate hangs and
+the remote never starts listening. And the remotes are driven by synthetic
+`deviceorientation` events fired on an interval, because a phone fires them continuously
+and the page only sends when the angles change; a single dispatch would race the master's
+listener after a reconnection.
+
+`testMatch` on each project is what keeps the two suites apart. The counter demo is the one
+that exists in three modes, so only its spec is parameterised that way; without a
+`testMatch` every project runs every spec and the accelerometer suite, which has a single
+implementation, would run three times.
+
+A few things are load-bearing:
 
 - **Chromium needs `--disable-features=WebRtcHideLocalIpsWithMdns`.** It otherwise hides
   local IPs in ICE candidates behind `.local` mDNS names, which a browser launched from
@@ -243,7 +263,8 @@ opening the master page and connecting three remotes - and the assertion helpers
   a 30 second timeout, and that retry is what hid the reconnection race for a year - if a
   scenario only passes on a second attempt, that is a bug to chase, not noise to retry away.
 - **The three demo modes are Playwright projects**, not a `describe.each` over a `MODE` env
-  var, so `pnpm run test:e2e --project=vue` runs one of them. Write it without the `--`:
+  var, so `pnpm run test:e2e --project=vue` runs one of them - and `--project=accelerometer`
+  runs the other demo's suite. Write it without the `--`:
   pnpm stopped treating a `--` after the script name as a separator in v7 - everything
   after the name goes to the script verbatim - and `vp run` follows the same convention,
   so a `--` written anywhere after the script name reaches the final command in its argv.
