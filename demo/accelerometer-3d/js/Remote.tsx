@@ -1,5 +1,6 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { useRemote } from "@webrtc-remote-control/react";
+import { makeReconnectNotice } from "@webrtc-remote-control/core";
 import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
 import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
@@ -10,6 +11,9 @@ import { useDeviceOrientation } from "../../shared/js/react-useDeviceOrientation
 import { orientationToRotation } from "./accelerometer.helpers";
 
 const Phone3D = lazy(() => import("./Phone3D"));
+
+// The wording is the consumer's, the threshold core's.
+const reconnectNotice = makeReconnectNotice();
 
 export default function Remote() {
   // eslint-disable-next-line no-unused-vars
@@ -35,8 +39,24 @@ export default function Remote() {
   ) => {
     console.log({ event: "remote.disconnect", payload });
   };
+  // A ref, not state: `onPeerError` is registered in an effect keyed on `peer`
+  // and would otherwise close over whatever this was on first render.
+  const reconnecting = useRef(false);
+  const onRemoteReconnecting: WrcRemoteEvents["remote.reconnecting"] = (
+    payload,
+  ) => {
+    console.log({ event: "remote.reconnecting", payload });
+    reconnecting.current = true;
+    setErrors([reconnectNotice(payload)]);
+  };
   const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
     console.log({ event: "remote.reconnect", payload });
+    reconnecting.current = false;
+    // `onPeerError` nulled `peerId` and put an error on screen. Reconnecting
+    // has to undo both, or a remote that came back is indistinguishable from
+    // one that never did.
+    setPeerId(payload.id);
+    setErrors(null);
     // see the note in `counter-react` - a callback closes over the destructured
     // value, so it branches on `ready` itself.
     if (ready && name) {
@@ -46,6 +66,16 @@ export default function Remote() {
   const onPeerError = (error: Error) => {
     setPeerId(null);
     console.error({ event: "error", error });
+    // While the retry loop is running, a `peer-unavailable` is just the attempt
+    // that lost its race to the master re-registering. The reconnection notice
+    // already says so, and `humanizeError` would talk over it with advice to
+    // reload - the one thing the user does not need to do.
+    if (
+      reconnecting.current &&
+      (error as { type?: string }).type === "peer-unavailable"
+    ) {
+      return;
+    }
     setErrors([humanizeError(error)]);
   };
   const onData: WrcRemoteEvents["data"] = (_, data) => {
@@ -76,6 +106,7 @@ export default function Remote() {
         payload: { id: peer.id },
       });
       api.on("remote.disconnect", onRemoteDisconnect);
+      api.on("remote.reconnecting", onRemoteReconnecting);
       api.on("remote.reconnect", onRemoteReconnect);
       api.on("data", onData);
       if (name) {
@@ -86,6 +117,7 @@ export default function Remote() {
       console.log("Remote.tsx.cleanup");
       if (ready) {
         api.off("remote.disconnect", onRemoteDisconnect);
+        api.off("remote.reconnecting", onRemoteReconnecting);
         api.off("remote.reconnect", onRemoteReconnect);
         api.off("data", onData);
       }
