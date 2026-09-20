@@ -1,5 +1,59 @@
 # Change Log
 
+## 0.3.0
+
+### Minor Changes
+
+- [#57](https://github.com/topheman/webrtc-remote-control/pull/57) [`a08506c`](https://github.com/topheman/webrtc-remote-control/commit/a08506c5f15d91e470e1576a2e41c40f21220c0e) Thanks [@topheman](https://github.com/topheman)! - The injected context is now replaced rather than mutated in place, so a
+  consumer no longer waits on a `Promise.resolve()` microtask to notice the peer
+  has arrived, and `ready` is derived directly from whether the resolved api is
+  there instead of being flipped by a separate effect.
+  
+  That is what removed `peerReady`. It existed only to tell a consumer the
+  injected `peer` had become non-null, which was needed because the old context
+  was a `shallowRef` mutated in place - `peer` itself never triggered reactivity.
+  With the context replaced wholesale, the peer is reactive on its own.
+  
+  The binding was also split by mode in this release, so `usePeer` is gone
+  entirely and there is no `peer` ref to watch in its place: read
+  `state.value.peer` off `useMaster()` or `useRemote()`, which is non-null exactly
+  when `state.value.ready` is true. See that entry for the full shape.
+
+- [#60](https://github.com/topheman/webrtc-remote-control/pull/60) [`b95d1e7`](https://github.com/topheman/webrtc-remote-control/commit/b95d1e7c7c33d4e0e87bc04a397d16a4eea7fe3a) Thanks [@topheman](https://github.com/topheman)! - Split the binding by mode: `provideMaster`/`useMaster` and
+  `provideRemote`/`useRemote` replace `provideWebTCRemoteControl` and
+  `usePeer<M>()`, mirroring the react package. This is a breaking change on a 0.x
+  line. The two sides have their own injection key, so calling the wrong hook is
+  caught instead of handing back a master api typed as a remote one.
+  
+  The result is no longer a bag of refs. `ToRefs<...>` is precisely what cannot
+  express "the api is there once ready" - narrowing `ready.value` says nothing
+  about `api.value`, which is why every consumer wrote `api!.value!`. The members
+  that never change are plain values now (`humanizeError` is a function, not a ref
+  wrapping one), and the one that does is a single `state` ref holding a
+  discriminated union: `if (state.value.ready)` narrows `state.value.api` and
+  `state.value.peer`.
+  
+  Also gone: `peerReady`, which only existed because the context used to be a ref
+  mutated in place, and `masterPeerId` as an optional option - it is required by
+  `provideRemote` and absent from `provideMaster`.
+  
+  The exported types are renamed to match. A JavaScript consumer is unaffected; a
+  TypeScript one that imports any of these has to update the import:
+  
+  | Before                                                                   | Now                                      |
+  | ------------------------------------------------------------------------ | ---------------------------------------- |
+  | `ProvideWebRTCRemoteControlOptions`                                      | `ProvideOptions`, `ProvideRemoteOptions` |
+  | `ProvideInitOptions`, what `init` is handed                              | `MasterUtils`, `RemoteUtils`             |
+  | `WebRTCRemoteControlContextValue`, `UsePeerState<M>`, `UsePeerResult<M>` | `UseMasterResult`, `UseRemoteResult`     |
+  
+  `Connection<TApi>` is new: it is the `ready`/`api`/`peer` union `state` holds,
+  exported so a consumer can name the narrowed value.
+
+### Patch Changes
+
+- Updated dependencies [[`3653ddd`](https://github.com/topheman/webrtc-remote-control/commit/3653ddd1e75caa0b4dbb37845ab31b3d26c48426), [`d953051`](https://github.com/topheman/webrtc-remote-control/commit/d95305190e1add0364aef6d2179ea21130c5be6d), [`85141d3`](https://github.com/topheman/webrtc-remote-control/commit/85141d3a65dffdda92d93765826959476a7d32d7), [`9ffcfdf`](https://github.com/topheman/webrtc-remote-control/commit/9ffcfdf03434dcf5adc5e76926219ac5558cac92), [`acc08e1`](https://github.com/topheman/webrtc-remote-control/commit/acc08e1f9661a6cd5395b96a7eb470569bd0c9e1)]:
+  - @webrtc-remote-control/core@0.3.0
+
 ## 0.2.1
 
 ### Minor Changes

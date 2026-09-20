@@ -1,5 +1,68 @@
 # Change Log
 
+## 0.3.0
+
+### Minor Changes
+
+- [#60](https://github.com/topheman/webrtc-remote-control/pull/60) [`b95d1e7`](https://github.com/topheman/webrtc-remote-control/commit/b95d1e7c7c33d4e0e87bc04a397d16a4eea7fe3a) Thanks [@topheman](https://github.com/topheman)! - Split the binding by mode: `MasterProvider`/`useMaster` and
+  `RemoteProvider`/`useRemote` replace the single `WebRTCRemoteControlProvider`
+  and `usePeer<M>()`. This is a breaking change on a 0.x line.
+  
+  Core is already split by side - `@webrtc-remote-control/core/master` and
+  `/remote` are separate entry points with their own `bindConnection` - and this
+  package used to merge the two back together behind a `mode` string, then pull
+  them apart again with conditional types, a caller-supplied type parameter and
+  three runtime throws. Picking the side by picking the import removes all of
+  that, and with it the two combinations the old provider could only reject at
+  runtime: `masterPeerId` is now a required prop of `RemoteProvider` and does not
+  exist on `MasterProvider`.
+  
+  What changes for a consumer:
+  
+  - `ready` narrows. The hook returns a discriminated union, so `if (ready)` is
+    what makes `api` and `peer` known to be there. Every `api!` and `peer!` goes
+    away. A callback that outlives the branch has to read `ready` itself.
+  - `useMaster()` and `useRemote()` take no type argument. Which side you are on
+    comes from which provider is above you, so the side can no longer be asserted
+    as one thing and provided as another.
+  - The remote side no longer carries `isConnectionFromRemote`. It is a
+    master-side filter, and only existed on the remote side as a permanent
+    `undefined` because one hook served both.
+  - `humanizeError` is present from the first render. It used to be put on the
+    context from inside the connection effect while being typed as always there,
+    so it was `undefined` until that effect ran.
+  
+  The exported types are renamed to match. A JavaScript consumer is unaffected; a
+  TypeScript one that imports any of these has to update the import:
+  
+  | Before                                                | Now                                          |
+  | ----------------------------------------------------- | -------------------------------------------- |
+  | `ProviderProps`                                       | `MasterProviderProps`, `RemoteProviderProps` |
+  | `ProviderInitOptions`, what `init` is handed          | `MasterUtils`, `RemoteUtils`                 |
+  | `WebRTCRemoteControlContextValue`, `UsePeerResult<M>` | `UseMasterResult`, `UseRemoteResult`         |
+  
+  `Connection<TApi>` is new: it is the `ready`/`api`/`peer` union both hook
+  results are built from, exported so a consumer can name the narrowed value.
+
+### Patch Changes
+
+- [#56](https://github.com/topheman/webrtc-remote-control/pull/56) [`2cf8f8f`](https://github.com/topheman/webrtc-remote-control/commit/2cf8f8f86fe751ad9f2fcd46b12a079af687f6aa) Thanks [@topheman](https://github.com/topheman)! - The provider no longer rebuilds the peer connection on every render. `utils` was
+  rebuilt each render and sat in the connection effect's dependencies, so any
+  re-render tore the connection down and called `init` again; `init` and
+  `humanErrors` were dependencies too, and both are normally written inline. The
+  connection is now established once per `mode`/`masterPeerId`/`sessionStorageKey`,
+  and the latest `init` and `humanErrors` are read when it is.
+  
+  The context value is also replaced rather than mutated in place, so `ready`
+  flips on the render that follows the connection resolving instead of waiting on
+  a microtask.
+  
+  Both fixes are described here against the provider this release replaces. The
+  binding was split by mode in the same version, so what ships is
+  `MasterProvider`/`RemoteProvider`; see that entry for the shape they hand back.
+- Updated dependencies [[`3653ddd`](https://github.com/topheman/webrtc-remote-control/commit/3653ddd1e75caa0b4dbb37845ab31b3d26c48426), [`d953051`](https://github.com/topheman/webrtc-remote-control/commit/d95305190e1add0364aef6d2179ea21130c5be6d), [`85141d3`](https://github.com/topheman/webrtc-remote-control/commit/85141d3a65dffdda92d93765826959476a7d32d7), [`9ffcfdf`](https://github.com/topheman/webrtc-remote-control/commit/9ffcfdf03434dcf5adc5e76926219ac5558cac92), [`acc08e1`](https://github.com/topheman/webrtc-remote-control/commit/acc08e1f9661a6cd5395b96a7eb470569bd0c9e1)]:
+  - @webrtc-remote-control/core@0.3.0
+
 ## 0.2.1
 
 ### Minor Changes
