@@ -117,30 +117,19 @@ export default function prepare<TReconnecting = string, TStalled = string>({
      */
     reconnectNotice,
     /**
-     * Whether an error a consumer just received from their `Peer` is one this
+     * Whether an error the consumer just received from their `Peer` is one this
      * library provoked, and so safe not to show anyone.
      *
-     * While the retry loop is running, every attempt that loses its race to the
-     * master re-registering its stored id makes peerjs emit `peer-unavailable`.
-     * `humanizeError` turns those into advice to reload, which is the one thing
-     * the user should not do mid-recovery - and the message cannot simply be
-     * reworded, because on a first connection, which is not retried, that same
-     * advice is correct. What separates the two cases is whether this loop is
-     * running, and that is state only this library holds. Without this, every
-     * consumer has to shadow it with a flag of their own, maintained across the
-     * `remote.reconnecting` and `remote.reconnect` handlers.
+     * Every retry that loses its race to the master re-registering makes peerjs
+     * emit `peer-unavailable`. `humanizeError` turns those into advice to
+     * reload: wrong mid-recovery, right on a first connection - which is never
+     * retried. Only this library knows which of the two is happening.
      *
-     * Nothing is intercepted: the consumer subscribes to their peer exactly as
-     * before, receives every event, and writes their own `return`. This only
-     * answers a question.
-     *
-     * Two limits, both deliberate. It is `true` only for `peer-unavailable` -
-     * no other error type is ever this library's doing. And it cannot tell
-     * which peer an error is about: peerjs carries that id only inside the
-     * message text. So on a page whose `Peer` also connects to ids this library
-     * does not manage, a `peer-unavailable` from one of those would read as
-     * ignorable for as long as an outage lasts. Such a page should not call
-     * this - which costs nothing, since calling it is the opt-in.
+     * Nothing is intercepted; the consumer still gets every event and still
+     * writes the `return`. It is `true` for `peer-unavailable` alone, and it
+     * cannot tell which peer an error is about, since peerjs carries that id
+     * only in the message text - so a page whose `Peer` also connects to ids
+     * this library does not manage should not call it.
      */
     isIgnorableError(error: HumanizableError): boolean {
       return reconnecting && error.type === "peer-unavailable";

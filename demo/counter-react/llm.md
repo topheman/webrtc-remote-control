@@ -309,7 +309,8 @@ worth waiting" threshold is core's.
 
 ```tsx
 function Remote() {
-  const { ready, api, peer, humanizeError, reconnectNotice } = useRemote();
+  const { ready, api, peer, humanizeError, isIgnorableError, reconnectNotice } =
+    useRemote();
   const [errors, setErrors] = useState<string[] | null>(null);
 
   useEffect(() => {
@@ -322,6 +323,20 @@ function Remote() {
       });
     }
   }, [ready]);
+
+  // errors come from `peer`, not from `api`, so they get their own effect
+  useEffect(() => {
+    const onPeerError = (error: Error) => {
+      if (isIgnorableError(error)) {
+        return;
+      }
+      setErrors([humanizeError(error)]);
+    };
+    peer?.on("error", onPeerError);
+    return () => {
+      peer?.off("error", onPeerError);
+    };
+  }, [peer]);
 }
 ```
 
@@ -335,24 +350,12 @@ never did.
 And while the retry loop runs, peerjs emits `peer-unavailable` errors for the
 attempts that lose their race to the master re-registering. Passing those to
 `humanizeError` talks over the notice with advice to reload - the one thing the
-user does not need to do. Do not track that yourself with a flag: `useRemote`
-hands out `isIgnorableError`, which knows whether core is retrying.
-
-```tsx
-const { humanizeError, isIgnorableError } = useRemote();
-
-const onPeerError = (error: Error) => {
-  if (isIgnorableError(error)) {
-    return;
-  }
-  setErrors([humanizeError(error)]);
-};
-```
-
-Register that one on `peer`, not on `api`, in an effect keyed on `peer`. Nothing
-is intercepted - every error still reaches your handler, so log there freely;
-the predicate only decides what is worth putting on screen. It says `true` only
-for `peer-unavailable`, only while a reconnection is in flight.
+user does not need to do. Do not track that yourself with a flag: the
+`isIgnorableError` above is handed out by `useRemote` and knows whether core is
+retrying. Nothing is intercepted - every error still reaches your handler, so
+log there freely; the predicate only decides what is worth putting on screen. It
+says `true` only for `peer-unavailable`, only while a reconnection is in
+flight.
 
 Both messages are overridable, on the provider, and either may be a value or a
 function of the payload - `{ id, attempt, nextDelayMs }`:
