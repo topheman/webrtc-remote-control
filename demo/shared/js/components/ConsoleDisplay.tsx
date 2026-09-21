@@ -7,5 +7,5 @@ export interface ConsoleDisplayProps {
 }
 
 export default function ConsoleDisplay({ data }: ConsoleDisplayProps) {
-  return <console-display data={JSON.stringify(data)}></console-display>;
+  return <console-display data={data}></console-display>;
 }

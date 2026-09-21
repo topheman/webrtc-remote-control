@@ -173,13 +173,22 @@ export async function expectListedRemotes(
     .toEqual([...expected].sort(byPeerId));
 }
 
-/** What the page currently shows in its error box, if anything. */
+/**
+ * What the page currently shows in its error box, if anything. Read off the
+ * `data` property, the way `fixtures.ts` reads the counter demo's elements.
+ *
+ * This page is react, and React 19 sets a prop on a custom element by checking
+ * `name in element` and, when that holds, assigning the property -
+ * `element.data = value` - rather than calling `setAttribute`. `errors-display`
+ * has a `data` accessor, so that is the branch taken, and it does not mirror
+ * the property back to the attribute. Nothing ever writes `data=` in the
+ * markup: `getAttribute("data")` would answer `null` whatever the page shows,
+ * and the assertion below would pass vacuously.
+ */
 export async function readErrors(page: Page): Promise<string[] | null> {
-  const serialized = await page.evaluate(
-    () =>
-      document.querySelector("errors-display")?.getAttribute("data") ?? null,
+  return page.evaluate(
+    () => document.querySelector("errors-display")?.data ?? null,
   );
-  return serialized === null ? null : (JSON.parse(serialized) as string[]);
 }
 
 async function openRemote(

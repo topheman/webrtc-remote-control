@@ -1,12 +1,24 @@
 import { useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import type { MeshProps, ThreeEvent } from "@react-three/fiber";
+import type { ThreeElements, ThreeEvent } from "@react-three/fiber";
 import type { Mesh } from "three";
 
 import { usePhoneColor } from "./color";
 import type { Rotation } from "./accelerometer.helpers";
 
-type BoxProps = MeshProps & { color?: string };
+// fiber 9 dropped the per-element `MeshProps` aliases; the props of a three
+// element are now read off the `ThreeElements` map it also uses to declare the
+// intrinsics.
+type BoxProps = ThreeElements["mesh"] & { color?: string };
+
+// three r155 made lighting physically correct and removed the legacy mode the
+// lighting below was written for. Two things changed with it, and the phones
+// come out nearly black without both: the renderer no longer scales every
+// light's intensity by PI, and `decay` now always applies to punctual lights
+// instead of only under `physicallyCorrectLights`. `decay={0}` on the two of
+// them restores the old no-falloff behaviour; the pixels then match what r139
+// rendered to within a couple of levels.
+const LEGACY_LIGHT_INTENSITY = Math.PI;
 
 function Box({ color = "#900000", ...props }: BoxProps) {
   // This reference gives us direct access to the THREE.Mesh object
@@ -65,9 +77,19 @@ export default function Phone3D({
       }}
     >
       <Canvas>
-        <ambientLight intensity={0.5} />
-        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
-        <pointLight position={[-10, -10, -10]} />
+        <ambientLight intensity={0.5 * LEGACY_LIGHT_INTENSITY} />
+        <spotLight
+          position={[10, 10, 10]}
+          angle={0.15}
+          penumbra={1}
+          intensity={LEGACY_LIGHT_INTENSITY}
+          decay={0}
+        />
+        <pointLight
+          position={[-10, -10, -10]}
+          intensity={LEGACY_LIGHT_INTENSITY}
+          decay={0}
+        />
         <Box
           position={[0, 0, 0]}
           rotation={[y, z, 0]}

@@ -5,5 +5,5 @@ export interface ErrorsDisplayProps {
 }
 
 export default function ErrorsDisplay({ data }: ErrorsDisplayProps) {
-  return <errors-display data={JSON.stringify(data)}></errors-display>;
+  return <errors-display data={data ?? undefined}></errors-display>;
 }

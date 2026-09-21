@@ -8,9 +8,21 @@ packages:
 # Test files across every package import from "vitest", so each one declares it.
 # Vite and its plugins are shared by the demo (which builds with them) and the
 # root Vitest config (which reuses the React plugin to transform JSX in tests).
+# React is shared by `packages/react` (which develops and tests against it) and
+# the demo (which ships it); the range is `~19.2` rather than `^19` on purpose,
+# because `@react-three/fiber` declares `react: ">=19 <19.3"` and the demo's 3D
+# page depends on it. Widen it once fiber does.
+#
+# `packages/react`'s `peerDependencies.react` is not catalogued: `>=16.8.0` is
+# the public contract, the widest React the package supports, and it has no
+# business tracking the version the repo happens to develop against.
 catalog:
   vitest: 4.1.11
-  "@types/react": ^18.3.31
+  react: ~19.2
+  react-dom: ~19.2
+  "@types/react": ~19.2
+  "@types/react-dom": ~19.2
+  "@testing-library/react": ^16.3.3
   vite: npm:@voidzero-dev/vite-plus-core@0.3.1
   "@vitejs/plugin-react": ^6.1.1
   "@vitejs/plugin-vue": ^6.0.8

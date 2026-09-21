@@ -43,5 +43,5 @@ export default function RemotesList({
       }
     };
   }, [onPingAllCallback, onPingCallback, ref]);
-  return <remotes-list data={JSON.stringify(data)} ref={ref}></remotes-list>;
+  return <remotes-list data={data} ref={ref}></remotes-list>;
 }
