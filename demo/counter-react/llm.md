@@ -304,17 +304,12 @@ function Remote() {
 A remote that loses its master retries on a backoff - 1s, 2s, 4s, then 8s
 repeatedly - and emits `remote.reconnecting` before each attempt, then
 `remote.reconnect` once it is back. `useRemote` gives you `humanizeError` for
-errors, but it does **not** give you anything for these: build the notice from
-core yourself, at module scope, and call it in the handler.
+errors and `reconnectNotice` for these - the wording is yours, the "is it still
+worth waiting" threshold is core's.
 
 ```tsx
-import { makeReconnectNotice } from "@webrtc-remote-control/core";
-
-// the wording is yours, the "is it still worth waiting" threshold is core's
-const reconnectNotice = makeReconnectNotice();
-
 function Remote() {
-  const { ready, api, peer, humanizeError } = useRemote();
+  const { ready, api, peer, humanizeError, reconnectNotice } = useRemote();
   const [errors, setErrors] = useState<string[] | null>(null);
   // a ref, not state: `onPeerError` below closes over it from another effect
   const reconnecting = useRef(false);
@@ -360,18 +355,25 @@ const onPeerError = (error: Error) => {
 
 Register that one on `peer`, not on `api`, in an effect keyed on `peer`.
 
-Both messages `makeReconnectNotice` produces are overridable, and either may be
-a value or a function of the payload - `{ id, attempt, nextDelayMs }`:
+Both messages are overridable, on the provider, and either may be a value or a
+function of the payload - `{ id, attempt, nextDelayMs }`:
 
 ```tsx
-const reconnectNotice = makeReconnectNotice({
-  reconnecting: ({ attempt }) => `Reconnecting (attempt ${attempt})...`,
-  stalled: "The other screen seems gone. Try reloading.",
-});
+<RemoteProvider
+  masterPeerId={masterPeerId}
+  init={({ getPeerId }) => new Peer(getPeerId())}
+  reconnectNotice={{
+    reconnecting: ({ attempt }) => `Reconnecting (attempt ${attempt})...`,
+    stalled: "The other screen seems gone. Try reloading.",
+  }}
+>
 ```
 
-They are independently typed and inferred from what you pass, so returning a
-React node rather than a string needs no annotation and no cast.
+They are independently typed and inferred from what you pass there. A React
+context is created once, at module scope, so it cannot carry that inference to
+the hook: if your notice is not a string, name its type at `useRemote` instead -
+`useRemote<ReactNode>()`. `useMaster` has no counterpart, since reconnecting is
+something a remote does to its master, not the other way round.
 
 ## Best Practices
 

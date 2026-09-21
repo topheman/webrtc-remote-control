@@ -156,12 +156,14 @@ describe("react", () => {
       );
 
       // The remote side has no use for the connection filter, so it is not
-      // offered one - it is not on the type, and not on the value either.
+      // offered one - it is not on the type, and not on the value either. It
+      // does get a `reconnectNotice`, which the master side has no use for.
       expect(Object.keys(init.mock.calls[0]?.[0] ?? {}).sort()).toEqual([
         "getPeerId",
         "humanizeError",
         "masterPeerId",
         "mode",
+        "reconnectNotice",
       ]);
 
       await act(async () => {
@@ -178,6 +180,74 @@ describe("react", () => {
           "remote master-peer-id off|on|send",
         );
       });
+    });
+  });
+
+  describe("reconnect notice", () => {
+    function NoticeConsumer() {
+      const { reconnectNotice } = useRemote();
+      return (
+        <div data-testid="notice">
+          {reconnectNotice({
+            id: "master-peer-id",
+            attempt: 1,
+            nextDelayMs: 1000,
+          })}
+        </div>
+      );
+    }
+
+    it("should hand out a notice built from the wording it was given", () => {
+      render(
+        <RemoteProvider
+          masterPeerId="master-peer-id"
+          init={() => makeFakePeer()}
+          reconnectNotice={{ reconnecting: "hold on" }}
+        >
+          <NoticeConsumer />
+        </RemoteProvider>,
+      );
+
+      expect(screen.getByTestId("notice").textContent).toBe("hold on");
+    });
+
+    it("should hand out core's wording when none was given", () => {
+      render(
+        <RemoteProvider
+          masterPeerId="master-peer-id"
+          init={() => makeFakePeer()}
+        >
+          <NoticeConsumer />
+        </RemoteProvider>,
+      );
+
+      expect(screen.getByTestId("notice").textContent).toBe(
+        "Lost connection to the peer, reconnecting...",
+      );
+    });
+
+    it("should not rebuild the connection when the wording is a fresh inline object", () => {
+      // The same trap `humanErrors` carries: written inline, this is a new
+      // object every render, and rebuilding the utilities on it would tear the
+      // peer down each time.
+      const peer = makeFakePeer();
+      const init = vi.fn<RemoteProviderProps["init"]>(() => peer);
+      const renderWith = () => (
+        <RemoteProvider
+          masterPeerId="master-peer-id"
+          init={init}
+          reconnectNotice={{ reconnecting: "hold on" }}
+        >
+          <NoticeConsumer />
+        </RemoteProvider>
+      );
+      const { rerender } = render(renderWith());
+
+      rerender(renderWith());
+      rerender(renderWith());
+
+      expect(init).toHaveBeenCalledTimes(1);
+      expect(peer.disconnect).not.toHaveBeenCalled();
     });
   });
 

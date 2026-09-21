@@ -204,12 +204,14 @@ describe("vue", () => {
       );
 
       // The remote side has no use for the connection filter, so it is not
-      // offered one - it is not on the type, and not on the value either.
+      // offered one - it is not on the type, and not on the value either. It
+      // does get a `reconnectNotice`, which the master side has no use for.
       expect(Object.keys(init.mock.calls[0]?.[0] ?? {}).sort()).toEqual([
         "getPeerId",
         "humanizeError",
         "masterPeerId",
         "mode",
+        "reconnectNotice",
       ]);
 
       peer.emitOpen("remote-peer-id");
@@ -244,6 +246,41 @@ describe("vue", () => {
       );
       window.sessionStorage.setItem("my-key", "stored-peer-id");
       expect(initArgs?.getPeerId()).toBe("stored-peer-id");
+    });
+
+    it("should build the reconnect notice from the wording `provideRemote` was given", () => {
+      const init = vi.fn<RemoteInit>(() => makeFakePeer());
+
+      render(
+        makeRemoteRoot(init, {
+          masterPeerId: "master-peer-id",
+          reconnectNotice: { reconnecting: "hold on" },
+        }),
+      );
+
+      const initArgs = init.mock.calls[0]?.[0];
+      expect(
+        initArgs?.reconnectNotice({
+          id: "master-peer-id",
+          attempt: 1,
+          nextDelayMs: 1000,
+        }),
+      ).toBe("hold on");
+    });
+
+    it("should fall back to core's wording when `provideRemote` was given none", () => {
+      const init = vi.fn<RemoteInit>(() => makeFakePeer());
+
+      render(makeRemoteRoot(init, { masterPeerId: "master-peer-id" }));
+
+      const initArgs = init.mock.calls[0]?.[0];
+      expect(
+        initArgs?.reconnectNotice({
+          id: "master-peer-id",
+          attempt: 1,
+          nextDelayMs: 1000,
+        }),
+      ).toBe("Lost connection to the peer, reconnecting...");
     });
   });
 });

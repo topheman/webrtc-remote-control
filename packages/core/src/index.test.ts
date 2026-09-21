@@ -36,6 +36,9 @@ describe("index", () => {
       "bindConnection",
       "getPeerId",
       "humanizeError",
+      // The master has no counterpart: reconnecting is something a remote
+      // does to its master, not the other way round.
+      "reconnectNotice",
     ]);
   });
 });

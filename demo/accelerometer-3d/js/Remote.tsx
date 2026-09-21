@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { useRemote } from "@webrtc-remote-control/react";
-import { makeReconnectNotice } from "@webrtc-remote-control/core";
 import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
 import ErrorsDisplay from "../../shared/js/components/ErrorsDisplay";
@@ -11,9 +10,6 @@ import { useDeviceOrientation } from "../../shared/js/react-useDeviceOrientation
 import { orientationToRotation } from "./accelerometer.helpers";
 
 const Phone3D = lazy(() => import("./Phone3D"));
-
-// The wording is the consumer's, the threshold core's.
-const reconnectNotice = makeReconnectNotice();
 
 export default function Remote() {
   // eslint-disable-next-line no-unused-vars
@@ -26,7 +22,7 @@ export default function Remote() {
   const [phoneScale, setPhoneScale] = useState(1);
 
   // see the note in `Master.tsx` about `ready` narrowing `api` and `peer`
-  const { ready, api, peer, humanizeError } = useRemote();
+  const { ready, api, peer, humanizeError, reconnectNotice } = useRemote();
 
   const {
     orientation,

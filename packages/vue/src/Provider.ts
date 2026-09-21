@@ -3,6 +3,7 @@ import type { InjectionKey, ShallowRef } from "vue";
 import { master, prepareUtils, remote } from "@webrtc-remote-control/core";
 import type {
   MakeHumanizeErrorOptions,
+  MakeReconnectNoticeOptions,
   MasterBindConnectionApiResolved,
   RemoteBindConnectionApiResolved,
 } from "@webrtc-remote-control/core";
@@ -17,8 +18,16 @@ export type PeerInstance = Parameters<
   ReturnType<typeof master.default>["bindConnection"]
 >[0];
 
-/** What `prepareUtils` hands out, before a side has been picked. */
-type PreparedUtils = ReturnType<typeof prepareUtils>;
+/**
+ * What `prepareUtils` hands out, before a side has been picked.
+ *
+ * The two parameters are the ones `makeReconnectNotice` infers from the
+ * messages it was given: a notice may be anything core is handed, and each half
+ * of it is typed independently.
+ */
+type PreparedUtils<TReconnecting = string, TStalled = string> = ReturnType<
+  typeof prepareUtils<TReconnecting, TStalled>
+>;
 
 /**
  * The utilities the master side works with: core's own per-mode bundle, minus
@@ -37,9 +46,13 @@ export type MasterUtils = Omit<
   "bindConnection"
 > & { mode: "master" };
 
-/** The remote side's half of {@link MasterUtils}. It has no connection filter. */
-export type RemoteUtils = Omit<
-  ReturnType<typeof remote.default>,
+/**
+ * The remote side's half of {@link MasterUtils}. It has no connection filter,
+ * and it does carry a `reconnectNotice` - it is a remote that reconnects to its
+ * master, not the other way round, so core hands one out on this side alone.
+ */
+export type RemoteUtils<TReconnecting = string, TStalled = string> = Omit<
+  ReturnType<typeof remote.default<TReconnecting, TStalled>>,
   "bindConnection"
 > & { mode: "remote"; masterPeerId: string };
 
@@ -61,7 +74,10 @@ export type UseMasterResult = MasterUtils & {
 };
 
 /** What `useRemote` returns, and what `provideRemote` provides. */
-export type UseRemoteResult = RemoteUtils & {
+export type UseRemoteResult<
+  TReconnecting = string,
+  TStalled = string,
+> = RemoteUtils<TReconnecting, TStalled> & {
   state: Readonly<ShallowRef<Connection<RemoteBindConnectionApiResolved>>>;
 };
 
@@ -69,26 +85,52 @@ export type UseRemoteResult = RemoteUtils & {
 export const MasterContext: InjectionKey<UseMasterResult> = Symbol(
   "master-webrtc-remote-control",
 );
-export const RemoteContext: InjectionKey<UseRemoteResult> = Symbol(
-  "remote-webrtc-remote-control",
-);
+/**
+ * The key is built once, at module scope, so it cannot carry the notice types a
+ * given `provideRemote` call was instantiated with. `unknown` is what every
+ * instantiation is assignable to - the notice is only ever returned, never
+ * accepted - so providing needs no cast and `useRemote` can name what it wants.
+ */
+export const RemoteContext: InjectionKey<UseRemoteResult<unknown, unknown>> =
+  Symbol("remote-webrtc-remote-control");
 
 /** The options both sides share. */
-export interface ProvideOptions {
+export interface ProvideOptions<TReconnecting = string, TStalled = string> {
   sessionStorageKey?: string;
   humanErrors?: MakeHumanizeErrorOptions;
+  /**
+   * Only `provideRemote` offers this one - see {@link ProvideRemoteOptions}.
+   * It is declared here because this is the bag the shared builder below reads.
+   */
+  reconnectNotice?: MakeReconnectNoticeOptions<TReconnecting, TStalled>;
 }
 
-export interface ProvideRemoteOptions extends ProvideOptions {
+export interface ProvideRemoteOptions<
+  TReconnecting = string,
+  TStalled = string,
+> extends ProvideOptions<TReconnecting, TStalled> {
   masterPeerId: string;
+  /**
+   * The wording of the reconnection notice, handed to core's factory. Both
+   * halves are inferred from what is passed, so returning something richer than
+   * a string needs no annotation here - but the injection key cannot carry that
+   * inference to `useRemote`, which names it again as a type argument.
+   */
+  reconnectNotice?: MakeReconnectNoticeOptions<TReconnecting, TStalled>;
 }
 
 /**
  * How a side wires core up: what the utilities look like once the side is
  * picked, and how to open the connection.
  */
-type Wire<TUtils, TApi, TMasterPeerId extends string | undefined> = (
-  prepared: PreparedUtils,
+type Wire<
+  TUtils,
+  TApi,
+  TMasterPeerId extends string | undefined,
+  TReconnecting = string,
+  TStalled = string,
+> = (
+  prepared: PreparedUtils<TReconnecting, TStalled>,
   masterPeerId: TMasterPeerId,
 ) => { utils: TUtils; connect: (peer: PeerInstance) => Promise<TApi> };
 
@@ -104,16 +146,23 @@ const wireMaster: Wire<
   };
 };
 
-const wireRemote: Wire<RemoteUtils, RemoteBindConnectionApiResolved, string> = (
-  prepared,
-  masterPeerId,
-) => {
+/**
+ * A declaration rather than a typed const, because this one is generic in the
+ * notice types and a const can only hold one instantiation of `Wire`.
+ */
+function wireRemote<TReconnecting, TStalled>(
+  prepared: PreparedUtils<TReconnecting, TStalled>,
+  masterPeerId: string,
+): {
+  utils: RemoteUtils<TReconnecting, TStalled>;
+  connect: (peer: PeerInstance) => Promise<RemoteBindConnectionApiResolved>;
+} {
   const { bindConnection, ...utils } = remote.default(prepared);
   return {
     utils: { ...utils, mode: "remote", masterPeerId },
     connect: (peer) => bindConnection(peer, masterPeerId),
   };
-};
+}
 
 /**
  * The shared half of both composables. The split is in the public surface, not
@@ -128,14 +177,24 @@ function buildConnection<
   TUtils,
   TApi,
   TMasterPeerId extends string | undefined,
+  TReconnecting = string,
+  TStalled = string,
 >(
-  wire: Wire<TUtils, TApi, TMasterPeerId>,
+  wire: Wire<TUtils, TApi, TMasterPeerId, TReconnecting, TStalled>,
   init: (utils: TUtils) => PeerInstance,
   masterPeerId: TMasterPeerId,
-  { sessionStorageKey, humanErrors }: ProvideOptions,
+  {
+    sessionStorageKey,
+    humanErrors,
+    reconnectNotice,
+  }: ProvideOptions<TReconnecting, TStalled>,
 ): TUtils & { state: ShallowRef<Connection<TApi>> } {
   const { utils, connect } = wire(
-    prepareUtils({ sessionStorageKey, humanErrors }),
+    prepareUtils<TReconnecting, TStalled>({
+      sessionStorageKey,
+      humanErrors,
+      reconnectNotice,
+    }),
     masterPeerId,
   );
   // init callback that should return a peer instance like:
@@ -164,9 +223,9 @@ export function provideMaster(
   provide(MasterContext, buildConnection(wireMaster, init, undefined, options));
 }
 
-export function provideRemote(
-  init: (utils: RemoteUtils) => PeerInstance,
-  options: ProvideRemoteOptions,
+export function provideRemote<TReconnecting = string, TStalled = string>(
+  init: (utils: RemoteUtils<TReconnecting, TStalled>) => PeerInstance,
+  options: ProvideRemoteOptions<TReconnecting, TStalled>,
 ): void {
   const { masterPeerId } = options;
   // TypeScript rules this out for typed callers - the option is required. It
