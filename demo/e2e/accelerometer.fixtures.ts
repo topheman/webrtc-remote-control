@@ -175,11 +175,15 @@ export async function expectListedRemotes(
 
 /**
  * What the page currently shows in its error box, if anything. Read off the
- * `data` property, the way `fixtures.ts` reads the counter demo's elements:
- * the element deliberately does not mirror the property back to the attribute,
- * and React 19 assigns the property rather than setting the attribute, so
- * `getAttribute("data")` here would always answer `null` and the assertion
- * would pass whatever the page shows.
+ * `data` property, the way `fixtures.ts` reads the counter demo's elements.
+ *
+ * This page is react, and React 19 sets a prop on a custom element by checking
+ * `name in element` and, when that holds, assigning the property -
+ * `element.data = value` - rather than calling `setAttribute`. `errors-display`
+ * has a `data` accessor, so that is the branch taken, and it does not mirror
+ * the property back to the attribute. Nothing ever writes `data=` in the
+ * markup: `getAttribute("data")` would answer `null` whatever the page shows,
+ * and the assertion below would pass vacuously.
  */
 export async function readErrors(page: Page): Promise<string[] | null> {
   return page.evaluate(
