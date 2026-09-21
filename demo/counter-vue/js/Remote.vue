@@ -43,22 +43,19 @@ const errors = ref<string[] | null>(null);
 const reversedLogs = computed(() => [...logs.value].reverse());
 
 // see the note in `Master.vue` about `state` narrowing `api` and `peer`
-const { state, humanizeError, reconnectNotice } = useRemote();
+const { state, humanizeError, isIgnorableError, reconnectNotice } = useRemote();
 
 const onRemoteDisconnect: WrcRemoteEvents["remote.disconnect"] = (payload) => {
   logger.log({ event: "remote.disconnect", payload });
 };
-const reconnecting = ref(false);
 const onRemoteReconnecting: WrcRemoteEvents["remote.reconnecting"] = (
   payload,
 ) => {
   logger.log({ event: "remote.reconnecting", payload });
-  reconnecting.value = true;
   errors.value = [reconnectNotice(payload)];
 };
 const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
   logger.log({ event: "remote.reconnect", payload });
-  reconnecting.value = false;
   // `onPeerError` nulled `peerId` and put an error on screen, which disables
   // every control. Reconnecting has to undo both, or a remote that came back
   // is indistinguishable from one that never did.
@@ -74,14 +71,11 @@ const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
 const onPeerError = (error: Error) => {
   peerId.value = null;
   logger.error({ event: "error", error });
-  // While the retry loop is running, a `peer-unavailable` is just the attempt
-  // that lost its race to the master re-registering. The reconnection notice
-  // already says so, and `humanizeError` would talk over it with advice to
-  // reload - the one thing the user does not need to do.
-  if (
-    reconnecting.value &&
-    (error as { type?: string }).type === "peer-unavailable"
-  ) {
+  // The errors core's own retry loop provokes are not worth showing: mid
+  // recovery `humanizeError` would advise reloading, which is the one thing
+  // the user should not do. Core knows whether it is retrying, so it answers
+  // rather than every page tracking it.
+  if (isIgnorableError(error)) {
     return;
   }
   errors.value = [humanizeError(error)];

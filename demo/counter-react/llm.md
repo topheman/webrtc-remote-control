@@ -311,17 +311,13 @@ worth waiting" threshold is core's.
 function Remote() {
   const { ready, api, peer, humanizeError, reconnectNotice } = useRemote();
   const [errors, setErrors] = useState<string[] | null>(null);
-  // a ref, not state: `onPeerError` below closes over it from another effect
-  const reconnecting = useRef(false);
 
   useEffect(() => {
     if (ready) {
       api.on("remote.reconnecting", (payload) => {
-        reconnecting.current = true;
         setErrors([reconnectNotice(payload)]);
       });
       api.on("remote.reconnect", () => {
-        reconnecting.current = false;
         setErrors(null);
       });
     }
@@ -339,21 +335,24 @@ never did.
 And while the retry loop runs, peerjs emits `peer-unavailable` errors for the
 attempts that lose their race to the master re-registering. Passing those to
 `humanizeError` talks over the notice with advice to reload - the one thing the
-user does not need to do - so skip them while a reconnection is in flight:
+user does not need to do. Do not track that yourself with a flag: `useRemote`
+hands out `isIgnorableError`, which knows whether core is retrying.
 
 ```tsx
+const { humanizeError, isIgnorableError } = useRemote();
+
 const onPeerError = (error: Error) => {
-  if (
-    reconnecting.current &&
-    (error as { type?: string }).type === "peer-unavailable"
-  ) {
+  if (isIgnorableError(error)) {
     return;
   }
   setErrors([humanizeError(error)]);
 };
 ```
 
-Register that one on `peer`, not on `api`, in an effect keyed on `peer`.
+Register that one on `peer`, not on `api`, in an effect keyed on `peer`. Nothing
+is intercepted - every error still reaches your handler, so log there freely;
+the predicate only decides what is worth putting on screen. It says `true` only
+for `peer-unavailable`, only while a reconnection is in flight.
 
 Both messages are overridable, on the provider, and either may be a value or a
 function of the payload - `{ id, attempt, nextDelayMs }`:
@@ -372,8 +371,9 @@ function of the payload - `{ id, attempt, nextDelayMs }`:
 They are independently typed and inferred from what you pass there. A React
 context is created once, at module scope, so it cannot carry that inference to
 the hook: if your notice is not a string, name its type at `useRemote` instead -
-`useRemote<ReactNode>()`. `useMaster` has no counterpart, since reconnecting is
-something a remote does to its master, not the other way round.
+`useRemote<ReactNode>()`. `useMaster` has no counterpart for either of these,
+since reconnecting is something a remote does to its master, not the other way
+round.
 
 ## Best Practices
 

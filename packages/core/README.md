@@ -165,10 +165,41 @@ Its two messages are independently typed and inferred from what you pass, so
 returning something richer than a string - a React node, say - needs no
 annotation and no cast.
 
-One thing to handle alongside it: while the retry loop runs, peerjs emits
-`peer-unavailable` errors for the attempts that lose their race to the master
-re-registering. Passing those through `humanizeError` talks over the notice with
-advice to reload, so skip them while a reconnection is in flight.
+### Skipping the errors the retry loop provokes
+
+While the retry loop runs, peerjs emits `peer-unavailable` for every attempt
+that loses its race to the master re-registering its stored id. Passing those
+through `humanizeError` talks over the notice with advice to reload - the one
+thing the user should not do mid-recovery. Rewording the message is not a fix
+either: on a first connection, which is never retried, that advice is correct.
+
+What separates the two cases is whether the retry loop is running, and that is
+state only this library holds. `isIgnorableError` answers it, so you do not have
+to track it yourself:
+
+```js
+const peer = new Peer(getPeerId());
+const { bindConnection, humanizeError, isIgnorableError } = prepare(utils);
+
+peer.on("error", (error) => {
+  // your own logging still sees every error
+  console.error(error);
+  if (isIgnorableError(error)) {
+    return;
+  }
+  setErrors([humanizeError(error)]);
+});
+```
+
+Nothing is intercepted. You subscribe to your own `Peer` exactly as before and
+receive every event it emits; the predicate only answers a question, and you
+still write the `return`. It answers `true` only for `peer-unavailable`, and
+only while a reconnection is in flight - no other error type is ever this
+library's doing. What it cannot do is tell which peer an error is about, since
+peerjs carries that id only inside the message text, so a page whose `Peer` also
+connects to ids this library does not manage should not call it.
+
+Like `reconnectNotice`, it is handed out by the remote side alone.
 
 ## TypeScript
 

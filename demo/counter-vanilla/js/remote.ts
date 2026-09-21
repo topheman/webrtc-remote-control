@@ -28,7 +28,8 @@ async function init() {
     sessionStorageKey: "webrtc-remote-control-peer-id-vanilla",
   });
   const { reconnectNotice } = utils;
-  const { bindConnection, getPeerId, humanizeError } = prepare(utils);
+  const { bindConnection, getPeerId, humanizeError, isIgnorableError } =
+    prepare(utils);
 
   const initialName = getRemoteNameFromSessionStorage();
   const { showLoader, setConnected, setEvents, setConsoleDisplay, setErrors } =
@@ -56,16 +57,15 @@ async function init() {
       payload: { id: peerId },
     });
   });
-  // While the retry loop is running, a `peer-unavailable` is just the attempt
-  // that lost its race to the master re-registering. The reconnection notice
-  // already says so, and `humanizeError` would talk over it with advice to
-  // reload - the one thing the user does not need to do.
-  let reconnecting = false;
   peer.on("error", (error) => {
     showLoader(false);
     setConnected(false);
     logger.error({ event: "error", error });
-    if (reconnecting && error.type === "peer-unavailable") {
+    // The errors core's own retry loop provokes are not worth showing: mid
+    // recovery `humanizeError` would advise reloading, which is the one thing
+    // the user should not do. Core knows whether it is retrying, so it answers
+    // rather than every page tracking it.
+    if (isIgnorableError(error)) {
       return;
     }
     setErrors([humanizeError(error)]);
@@ -83,12 +83,10 @@ async function init() {
   });
   wrcRemote.on("remote.reconnecting", (payload) => {
     logger.log({ event: "remote.reconnecting", payload });
-    reconnecting = true;
     setErrors([reconnectNotice(payload)]);
   });
   wrcRemote.on("remote.reconnect", (payload) => {
     logger.log({ event: "remote.reconnect", payload });
-    reconnecting = false;
     // The `peer-unavailable` that a reconnection attempt loses its race to left
     // the controls disabled and the error on screen. Now that the retry loop
     // gets far enough to come back, that state has to be cleared - otherwise a

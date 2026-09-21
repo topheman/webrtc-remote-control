@@ -88,12 +88,29 @@ cannot carry that inference to the composable. Name it there instead:
 const { reconnectNotice } = useRemote<VNode>();
 ```
 
-`useMaster` has no counterpart: reconnecting is something a remote does to its
-master, not the other way round.
+`useRemote` hands out one more thing for the same outage: `isIgnorableError`,
+which tells the `peer-unavailable` errors the retry loop provokes from the ones
+worth showing. Your subscription to your own peer is untouched - the predicate
+answers a question, and you still write the `return`:
+
+```js
+const { humanizeError, isIgnorableError } = useRemote();
+
+peer.on("error", (error) => {
+  if (isIgnorableError(error)) {
+    return;
+  }
+  errors.value = [humanizeError(error)];
+});
+```
+
+`useMaster` has no counterpart for either of these: reconnecting is something a
+remote does to its master, not the other way round.
 
 See [the core README](https://github.com/topheman/webrtc-remote-control/tree/master/packages/core#telling-the-user-about-a-reconnection)
-for what the notice decides, and the `peer-unavailable` errors worth skipping
-while a reconnection is in flight.
+for what the notice decides, and
+[the section after it](https://github.com/topheman/webrtc-remote-control/tree/master/packages/core#skipping-the-errors-the-retry-loop-provokes)
+for what the predicate does and does not claim.
 
 ## TypeScript
 

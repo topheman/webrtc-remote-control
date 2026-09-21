@@ -8,10 +8,18 @@ import {
 } from "./common.js";
 import type {
   GetPeerIdType,
+  HumanizableError,
   HumanizeErrorType,
   ReconnectingPayload,
   SetPeerIdToSessionStorageType,
 } from "./common.js";
+
+/**
+ * The type of the predicate `prepare` hands out. Declared here rather than in
+ * `common.ts` because it is the remote side's alone: a master does not
+ * reconnect, so nothing on that side can produce the errors this describes.
+ */
+export type IsIgnorableErrorType = (error: HumanizableError) => boolean;
 
 export { makeReconnectNotice, prepareUtils } from "./common.js";
 
@@ -90,6 +98,15 @@ export default function prepare<TReconnecting = string, TStalled = string>({
     payload: ReconnectingPayload,
   ) => TReconnecting | TStalled,
 }: PrepareRemoteUtils<TReconnecting, TStalled>) {
+  /**
+   * Whether the retry loop below is in flight. It lives here, in `prepare`'s
+   * closure rather than inside `bindConnection`, so `isIgnorableError` exists
+   * before any peer does: a consumer registers `peer.on("error", ...)` before
+   * awaiting `bindConnection`, and a first-connection failure arrives in
+   * exactly that window. `false` until the first retry starts is also the
+   * right answer there - a first connection is never retried.
+   */
+  let reconnecting = false;
   return {
     humanizeError,
     getPeerId,
@@ -99,6 +116,35 @@ export default function prepare<TReconnecting = string, TStalled = string>({
      * is where the notice belongs - `master.default` has no use for it.
      */
     reconnectNotice,
+    /**
+     * Whether an error a consumer just received from their `Peer` is one this
+     * library provoked, and so safe not to show anyone.
+     *
+     * While the retry loop is running, every attempt that loses its race to the
+     * master re-registering its stored id makes peerjs emit `peer-unavailable`.
+     * `humanizeError` turns those into advice to reload, which is the one thing
+     * the user should not do mid-recovery - and the message cannot simply be
+     * reworded, because on a first connection, which is not retried, that same
+     * advice is correct. What separates the two cases is whether this loop is
+     * running, and that is state only this library holds. Without this, every
+     * consumer has to shadow it with a flag of their own, maintained across the
+     * `remote.reconnecting` and `remote.reconnect` handlers.
+     *
+     * Nothing is intercepted: the consumer subscribes to their peer exactly as
+     * before, receives every event, and writes their own `return`. This only
+     * answers a question.
+     *
+     * Two limits, both deliberate. It is `true` only for `peer-unavailable` -
+     * no other error type is ever this library's doing. And it cannot tell
+     * which peer an error is about: peerjs carries that id only inside the
+     * message text. So on a page whose `Peer` also connects to ids this library
+     * does not manage, a `peer-unavailable` from one of those would read as
+     * ignorable for as long as an outage lasts. Such a page should not call
+     * this - which costs nothing, since calling it is the opt-in.
+     */
+    isIgnorableError(error: HumanizableError): boolean {
+      return reconnecting && error.type === "peer-unavailable";
+    },
     bindConnection(peer: Peer, masterPeerId: string): Promise<WrcRemote> {
       return new Promise((res) => {
         let conn: DataConnection | null = null;
@@ -149,6 +195,7 @@ export default function prepare<TReconnecting = string, TStalled = string>({
             // one starts from the first delay again.
             clearRetryTimer();
             attempt = 0;
+            reconnecting = false;
             if (typeof onConnectionOpened === "function") {
               onConnectionOpened();
             }
@@ -178,6 +225,9 @@ export default function prepare<TReconnecting = string, TStalled = string>({
         };
 
         const reconnect = () => {
+          // Set before the event is emitted rather than after, so a handler
+          // that reacts synchronously already sees the loop as running.
+          reconnecting = true;
           ee.emit("remote.reconnecting", {
             id: peer.id,
             attempt: attempt + 1,
