@@ -223,8 +223,21 @@ export function provideMaster(
   provide(MasterContext, buildConnection(wireMaster, init, undefined, options));
 }
 
+/**
+ * `init` takes `RemoteUtils<unknown, unknown>`, and deliberately not
+ * `RemoteUtils<TReconnecting, TStalled>`. That callback is context-sensitive -
+ * `(utils) => new Peer(utils.getPeerId())` is what every consumer writes - so
+ * TypeScript defers it to a second inference pass and, to type its parameter
+ * contextually, fixes this function's type parameters first. Naming them there
+ * fixes them at their `string` default before `options.reconnectNotice` is ever
+ * read, and a message returning a `VNode` is then measured against `string`.
+ * `unknown` is also honest - inside `init` the notice type is genuinely not
+ * decided yet, which is the same reason the injection key carries `unknown`.
+ *
+ * `reconnect-notice.test-d.ts` fails to compile if this regresses.
+ */
 export function provideRemote<TReconnecting = string, TStalled = string>(
-  init: (utils: RemoteUtils<TReconnecting, TStalled>) => PeerInstance,
+  init: (utils: RemoteUtils<unknown, unknown>) => PeerInstance,
   options: ProvideRemoteOptions<TReconnecting, TStalled>,
 ): void {
   const { masterPeerId } = options;

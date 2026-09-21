@@ -86,7 +86,11 @@ describe("vue", () => {
   });
 
   type MasterInit = (utils: MasterUtils) => ReturnType<typeof makeFakePeer>;
-  type RemoteInit = (utils: RemoteUtils) => ReturnType<typeof makeFakePeer>;
+  // `unknown`, because that is what `provideRemote` hands `init`: the notice
+  // types are decided by the wording in the options, not by this callback.
+  type RemoteInit = (
+    utils: RemoteUtils<unknown, unknown>,
+  ) => ReturnType<typeof makeFakePeer>;
 
   /** Root component that installs the master provider, so the child can inject it. */
   function makeMasterRoot(

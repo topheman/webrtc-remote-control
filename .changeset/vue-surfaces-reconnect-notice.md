@@ -28,3 +28,13 @@ injection key is created once, at module scope, and cannot carry that inference
 to the composable. `useRemote` takes the same two type parameters instead,
 defaulting to `string`, so a caller who did not override the wording writes
 nothing and a caller who returns a node writes `useRemote<VNode>()`.
+
+The utilities `init` receives are typed `RemoteUtils<unknown, unknown>` rather
+than being parameterised on those two types. `init` is context-sensitive -
+`(utils) => new Peer(utils.getPeerId())` is what every consumer writes - so
+TypeScript defers it and, to type its parameter contextually, fixes
+`provideRemote`'s type parameters before it reads the options. Naming them on
+`init` fixed them at `string`, which made a notice returning a `VNode` fail to
+compile. The only visible consequence is that `utils.reconnectNotice(...)`
+called from inside `init` returns `unknown`, which is the same thing the
+injection key carries.

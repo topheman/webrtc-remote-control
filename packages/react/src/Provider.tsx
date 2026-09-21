@@ -124,7 +124,21 @@ export interface RemoteProviderProps<
   TStalled = string,
 > extends ProviderPropsBase {
   masterPeerId: string;
-  init: (utils: RemoteUtils<TReconnecting, TStalled>) => PeerInstance;
+  /**
+   * `unknown`, and deliberately not `RemoteUtils<TReconnecting, TStalled>`.
+   * This callback is context-sensitive - `init={({ getPeerId }) => ...}` is
+   * what every consumer writes - so TypeScript defers it to a second inference
+   * pass and, to type its parameter contextually, fixes this component's type
+   * parameters first. Naming them here fixes them at their `string` default
+   * before `reconnectNotice` is ever read, and a message returning a React node
+   * is then measured against `string`. `NoInfer` does not help: it removes the
+   * inference site, not the fixing. `unknown` is also honest - inside `init`
+   * the notice type is genuinely not decided yet, which is the same reason the
+   * context below carries `unknown`.
+   *
+   * `reconnect-notice.test-d.tsx` fails to compile if this regresses.
+   */
+  init: (utils: RemoteUtils<unknown, unknown>) => PeerInstance;
   /**
    * The wording of the reconnection notice, handed to core's factory. Both
    * halves are inferred from what is passed, so returning something richer than
