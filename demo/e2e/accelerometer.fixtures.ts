@@ -173,13 +173,18 @@ export async function expectListedRemotes(
     .toEqual([...expected].sort(byPeerId));
 }
 
-/** What the page currently shows in its error box, if anything. */
+/**
+ * What the page currently shows in its error box, if anything. Read off the
+ * `data` property, the way `fixtures.ts` reads the counter demo's elements:
+ * the element deliberately does not mirror the property back to the attribute,
+ * and React 19 assigns the property rather than setting the attribute, so
+ * `getAttribute("data")` here would always answer `null` and the assertion
+ * would pass whatever the page shows.
+ */
 export async function readErrors(page: Page): Promise<string[] | null> {
-  const serialized = await page.evaluate(
-    () =>
-      document.querySelector("errors-display")?.getAttribute("data") ?? null,
+  return page.evaluate(
+    () => document.querySelector("errors-display")?.data ?? null,
   );
-  return serialized === null ? null : (JSON.parse(serialized) as string[]);
 }
 
 async function openRemote(
