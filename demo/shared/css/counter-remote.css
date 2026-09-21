@@ -2,6 +2,17 @@ body {
   /* prevent zoom when double tap: https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action#Syntax */
   touch-action: manipulation;
 }
+/* A fast sequence of taps on the counter buttons is read by iOS as a selection
+   gesture. The buttons are unselectable, so WebKit walks up and selects the
+   nearest text it can find instead - the title right above them - and pops the
+   copy callout over the controls. The title is a link to the homepage, not
+   something anyone copies, so taking it out of selection leaves the gesture
+   with nothing to grab. Everything else on the page stays selectable. */
+h1.title {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 .counter-control {
   text-align: center;
 }
