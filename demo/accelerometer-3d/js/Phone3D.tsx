@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import { View } from "@react-three/drei";
 import type { ThreeElements, ThreeEvent } from "@react-three/fiber";
 import type { Mesh } from "three";
 
@@ -65,9 +65,14 @@ export default function Phone3D({
   const [hover, setHover] = useState(false);
   const phoneColor = usePhoneColor(peerId);
   return (
-    <div
+    // A `<View>` is a plain `<div>` that reserves this rectangle in the layout
+    // and tunnels the scene below to the page's single `<PhonesCanvas>`, which
+    // draws it there with `gl.scissor`. It used to be a `<Canvas>` of its own,
+    // which cost one WebGL context per phone - see the comment in
+    // `PhonesCanvas.tsx`. The lights live inside the view rather than next to
+    // the port because each view is portalled into a scene of its own.
+    <View
       style={{
-        position: "relative",
         width,
         height,
         cursor: hover ? "pointer" : "initial",
@@ -76,41 +81,39 @@ export default function Phone3D({
         MozUserSelect: "none",
       }}
     >
-      <Canvas>
-        <ambientLight intensity={0.5 * LEGACY_LIGHT_INTENSITY} />
-        <spotLight
-          position={[10, 10, 10]}
-          angle={0.15}
-          penumbra={1}
-          intensity={LEGACY_LIGHT_INTENSITY}
-          decay={0}
-        />
-        <pointLight
-          position={[-10, -10, -10]}
-          intensity={LEGACY_LIGHT_INTENSITY}
-          decay={0}
-        />
-        <Box
-          position={[0, 0, 0]}
-          rotation={[y, z, 0]}
-          color={hover ? colorHover : (color ?? phoneColor)}
-          scale={scale}
-          onPointerDown={onPointerDown}
-          onPointerUp={onPointerUp}
-          onPointerEnter={(e) => {
-            if (colorHover) {
-              setHover(true);
-            }
-            onPointerEnter?.(e);
-          }}
-          onPointerLeave={(e) => {
-            if (colorHover) {
-              setHover(false);
-            }
-            onPointerLeave?.(e);
-          }}
-        />
-      </Canvas>
-    </div>
+      <ambientLight intensity={0.5 * LEGACY_LIGHT_INTENSITY} />
+      <spotLight
+        position={[10, 10, 10]}
+        angle={0.15}
+        penumbra={1}
+        intensity={LEGACY_LIGHT_INTENSITY}
+        decay={0}
+      />
+      <pointLight
+        position={[-10, -10, -10]}
+        intensity={LEGACY_LIGHT_INTENSITY}
+        decay={0}
+      />
+      <Box
+        position={[0, 0, 0]}
+        rotation={[y, z, 0]}
+        color={hover ? colorHover : (color ?? phoneColor)}
+        scale={scale}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerEnter={(e) => {
+          if (colorHover) {
+            setHover(true);
+          }
+          onPointerEnter?.(e);
+        }}
+        onPointerLeave={(e) => {
+          if (colorHover) {
+            setHover(false);
+          }
+          onPointerLeave?.(e);
+        }}
+      />
+    </View>
   );
 }

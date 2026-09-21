@@ -45,6 +45,8 @@ declare global {
     /** Filled by the init script below, in the order the page logged them. */
     __wrcEvents?: DemoEvent[];
     __orientationTimer?: number;
+    /** Filled by `recordContextLosses`, one entry per lost WebGL context. */
+    __wrcContextLosses?: string[];
   }
 }
 
@@ -100,6 +102,42 @@ async function grantDeviceOrientation(page: Page): Promise<void> {
         PermissionRequestableEventConstructor
     ).requestPermission = granted;
   });
+}
+
+/**
+ * Records every WebGL context this page loses. The master draws all its phones
+ * through one context now; before that each phone mounted a `<Canvas>` of its
+ * own, and Chrome caps a page at 16 active contexts and silently evicts the
+ * oldest past that - the evicted cards render as a broken-image glyph while
+ * their peer id, angles and WebRTC traffic all keep working, which is why the
+ * bug reached production invisible to every assertion this suite makes.
+ *
+ * `webglcontextlost` is fired at the canvas and does not bubble, and the canvas
+ * does not exist yet when an init script runs, so listen on the document in the
+ * capture phase - that reaches a non-bubbling event on any descendant.
+ */
+async function recordContextLosses(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const losses: string[] = [];
+    window.__wrcContextLosses = losses;
+    document.addEventListener(
+      "webglcontextlost",
+      (event) => {
+        losses.push((event.target as HTMLElement)?.tagName ?? "unknown");
+      },
+      true,
+    );
+  });
+}
+
+/** How many WebGL contexts the page has lost, and on what. */
+export async function readContextLosses(page: Page): Promise<string[]> {
+  return page.evaluate(() => window.__wrcContextLosses ?? []);
+}
+
+/** How many `<canvas>` elements the page is drawing through. */
+export async function countCanvases(page: Page): Promise<number> {
+  return page.evaluate(() => document.querySelectorAll("canvas").length);
 }
 
 export async function readEvents(page: Page): Promise<DemoEvent[]> {
@@ -203,6 +241,7 @@ async function openRemote(
 ): Promise<AccelerometerRemote> {
   const page = await context.newPage();
   await recordEvents(page);
+  await recordContextLosses(page);
   await grantDeviceOrientation(page);
   await page.goto(href);
   await page.getByRole("button", { name: "Click here to start" }).click();
@@ -237,33 +276,47 @@ async function openRemote(
   };
 }
 
+/**
+ * Opens the master page and connects `remoteCount` remotes to it, each its own
+ * tab of the one context so each gets its own stored peer id. Exported as well
+ * as used by the fixture below, because the WebGL-context scenario needs more
+ * remotes than every other test wants to pay for.
+ */
+export async function connectAccelerometerDemo(
+  context: BrowserContext,
+  remoteCount: number,
+): Promise<ConnectedAccelerometerDemo> {
+  const masterPage = await context.newPage();
+  await recordEvents(masterPage);
+  await recordContextLosses(masterPage);
+  await masterPage.goto(MASTER_URL);
+  await expect(masterPage).toHaveTitle(MASTER_TITLE);
+  const masterPeerId = await waitForPeerId(masterPage);
+
+  // The master only fills the link in once its own peer is open, and its href
+  // is a bare `#<peerId>` fragment, so read the resolved property.
+  const link = masterPage.locator("a.open-remote");
+  await expect
+    .poll(() =>
+      link.evaluate((el: HTMLAnchorElement) => el.getAttribute("href")),
+    )
+    .toBeTruthy();
+  const href = await link.evaluate((el: HTMLAnchorElement) => el.href);
+  await expectQrcodeMatchesRemoteLink(masterPage);
+
+  const remotes: AccelerometerRemote[] = [];
+  for (let index = 0; index < remoteCount; index += 1) {
+    remotes.push(await openRemote(context, masterPage, href));
+  }
+
+  return { masterPage, masterPeerId, remotes };
+}
+
 export const test = base.extend<{ demo: ConnectedAccelerometerDemo }>({
   // Open the master page and connect two remotes, each holding a device
   // orientation of its own so the master's entries can be told apart.
   demo: async ({ context }, use) => {
-    const masterPage = await context.newPage();
-    await recordEvents(masterPage);
-    await masterPage.goto(MASTER_URL);
-    await expect(masterPage).toHaveTitle(MASTER_TITLE);
-    const masterPeerId = await waitForPeerId(masterPage);
-
-    // The master only fills the link in once its own peer is open, and its href
-    // is a bare `#<peerId>` fragment, so read the resolved property.
-    const link = masterPage.locator("a.open-remote");
-    await expect
-      .poll(() =>
-        link.evaluate((el: HTMLAnchorElement) => el.getAttribute("href")),
-      )
-      .toBeTruthy();
-    const href = await link.evaluate((el: HTMLAnchorElement) => el.href);
-    await expectQrcodeMatchesRemoteLink(masterPage);
-
-    const remotes: AccelerometerRemote[] = [];
-    for (let index = 0; index < REMOTE_COUNT; index += 1) {
-      remotes.push(await openRemote(context, masterPage, href));
-    }
-
-    await use({ masterPage, masterPeerId, remotes });
+    await use(await connectAccelerometerDemo(context, REMOTE_COUNT));
   },
 });
 
