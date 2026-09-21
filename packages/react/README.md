@@ -60,19 +60,49 @@ assistant's context, or point the assistant at the URL.
 ## Reconnection
 
 A remote that loses its master retries on a backoff and emits `remote.reconnecting`
-before each attempt, then `remote.reconnect` once it is back. To turn that payload
-into something to show, build the notice from core directly - this package does not
-accept or hand out a `reconnectNotice` of its own yet:
+before each attempt, then `remote.reconnect` once it is back. `useRemote` hands out
+a `reconnectNotice` that turns that payload into something to show:
 
-```js
-import { makeReconnectNotice } from "@webrtc-remote-control/core";
+```jsx
+const { reconnectNotice } = useRemote();
 
-const reconnectNotice = makeReconnectNotice();
+api.on("remote.reconnecting", (payload) => {
+  setStatus(reconnectNotice(payload));
+});
+api.on("remote.reconnect", () => {
+  setStatus(null);
+});
 ```
 
+The wording is overridable on the provider, and either half may be a value or a
+function of the payload:
+
+```jsx
+<RemoteProvider
+  masterPeerId={masterPeerId}
+  init={({ getPeerId }) => new Peer(getPeerId())}
+  reconnectNotice={{
+    reconnecting: ({ attempt }) => `Reconnecting (attempt ${attempt})...`,
+    stalled: "The other screen seems gone. Try reloading.",
+  }}
+>
+```
+
+A notice does not have to be a string - returning a React node works, and core
+types each half of it independently. TypeScript infers those types from what you
+pass to the provider, but a React context is created once, at module scope, so it
+cannot carry that inference to the hook. Name it there instead:
+
+```tsx
+const { reconnectNotice } = useRemote<ReactNode>();
+```
+
+`useMaster` has no counterpart: reconnecting is something a remote does to its
+master, not the other way round.
+
 See [the core README](https://github.com/topheman/webrtc-remote-control/tree/master/packages/core#telling-the-user-about-a-reconnection)
-for what it decides, how to override the wording, and the `peer-unavailable`
-errors worth skipping while a reconnection is in flight.
+for what the notice decides, and the `peer-unavailable` errors worth skipping
+while a reconnection is in flight.
 
 ## TypeScript
 

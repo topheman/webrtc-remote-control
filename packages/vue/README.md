@@ -52,19 +52,48 @@ Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-vue/i
 ## Reconnection
 
 A remote that loses its master retries on a backoff and emits `remote.reconnecting`
-before each attempt, then `remote.reconnect` once it is back. To turn that payload
-into something to show, build the notice from core directly - this package does not
-accept or hand out a `reconnectNotice` of its own yet:
+before each attempt, then `remote.reconnect` once it is back. `useRemote` hands out
+a `reconnectNotice` that turns that payload into something to show:
 
 ```js
-import { makeReconnectNotice } from "@webrtc-remote-control/core";
+const { reconnectNotice } = useRemote();
 
-const reconnectNotice = makeReconnectNotice();
+api.on("remote.reconnecting", (payload) => {
+  errors.value = [reconnectNotice(payload)];
+});
+api.on("remote.reconnect", () => {
+  errors.value = null;
+});
 ```
 
+The wording is overridable on `provideRemote`, and either half may be a value or
+a function of the payload:
+
+```js
+provideRemote((utils) => new Peer(utils.getPeerId()), {
+  masterPeerId,
+  reconnectNotice: {
+    reconnecting: ({ attempt }) => `Reconnecting (attempt ${attempt})...`,
+    stalled: "The other screen seems gone. Try reloading.",
+  },
+});
+```
+
+A notice does not have to be a string, and core types each half of it
+independently. TypeScript infers those types from what you pass to
+`provideRemote`, but the injection key is created once, at module scope, so it
+cannot carry that inference to the composable. Name it there instead:
+
+```ts
+const { reconnectNotice } = useRemote<VNode>();
+```
+
+`useMaster` has no counterpart: reconnecting is something a remote does to its
+master, not the other way round.
+
 See [the core README](https://github.com/topheman/webrtc-remote-control/tree/master/packages/core#telling-the-user-about-a-reconnection)
-for what it decides, how to override the wording, and the `peer-unavailable`
-errors worth skipping while a reconnection is in flight.
+for what the notice decides, and the `peer-unavailable` errors worth skipping
+while a reconnection is in flight.
 
 ## TypeScript
 

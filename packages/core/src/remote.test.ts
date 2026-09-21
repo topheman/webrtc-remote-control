@@ -59,6 +59,41 @@ describe("remote", () => {
     expect(typeof prepareUtils).toBe("function");
   });
 
+  describe("reconnectNotice", () => {
+    it("should hand back the one it was given", () => {
+      const { reconnectNotice } = prepare(
+        prepareUtils({ reconnectNotice: { reconnecting: "hold on" } }),
+      );
+
+      expect(
+        reconnectNotice({
+          id: "master-peer-id",
+          attempt: 1,
+          nextDelayMs: 1000,
+        }),
+      ).toBe("hold on");
+    });
+
+    it("should build a default one when the bundle it was handed has none", () => {
+      // `prepare` is public, so a caller may hand in a bundle of their own
+      // rather than the one `prepareUtils` builds. The remote side is the one
+      // that reconnects, so it always has a notice to offer.
+      const { reconnectNotice } = prepare({
+        humanizeError: () => "",
+        getPeerId: () => undefined,
+        setPeerIdToSessionStorage: () => undefined,
+      });
+
+      expect(
+        reconnectNotice({
+          id: "master-peer-id",
+          attempt: 1,
+          nextDelayMs: 1000,
+        }),
+      ).toBe("Lost connection to the peer, reconnecting...");
+    });
+  });
+
   describe("bindConnection", () => {
     it("should connect to the master with json serialization and the package metadata", async () => {
       const { peer } = await connect();

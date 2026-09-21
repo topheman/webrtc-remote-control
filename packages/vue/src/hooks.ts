@@ -26,13 +26,26 @@ export function useMaster(): UseMasterResult {
   return value;
 }
 
-/** The remote side of {@link useMaster}, under a `provideRemote`. */
-export function useRemote(): UseRemoteResult {
+/**
+ * The remote side of {@link useMaster}, under a `provideRemote`.
+ *
+ * The two type parameters are the ones core infers for `reconnectNotice`, and
+ * they are named here rather than inferred because the injection key is created
+ * once, at module scope: it cannot carry the arguments a particular
+ * `provideRemote` call was instantiated with. They default to `string`, which is
+ * what the built-in messages are, so a caller who did not override the wording
+ * writes nothing. A caller who returns something richer says so once -
+ * `useRemote<VNode>()` - and the assertion below is what makes that hold.
+ */
+export function useRemote<
+  TReconnecting = string,
+  TStalled = string,
+>(): UseRemoteResult<TReconnecting, TStalled> {
   const value = inject(RemoteContext);
   if (!value) {
     throw new Error(
       "`useRemote` must be called under a component that called `provideRemote`.",
     );
   }
-  return value;
+  return value as UseRemoteResult<TReconnecting, TStalled>;
 }

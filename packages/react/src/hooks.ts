@@ -20,11 +20,24 @@ export function useMaster(): UseMasterResult {
   return value;
 }
 
-/** The remote side of {@link useMaster}, from inside a `RemoteProvider`. */
-export function useRemote(): UseRemoteResult {
+/**
+ * The remote side of {@link useMaster}, from inside a `RemoteProvider`.
+ *
+ * The two type parameters are the ones core infers for `reconnectNotice`, and
+ * they are named here rather than inferred because a React context is created
+ * once, at module scope: it cannot carry the arguments a particular
+ * `RemoteProvider` was instantiated with. They default to `string`, which is
+ * what the built-in messages are, so a caller who did not override the wording
+ * writes nothing. A caller who returns something richer says so once -
+ * `useRemote<ReactNode>()` - and the assertion below is what makes that hold.
+ */
+export function useRemote<
+  TReconnecting = string,
+  TStalled = string,
+>(): UseRemoteResult<TReconnecting, TStalled> {
   const value = useContext(RemoteContext);
   if (!value) {
     throw new Error("`useRemote` must be called inside a `RemoteProvider`.");
   }
-  return value;
+  return value as UseRemoteResult<TReconnecting, TStalled>;
 }

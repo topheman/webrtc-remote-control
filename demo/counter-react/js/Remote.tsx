@@ -9,10 +9,6 @@ import ConsoleDisplay from "../../shared/js/components/ConsoleDisplay";
 import DirectLinkToSourceCode from "./DirectLinkToSource";
 
 import { useLogger, useSessionStorage } from "../../shared/js/react-common";
-import { makeReconnectNotice } from "@webrtc-remote-control/core";
-
-// The wording is the consumer's, the threshold core's.
-const reconnectNotice = makeReconnectNotice();
 
 export default function Remote() {
   const { logs, logger } = useLogger();
@@ -21,7 +17,7 @@ export default function Remote() {
   const [errors, setErrors] = useState<string[] | null>(null);
 
   // see the note in `Master.tsx` about `ready` narrowing `api` and `peer`
-  const { ready, api, peer, humanizeError } = useRemote();
+  const { ready, api, peer, humanizeError, reconnectNotice } = useRemote();
 
   const onRemoteDisconnect: WrcRemoteEvents["remote.disconnect"] = (
     payload,

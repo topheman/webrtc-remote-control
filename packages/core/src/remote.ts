@@ -1,7 +1,11 @@
 import EventEmitter from "eventemitter3";
 import type { DataConnection, Peer } from "peerjs";
 
-import { makeConnectionFilterUtilities, reconnectDelay } from "./common.js";
+import {
+  makeConnectionFilterUtilities,
+  makeReconnectNotice,
+  reconnectDelay,
+} from "./common.js";
 import type {
   GetPeerIdType,
   HumanizeErrorType,
@@ -39,10 +43,17 @@ export interface WrcRemote {
   off: EventEmitter<WrcRemoteEvents>["off"];
 }
 
-export interface PrepareRemoteUtils {
+export interface PrepareRemoteUtils<TReconnecting = string, TStalled = string> {
   humanizeError: HumanizeErrorType;
   getPeerId: GetPeerIdType;
   setPeerIdToSessionStorage: SetPeerIdToSessionStorageType;
+  /**
+   * Optional, because `prepare` is public and a caller may hand in a
+   * hand-rolled bundle rather than the one `prepareUtils` builds. When it is
+   * absent the default factory fills it in, so what `prepare` returns always
+   * has one - a consumer of the remote side should never have to check.
+   */
+  reconnectNotice?: (payload: ReconnectingPayload) => TReconnecting | TStalled;
 }
 
 function makePeerConnection(
@@ -68,14 +79,26 @@ function makePeerConnection(
   return conn;
 }
 
-export default function prepare({
+export default function prepare<TReconnecting = string, TStalled = string>({
   humanizeError,
   getPeerId,
   setPeerIdToSessionStorage,
-}: PrepareRemoteUtils) {
+  // Both parameters are inferred from the `reconnectNotice` that was passed,
+  // so this fallback is only reached while they are still their `string`
+  // default - the same reasoning the built-in messages carry in `common.ts`.
+  reconnectNotice = makeReconnectNotice() as (
+    payload: ReconnectingPayload,
+  ) => TReconnecting | TStalled,
+}: PrepareRemoteUtils<TReconnecting, TStalled>) {
   return {
     humanizeError,
     getPeerId,
+    /**
+     * Passed straight through, the way `humanizeError` is. The remote side is
+     * the one that reconnects to its master, not the other way round, so this
+     * is where the notice belongs - `master.default` has no use for it.
+     */
+    reconnectNotice,
     bindConnection(peer: Peer, masterPeerId: string): Promise<WrcRemote> {
       return new Promise((res) => {
         let conn: DataConnection | null = null;

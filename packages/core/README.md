@@ -120,8 +120,8 @@ out a `reconnectNotice` that makes it for you:
 import prepare, { prepareUtils } from "@webrtc-remote-control/core/remote";
 
 const utils = prepareUtils();
-const { reconnectNotice } = utils;
-const { bindConnection, getPeerId, humanizeError } = prepare(utils);
+const { bindConnection, getPeerId, humanizeError, reconnectNotice } =
+  prepare(utils);
 
 const api = await bindConnection(new Peer(getPeerId()), masterPeerId);
 
@@ -145,9 +145,15 @@ const utils = prepareUtils({
 });
 ```
 
+Only the remote side is handed one - the `prepare` exported from
+`@webrtc-remote-control/core/master` has no `reconnectNotice`, because a master
+does not "reconnect", the remotes reconnect to their master. The react and vue
+bindings take the same option and hand the notice out of `useRemote`; see their
+READMEs for the one thing that differs there, which is that a context cannot
+carry the inference described below.
+
 `makeReconnectNotice` is the same factory on its own, for when you are not
-building the rest of the utilities - which is what the react and vue demos do,
-since their bindings do not pass this option through yet:
+building the rest of the utilities:
 
 ```js
 import { makeReconnectNotice } from "@webrtc-remote-control/core";
