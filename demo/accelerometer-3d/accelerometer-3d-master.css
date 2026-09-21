@@ -1,0 +1,71 @@
+/*
+ * The master shows one card per connected remote. A phone is a fixed 150px
+ * canvas, so the cards go in a grid that fits as many per row as the viewport
+ * allows instead of stacking one per line.
+ */
+.remotes-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+  padding: 0;
+  list-style: none;
+}
+.remote-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+.remote-header {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  align-self: stretch;
+}
+.remote-peer-id {
+  flex: 1;
+  /* without this a flex item refuses to shrink below its content width */
+  min-width: 0;
+  overflow: hidden;
+  font-size: 80%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.copy-peer-id {
+  padding: 0 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: none;
+  color: #900000;
+  font-size: 90%;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.copy-peer-id:hover {
+  background-color: #900000;
+  color: white;
+}
+/*
+ * One row per angle, label left and value right. The values change several
+ * times a second and every one has a different width, so a centered row moves
+ * under the reader's eyes; pinning both ends and holding the digits to one
+ * width keeps it still.
+ */
+.remote-orientation {
+  align-self: stretch;
+  margin: 0;
+  padding: 0 2px;
+  font-size: 80%;
+  list-style: none;
+}
+.remote-orientation li {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+.angle-value {
+  font-variant-numeric: tabular-nums;
+}

@@ -141,7 +141,10 @@ async function readRemotesList(page: Page): Promise<ListedRemote[]> {
   return page.evaluate(() =>
     [...document.querySelectorAll("li")]
       .map((item) => {
-        const peerId = item.querySelector(":scope > span")?.textContent ?? "";
+        // The id and its copy button share a header row, so the id is no
+        // longer a direct child of the entry - read it by its own class.
+        const peerId =
+          item.querySelector(":scope .remote-peer-id")?.textContent ?? "";
         const angles = Object.fromEntries(
           [...item.querySelectorAll(":scope ul > li")].map((angle) => {
             const [name, value] = (angle.textContent ?? "").split(": ");
