@@ -26,8 +26,9 @@
 // property - `element[name] = value` - falling back to `setAttribute` only when
 // it does not. React 18 always set the attribute, so a value had to be
 // serialized on the way in. The three elements with an accessor therefore take
-// the value itself now, typed off the accessor so the two cannot drift, and
-// the other two still take the serialized string their attribute expects.
+// the value itself now, typed off the accessor so the two cannot drift. The
+// other two are still reached through `setAttribute`, and what belongs there is
+// the plain string the element reads - a url, a number - not a serialized one.
 import type { DetailedHTMLProps, HTMLAttributes } from "react";
 
 type CustomElementProps<E extends HTMLElement, A = unknown> = DetailedHTMLProps<
