@@ -1,0 +1,34 @@
+# webrtc-remote-control
+
+> A thin abstraction over [PeerJS](https://peerjs.com) for controlling a web page (the master) from one or more other pages (the remotes), over a WebRTC data channel. It handles peer discovery, disconnections and reconnections, and ships as three packages: a vanilla core plus React and Vue bindings.
+
+This site is the demo. The documentation it points at lives in the repository on GitHub, next to the code it describes, and the links below are to that repository rather than to this host.
+
+A page is either a master or a remote, never both, and which one it is comes from the URL: a hash carrying the master's peer id makes it a remote. The master shows a QR code encoding the remote page's URL, so a phone that scans it joins.
+
+## Documentation
+
+- [@webrtc-remote-control/core](https://github.com/topheman/webrtc-remote-control/blob/master/packages/core/README.md): the API the bindings wrap - `prepare`, `bindConnection`, `getPeerId`, `humanizeError`, `isIgnorableError`, and the reconnection notices. Read this one first whatever framework you are on; the bindings add no concepts of their own.
+- [@webrtc-remote-control/react](https://github.com/topheman/webrtc-remote-control/blob/master/packages/react/README.md): `MasterProvider` / `RemoteProvider` and the `useMaster` / `useRemote` hooks.
+- [@webrtc-remote-control/vue](https://github.com/topheman/webrtc-remote-control/blob/master/packages/vue/README.md): `provideMaster` / `provideRemote` and the `useMaster` / `useRemote` composables.
+
+## Guides
+
+These are written for coding assistants. They state the parts of the contract the types cannot: that the mode comes from the URL hash, what `sessionStorageKey` buys you on reload, what the QR code has to encode, and which responsibilities sit with the library rather than with your application.
+
+- [Building a counter with the React binding](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-react/llm.md)
+- [Building a counter with the Vue binding](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vue/llm.md)
+
+There is no such guide for the vanilla core, and deliberately so: without a framework there is no single shape to describe, and the guide would restate the core README with a `document.querySelector` in it. Read that README, then the vanilla demo's source below for a worked example.
+
+## Demo source
+
+- [counter-vanilla](https://github.com/topheman/webrtc-remote-control/tree/master/demo/counter-vanilla): the core API used directly, no framework.
+- [counter-react](https://github.com/topheman/webrtc-remote-control/tree/master/demo/counter-react)
+- [counter-vue](https://github.com/topheman/webrtc-remote-control/tree/master/demo/counter-vue)
+- [accelerometer-3d](https://github.com/topheman/webrtc-remote-control/tree/master/demo/accelerometer-3d): a phone's orientation streamed to a 3D model on the master, rather than a counter.
+
+## Optional
+
+- [Running the demo](https://webrtc-remote-control.vercel.app/): the live pages, one per implementation.
+- [CONTRIBUTING](https://github.com/topheman/webrtc-remote-control/blob/master/CONTRIBUTING.md): how to run the repository locally, including the https tunnel a real phone needs.
