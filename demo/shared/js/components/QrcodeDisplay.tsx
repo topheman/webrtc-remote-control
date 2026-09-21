@@ -5,11 +5,5 @@ export interface QrcodeDisplayProps {
 }
 
 export default function QrcodeDisplay({ data }: QrcodeDisplayProps) {
-  return (
-    <qrcode-display
-      width="160"
-      height="160"
-      data={JSON.stringify(data)}
-    ></qrcode-display>
-  );
+  return <qrcode-display width="160" height="160" data={data}></qrcode-display>;
 }

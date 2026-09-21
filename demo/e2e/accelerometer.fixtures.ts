@@ -1,5 +1,10 @@
 import { expect, test as base } from "@playwright/test";
 
+// The one thing this suite shares with the counter fixture: this master renders
+// the same `qrcode-display`, and was the second page the stringified url
+// reached.
+import { expectQrcodeMatchesRemoteLink } from "./fixtures";
+
 import type { BrowserContext, Page } from "@playwright/test";
 
 export interface Orientation {
@@ -251,6 +256,7 @@ export const test = base.extend<{ demo: ConnectedAccelerometerDemo }>({
       )
       .toBeTruthy();
     const href = await link.evaluate((el: HTMLAnchorElement) => el.href);
+    await expectQrcodeMatchesRemoteLink(masterPage);
 
     const remotes: AccelerometerRemote[] = [];
     for (let index = 0; index < REMOTE_COUNT; index += 1) {
