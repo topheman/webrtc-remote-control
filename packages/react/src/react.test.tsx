@@ -157,10 +157,12 @@ describe("react", () => {
 
       // The remote side has no use for the connection filter, so it is not
       // offered one - it is not on the type, and not on the value either. It
-      // does get a `reconnectNotice`, which the master side has no use for.
+      // does get `isIgnorableError` and `reconnectNotice`, which the master
+      // side has no use for.
       expect(Object.keys(init.mock.calls[0]?.[0] ?? {}).sort()).toEqual([
         "getPeerId",
         "humanizeError",
+        "isIgnorableError",
         "masterPeerId",
         "mode",
         "reconnectNotice",

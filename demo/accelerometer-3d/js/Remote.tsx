@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useRemote } from "@webrtc-remote-control/react";
 import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
@@ -22,7 +22,8 @@ export default function Remote() {
   const [phoneScale, setPhoneScale] = useState(1);
 
   // see the note in `Master.tsx` about `ready` narrowing `api` and `peer`
-  const { ready, api, peer, humanizeError, reconnectNotice } = useRemote();
+  const { ready, api, peer, humanizeError, isIgnorableError, reconnectNotice } =
+    useRemote();
 
   const {
     orientation,
@@ -35,19 +36,14 @@ export default function Remote() {
   ) => {
     console.log({ event: "remote.disconnect", payload });
   };
-  // A ref, not state: `onPeerError` is registered in an effect keyed on `peer`
-  // and would otherwise close over whatever this was on first render.
-  const reconnecting = useRef(false);
   const onRemoteReconnecting: WrcRemoteEvents["remote.reconnecting"] = (
     payload,
   ) => {
     console.log({ event: "remote.reconnecting", payload });
-    reconnecting.current = true;
     setErrors([reconnectNotice(payload)]);
   };
   const onRemoteReconnect: WrcRemoteEvents["remote.reconnect"] = (payload) => {
     console.log({ event: "remote.reconnect", payload });
-    reconnecting.current = false;
     // `onPeerError` nulled `peerId` and put an error on screen. Reconnecting
     // has to undo both, or a remote that came back is indistinguishable from
     // one that never did.
@@ -62,14 +58,11 @@ export default function Remote() {
   const onPeerError = (error: Error) => {
     setPeerId(null);
     console.error({ event: "error", error });
-    // While the retry loop is running, a `peer-unavailable` is just the attempt
-    // that lost its race to the master re-registering. The reconnection notice
-    // already says so, and `humanizeError` would talk over it with advice to
-    // reload - the one thing the user does not need to do.
-    if (
-      reconnecting.current &&
-      (error as { type?: string }).type === "peer-unavailable"
-    ) {
+    // The errors core's own retry loop provokes are not worth showing: mid
+    // recovery `humanizeError` would advise reloading, which is the one thing
+    // the user should not do. Core knows whether it is retrying, so it answers
+    // rather than every page tracking it.
+    if (isIgnorableError(error)) {
       return;
     }
     setErrors([humanizeError(error)]);

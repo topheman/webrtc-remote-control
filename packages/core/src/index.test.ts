@@ -36,8 +36,9 @@ describe("index", () => {
       "bindConnection",
       "getPeerId",
       "humanizeError",
-      // The master has no counterpart: reconnecting is something a remote
-      // does to its master, not the other way round.
+      // The master has no counterpart for either of these: reconnecting is
+      // something a remote does to its master, not the other way round.
+      "isIgnorableError",
       "reconnectNotice",
     ]);
   });

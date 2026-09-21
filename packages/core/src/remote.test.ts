@@ -42,17 +42,20 @@ describe("remote", () => {
   }: MakeWrcRemoteOptions = {}) {
     const utils = { ...prepareUtils(), ...utilsOverrides };
     const peer = makeFakePeer({ id: "remote-peer-id", ...peerOverrides });
-    const promise = prepare(utils).bindConnection(peer, "master-peer-id");
-    return { peer, promise };
+    // The prepared bundle comes back as well as the api, because
+    // `isIgnorableError` lives on it rather than on the resolved connection.
+    const prepared = prepare(utils);
+    const promise = prepared.bindConnection(peer, "master-peer-id");
+    return { peer, promise, prepared };
   }
 
   /** Drives the handshake up to a resolved api: peer opens, then the connection opens. */
   async function connect(options?: MakeWrcRemoteOptions) {
-    const { peer, promise } = makeWrcRemote(options);
+    const { peer, promise, prepared } = makeWrcRemote(options);
     peer.emitOpen();
     peer.lastConnection().emitOpen();
     const wrc = await promise;
-    return { peer, wrc };
+    return { peer, wrc, prepared };
   }
 
   it("should re-export prepareUtils", () => {
@@ -404,6 +407,72 @@ describe("remote", () => {
 
       expect(peer.connect).toHaveBeenCalledTimes(3);
       expect(onReconnect).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  /**
+   * The predicate that lets a consumer skip the errors this library's own retry
+   * loop provokes, without the library ever touching their `peer.on("error")`
+   * subscription.
+   */
+  describe("isIgnorableError", () => {
+    it("should ignore nothing before the retry loop has ever run", () => {
+      // A first connection is not retried, so a `peer-unavailable` here really
+      // does mean the master id is wrong or dead - and the consumer's error
+      // handler is registered in exactly this window, before `bindConnection`
+      // has resolved.
+      const { prepared } = makeWrcRemote();
+
+      expect(prepared.isIgnorableError({ type: "peer-unavailable" })).toBe(
+        false,
+      );
+    });
+
+    it("should ignore a peer-unavailable while reconnecting", async () => {
+      const { peer, prepared } = await connect();
+
+      peer.lastConnection().emitClose();
+
+      expect(prepared.isIgnorableError({ type: "peer-unavailable" })).toBe(
+        true,
+      );
+    });
+
+    it("should already say so from inside a remote.reconnecting handler", async () => {
+      // The flag is set before the event is emitted, so a handler reacting
+      // synchronously to the notice sees the same answer the error handler
+      // that follows it will.
+      const { peer, wrc, prepared } = await connect();
+      const answers: boolean[] = [];
+      wrc.on("remote.reconnecting", () => {
+        answers.push(prepared.isIgnorableError({ type: "peer-unavailable" }));
+      });
+
+      peer.lastConnection().emitClose();
+
+      expect(answers).toEqual([true]);
+    });
+
+    it("should stop ignoring once the connection is back", async () => {
+      const { peer, prepared } = await connect();
+
+      peer.lastConnection().emitClose();
+      peer.lastConnection().emitOpen();
+
+      expect(prepared.isIgnorableError({ type: "peer-unavailable" })).toBe(
+        false,
+      );
+    });
+
+    it("should never ignore another error type", async () => {
+      // No other error type is this library's doing, so a reconnection in
+      // flight is no reason to keep one from the user.
+      const { peer, prepared } = await connect();
+
+      peer.lastConnection().emitClose();
+
+      expect(prepared.isIgnorableError({ type: "network" })).toBe(false);
+      expect(prepared.isIgnorableError({})).toBe(false);
     });
   });
 

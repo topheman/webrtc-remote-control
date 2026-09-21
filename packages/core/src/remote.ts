@@ -8,10 +8,18 @@ import {
 } from "./common.js";
 import type {
   GetPeerIdType,
+  HumanizableError,
   HumanizeErrorType,
   ReconnectingPayload,
   SetPeerIdToSessionStorageType,
 } from "./common.js";
+
+/**
+ * The type of the predicate `prepare` hands out. Declared here rather than in
+ * `common.ts` because it is the remote side's alone: a master does not
+ * reconnect, so nothing on that side can produce the errors this describes.
+ */
+export type IsIgnorableErrorType = (error: HumanizableError) => boolean;
 
 export { makeReconnectNotice, prepareUtils } from "./common.js";
 
@@ -90,6 +98,15 @@ export default function prepare<TReconnecting = string, TStalled = string>({
     payload: ReconnectingPayload,
   ) => TReconnecting | TStalled,
 }: PrepareRemoteUtils<TReconnecting, TStalled>) {
+  /**
+   * Whether the retry loop below is in flight. It lives here, in `prepare`'s
+   * closure rather than inside `bindConnection`, so `isIgnorableError` exists
+   * before any peer does: a consumer registers `peer.on("error", ...)` before
+   * awaiting `bindConnection`, and a first-connection failure arrives in
+   * exactly that window. `false` until the first retry starts is also the
+   * right answer there - a first connection is never retried.
+   */
+  let reconnecting = false;
   return {
     humanizeError,
     getPeerId,
@@ -99,6 +116,24 @@ export default function prepare<TReconnecting = string, TStalled = string>({
      * is where the notice belongs - `master.default` has no use for it.
      */
     reconnectNotice,
+    /**
+     * Whether an error the consumer just received from their `Peer` is one this
+     * library provoked, and so safe not to show anyone.
+     *
+     * Every retry that loses its race to the master re-registering makes peerjs
+     * emit `peer-unavailable`. `humanizeError` turns those into advice to
+     * reload: wrong mid-recovery, right on a first connection - which is never
+     * retried. Only this library knows which of the two is happening.
+     *
+     * Nothing is intercepted; the consumer still gets every event and still
+     * writes the `return`. It is `true` for `peer-unavailable` alone, and it
+     * cannot tell which peer an error is about, since peerjs carries that id
+     * only in the message text - so a page whose `Peer` also connects to ids
+     * this library does not manage should not call it.
+     */
+    isIgnorableError(error: HumanizableError): boolean {
+      return reconnecting && error.type === "peer-unavailable";
+    },
     bindConnection(peer: Peer, masterPeerId: string): Promise<WrcRemote> {
       return new Promise((res) => {
         let conn: DataConnection | null = null;
@@ -149,6 +184,7 @@ export default function prepare<TReconnecting = string, TStalled = string>({
             // one starts from the first delay again.
             clearRetryTimer();
             attempt = 0;
+            reconnecting = false;
             if (typeof onConnectionOpened === "function") {
               onConnectionOpened();
             }
@@ -178,6 +214,9 @@ export default function prepare<TReconnecting = string, TStalled = string>({
         };
 
         const reconnect = () => {
+          // Set before the event is emitted rather than after, so a handler
+          // that reacts synchronously already sees the loop as running.
+          reconnecting = true;
           ee.emit("remote.reconnecting", {
             id: peer.id,
             attempt: attempt + 1,
