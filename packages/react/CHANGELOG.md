@@ -1,5 +1,33 @@
 # Change Log
 
+## 0.5.0
+
+### Minor Changes
+
+- [#69](https://github.com/topheman/webrtc-remote-control/pull/69) [`3a23f68`](https://github.com/topheman/webrtc-remote-control/commit/3a23f68286ac3a415b25d2efa56100c9024ff0ba) Thanks [@topheman](https://github.com/topheman)! - `useRemote` hands out core's new `isIgnorableError`, next to `humanizeError` and
+  `reconnectNotice`, so a remote page no longer needs a ref to remember whether a
+  reconnection is in flight:
+  
+  ```jsx
+  const { humanizeError, isIgnorableError } = useRemote();
+  
+  peer.on("error", (error) => {
+    if (isIgnorableError(error)) {
+      return;
+    }
+    setErrors([humanizeError(error)]);
+  });
+  ```
+  
+  Your `peer.on("error")` subscription is untouched - every error still reaches
+  your handler, and the predicate only decides which are worth showing. `useMaster`
+  has no counterpart: a master does not reconnect.
+
+### Patch Changes
+
+- Updated dependencies [[`3a23f68`](https://github.com/topheman/webrtc-remote-control/commit/3a23f68286ac3a415b25d2efa56100c9024ff0ba)]:
+  - @webrtc-remote-control/core@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,5 +1,39 @@
 # Change Log
 
+## 0.5.0
+
+### Minor Changes
+
+- [#69](https://github.com/topheman/webrtc-remote-control/pull/69) [`3a23f68`](https://github.com/topheman/webrtc-remote-control/commit/3a23f68286ac3a415b25d2efa56100c9024ff0ba) Thanks [@topheman](https://github.com/topheman)! - `useRemote` hands out core's new `isIgnorableError`, next to `humanizeError` and
+  `reconnectNotice`, so a remote page no longer needs a ref to remember whether a
+  reconnection is in flight:
+  
+  ```js
+  const { humanizeError, isIgnorableError } = useRemote();
+  
+  peer.on("error", (error) => {
+    if (isIgnorableError(error)) {
+      return;
+    }
+    errors.value = [humanizeError(error)];
+  });
+  ```
+  
+  Your `peer.on("error")` subscription is untouched - every error still reaches
+  your handler, and the predicate only decides which are worth showing. `useMaster`
+  has no counterpart: a master does not reconnect.
+
+### Patch Changes
+
+- [#71](https://github.com/topheman/webrtc-remote-control/pull/71) [`e5e036f`](https://github.com/topheman/webrtc-remote-control/commit/e5e036f81e10b250814b211606104e46a72932cd) Thanks [@topheman](https://github.com/topheman)! - The README now points at a guide written for coding assistants,
+  `demo/counter-vue/llm.md`, the way the react README already did for its own. It
+  covers what the types cannot say: that the mode comes from the URL hash, what
+  `sessionStorageKey` buys you on reload, how `state` narrows `api` and `peer`,
+  what the QR code has to encode, and how `reconnectNotice` and
+  `isIgnorableError` fit together during an outage.
+- Updated dependencies [[`3a23f68`](https://github.com/topheman/webrtc-remote-control/commit/3a23f68286ac3a415b25d2efa56100c9024ff0ba)]:
+  - @webrtc-remote-control/core@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes
