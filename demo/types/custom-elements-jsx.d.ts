@@ -15,20 +15,28 @@
 // rather than restating it.
 //
 // The `data` prop is not the same kind of thing on all six, which is worth
-// knowing before changing one. `console-display`, `errors-display` and
-// `remotes-list` hold a list and expose a `data` accessor taking the parsed
-// value; they also observe a `data` attribute carrying a JSON string, but do
-// not mirror the property back to it. `counter-display` and `qrcode-display`
-// have only the attribute.
+// knowing before changing one. The split follows the custom element guidance at
+// https://web.dev/articles/custom-elements-best-practices: accept primitives as
+// either an attribute or a property and keep the two in sync, accept rich data
+// as a property only, and never reflect rich data to an attribute - serializing
+// a list on every render is expensive and loses the reference.
 //
-// That distinction started to matter with React 19. Setting a prop on a custom
-// element, it now checks `name in element` and, when that holds, assigns the
+// So `console-display`, `errors-display` and `remotes-list` hold a list and
+// expose a `data` accessor taking the parsed value, and nothing else: no
+// `data` attribute, no `observedAttributes`, no `JSON.parse`. `counter-display`
+// and `qrcode-display` hold a primitive - a count, a url - and expose both, the
+// setter reflecting to the attribute that their `render` reads.
+//
+// That distinction is what React 19 keys off. Setting a prop on a custom
+// element, it checks `name in element` and, when that holds, assigns the
 // property - `element[name] = value` - falling back to `setAttribute` only when
 // it does not. React 18 always set the attribute, so a value had to be
-// serialized on the way in. The three elements with an accessor therefore take
-// the value itself now, typed off the accessor so the two cannot drift. The
-// other two are still reached through `setAttribute`, and what belongs there is
-// the plain string the element reads - a url, a number - not a serialized one.
+// serialized on the way in. Every one of these six now has the accessor, so
+// every react call site passes the value itself and none of them stringify.
+// Until the two primitives grew one, react could only reach them by attribute,
+// and the `JSON.stringify` left over from React 18 put a quoted url in the QR
+// code - which is the bug that prompted giving them a property at all.
+
 import type { DetailedHTMLProps, HTMLAttributes } from "react";
 
 type CustomElementProps<E extends HTMLElement, A = unknown> = DetailedHTMLProps<
@@ -55,7 +63,7 @@ declare module "react" {
       >;
       "counter-display": CustomElementProps<
         HTMLElementTagNameMap["counter-display"],
-        { data?: string }
+        { data?: string | number }
       >;
       "errors-display": CustomElementProps<
         HTMLElementTagNameMap["errors-display"],

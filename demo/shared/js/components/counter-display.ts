@@ -37,6 +37,27 @@ span {
     }
   }
 
+  // A primitive, so the attribute and the property are two views of one value,
+  // the way `value` is on a native `<input>`: the setter reflects to the
+  // attribute, the getter reads it back, and `render` keeps the attribute as
+  // its single source. Both paths are live - `remotes-list` renders one of
+  // these into its own markup with a `data` attribute, while the three
+  // frameworks all assign the property. The list elements next to this one
+  // (`console-display`, `errors-display`, `remotes-list`) hold rich data and so
+  // expose the property alone; `demo/types/custom-elements-jsx.d.ts` explains
+  // the split and why react depends on it.
+  get data(): string | null {
+    return this.getAttribute("data");
+  }
+
+  set data(newVal: string | number | null | undefined) {
+    if (newVal === null || newVal === undefined) {
+      this.removeAttribute("data");
+    } else {
+      this.setAttribute("data", String(newVal));
+    }
+  }
+
   render() {
     // `getAttribute` returns null before `data` is set, and assigning null to
     // `innerHTML` writes the string "null" - which is what this rendered

@@ -50,37 +50,11 @@ counter-display {
     this.render();
   }
 
-  static get observedAttributes() {
-    return ["data"];
-  }
-
-  /**
-   * Accept a `data` attribute with a serialized object
-   * `data` attribute is not kept in sync with `data` property
-   * for performance reasons (to avoid large object serialization)
-   */
-
-  attributeChangedCallback(
-    attrName: string,
-    oldVal: string | null,
-    newVal: string | null,
-  ) {
-    if (oldVal !== newVal) {
-      if (attrName === "data") {
-        try {
-          const data = JSON.parse(newVal as string) as RemoteCounter[];
-          this._data = data;
-        } catch (e) {
-          console.error(
-            "Failed to parse `data` attribute in `remotes-list` element",
-            e,
-          );
-        }
-      }
-      this.render();
-    }
-  }
-
+  // Rich data - a list - so the property is the whole contract here: no `data`
+  // attribute, no `observedAttributes` and no JSON round-trip, per the custom
+  // element guidance on never reflecting rich data to an attribute.
+  // `demo/types/custom-elements-jsx.d.ts` has the picture across all six
+  // elements and why the react call sites care.
   get data(): RemoteCounter[] | undefined {
     return this._data;
   }

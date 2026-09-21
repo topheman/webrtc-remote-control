@@ -178,6 +178,31 @@ export async function expectRemoteCountersUnordered(
 }
 
 /**
+ * The QR code is the only way onto the demo from a phone, and the only thing in
+ * the repo that reads `qrcode-display`'s `data`. Nothing else asserts it: every
+ * scenario below reaches its remotes through the `.open-remote` href instead,
+ * which is exactly how a stringified url - `"http://..."`, quotes included -
+ * sat in the react masters' QR codes from React 18 until it was found by hand.
+ * Comparing the attribute against the link both pages build from the same peer
+ * id is the cheap guard against that; decoding the rendered image would be
+ * closer to what a phone scans and much more work.
+ */
+export async function expectQrcodeMatchesRemoteLink(
+  masterPage: Page,
+): Promise<void> {
+  const href = await masterPage
+    .locator(".open-remote")
+    .evaluate((el: HTMLAnchorElement) => el.href);
+  await expect
+    .poll(() =>
+      masterPage
+        .locator("qrcode-display")
+        .evaluate((el) => el.getAttribute("data")),
+    )
+    .toBe(href);
+}
+
+/**
  * Every peer is its own tab of one browser context, which is how the Jest suite
  * ran too: Chromium keeps sessionStorage per tab, so each peer gets its own
  * stored id even though they share a context.
@@ -224,6 +249,7 @@ export const test = base.extend<DemoOptions & { demo: ConnectedDemo }>({
     await masterPage.goto(url);
     await expect(masterPage).toHaveTitle(title);
     const masterPeerId = await waitForPeerId(masterPage);
+    await expectQrcodeMatchesRemoteLink(masterPage);
 
     const remotes: RemotePeer[] = [];
     for (let index = 0; index < REMOTE_COUNT; index += 1) {

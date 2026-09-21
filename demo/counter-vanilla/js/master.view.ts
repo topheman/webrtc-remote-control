@@ -41,9 +41,12 @@ function createView(templateNode: DocumentFragment, staticContent: Element) {
   const loader = content.querySelector(".initial-loading")!;
   const remotesList = content.querySelector("remotes-list")!;
   const errorsDisplay = content.querySelector("errors-display")!;
-  const globalCounter = content.querySelector(
-    "counter-display.global-counter",
-  )!;
+  // The compound selector puts this outside what `HTMLElementTagNameMap` can
+  // resolve, so the element type is named explicitly - the `data` property
+  // assigned below lives on the element, not on `Element`.
+  const globalCounter = content.querySelector<
+    HTMLElementTagNameMap["counter-display"]
+  >("counter-display.global-counter")!;
   const qrcodeDisplay = content.querySelector("qrcode-display")!;
   const buttonOpenRemote = content.querySelector(".open-remote")!;
   const consoleDisplay = content.querySelector("console-display")!;
@@ -61,11 +64,11 @@ function createView(templateNode: DocumentFragment, staticContent: Element) {
     setPeerId(id: string | null) {
       peerId = id;
       if (peerId) {
-        qrcodeDisplay.setAttribute("data", makeRemotePeerUrl(peerId));
+        qrcodeDisplay.data = makeRemotePeerUrl(peerId);
         buttonOpenRemote.setAttribute("href", makeRemotePeerUrl(peerId));
         buttonOpenRemote.removeAttribute("disabled");
       } else {
-        qrcodeDisplay.removeAttribute("data");
+        qrcodeDisplay.data = undefined;
         buttonOpenRemote.removeAttribute("href");
         buttonOpenRemote.setAttribute("disabled", "disabled");
       }
@@ -74,7 +77,7 @@ function createView(templateNode: DocumentFragment, staticContent: Element) {
       remotesList.data = data;
     },
     setGlobalCounter(count: number) {
-      globalCounter.setAttribute("data", String(count));
+      globalCounter.data = count;
     },
     setErrors(errors: string[]) {
       errorsDisplay.data = errors;

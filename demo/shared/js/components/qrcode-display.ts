@@ -40,6 +40,25 @@ class QRCodeDisplay extends HTMLElement {
     }
   }
 
+  // The url is a primitive, so it is reachable both ways - attribute for
+  // markup, property for JavaScript - and the setter reflects to the attribute
+  // that `render` reads. Before this existed react had only the attribute to
+  // write to, which is how a `JSON.stringify` at the call site ended up
+  // encoding a quoted url into the QR code. `width`, `height` and `wrap-anchor`
+  // stay attribute-only on purpose: nothing sets them from JavaScript, and an
+  // accessor no call site uses is the dead code this element just lost.
+  get data(): string | null {
+    return this.getAttribute("data");
+  }
+
+  set data(newVal: string | null | undefined) {
+    if (newVal === null || newVal === undefined) {
+      this.removeAttribute("data");
+    } else {
+      this.setAttribute("data", newVal);
+    }
+  }
+
   render() {
     const data = this.getAttribute("data");
     let wrapAnchor = false;
