@@ -49,6 +49,14 @@ The examples below assume that `Peer`.
 
 Direct link to the [demo](https://webrtc-remote-control.vercel.app/counter-vue/index.html) source code: [App.vue](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vue/js/App.vue) / [Master.vue](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vue/js/Master.vue) / [Remote.vue](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vue/js/Remote.vue)
 
+## Building with an LLM
+
+[`demo/counter-vue/llm.md`](https://github.com/topheman/webrtc-remote-control/blob/master/demo/counter-vue/llm.md)
+is a guide written for coding assistants. It states the parts of the contract the types cannot:
+that the mode comes from the URL hash, what `sessionStorageKey` buys you on reload, how `state`
+narrows `api` and `peer`, and which responsibilities sit with this package rather than with your
+application. Paste it into your assistant's context, or point the assistant at the URL.
+
 ## Reconnection
 
 A remote that loses its master retries on a backoff and emits `remote.reconnecting`
