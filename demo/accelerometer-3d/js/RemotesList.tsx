@@ -32,15 +32,6 @@ export default function RemotesList({ list }: RemotesListProps) {
                 color={color}
               />
             </Suspense>
-            {/*
-              The angles arrive several times a second and their width changes
-              with every value, so the rows are laid out label-left,
-              value-right rather than centered - a centered row shifts on each
-              update and is unreadable. The space after each label is written
-              explicitly: it is what the end-to-end suite splits `name: value`
-              on, and a formatter moving the `<span>` to its own line would
-              otherwise swallow it.
-            */}
             <ul className="remote-orientation">
               <li>
                 {"alpha: "}
