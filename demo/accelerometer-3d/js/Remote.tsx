@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { useRemote } from "@webrtc-remote-control/react";
 import type { WrcRemoteEvents } from "@webrtc-remote-control/core/remote";
 
@@ -9,7 +9,10 @@ import { useSessionStorage } from "../../shared/js/react-common";
 import { useDeviceOrientation } from "../../shared/js/react-useDeviceOrientation";
 import { orientationToRotation } from "./accelerometer.helpers";
 
+// Both of these pull three in, so both stay behind the lazy boundary the page
+// already had.
 const Phone3D = lazy(() => import("./Phone3D"));
+const PhonesCanvas = lazy(() => import("./PhonesCanvas"));
 
 export default function Remote() {
   // eslint-disable-next-line no-unused-vars
@@ -20,6 +23,10 @@ export default function Remote() {
   ] = useSessionStorage<string>("remote-name", "");
   const [errors, setErrors] = useState<string[] | null>(null);
   const [phoneScale, setPhoneScale] = useState(1);
+  // Fiber raycasts the phone's pointer events from this element rather than
+  // from the canvas; it has to contain both. See `PhonesCanvas.tsx` - pressing
+  // the phone is what sends a PING here, so it is load-bearing.
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // see the note in `Master.tsx` about `ready` narrowing `api` and `peer`
   const { ready, api, peer, humanizeError, isIgnorableError, reconnectNotice } =
@@ -123,34 +130,39 @@ export default function Remote() {
   return (
     <>
       <ErrorsDisplay data={errors} />
-      <Suspense fallback={<div>Loading 3D model ...</div>}>
-        <Phone3D
-          rotation={orientationToRotation(orientation, -1)}
-          width="100%"
-          height={300}
-          peerId={peerId}
-          colorHover="pink"
-          scale={phoneScale}
-          onPointerDown={() => {
-            setPhoneScale(1.3);
-            if (ready) {
-              api.send({ type: "PING_DOWN" });
-            }
-          }}
-          onPointerUp={() => {
-            setPhoneScale(1);
-            if (ready) {
-              api.send({ type: "PING_UP" });
-            }
-          }}
-          onPointerLeave={() => {
-            setPhoneScale(1);
-            if (ready) {
-              api.send({ type: "PING_UP" });
-            }
-          }}
-        />
-      </Suspense>
+      <div ref={containerRef}>
+        <Suspense fallback={<div>Loading 3D model ...</div>}>
+          <Phone3D
+            rotation={orientationToRotation(orientation, -1)}
+            width="100%"
+            height={300}
+            peerId={peerId}
+            colorHover="pink"
+            scale={phoneScale}
+            onPointerDown={() => {
+              setPhoneScale(1.3);
+              if (ready) {
+                api.send({ type: "PING_DOWN" });
+              }
+            }}
+            onPointerUp={() => {
+              setPhoneScale(1);
+              if (ready) {
+                api.send({ type: "PING_UP" });
+              }
+            }}
+            onPointerLeave={() => {
+              setPhoneScale(1);
+              if (ready) {
+                api.send({ type: "PING_UP" });
+              }
+            }}
+          />
+        </Suspense>
+        <Suspense fallback={null}>
+          <PhonesCanvas eventSource={containerRef} />
+        </Suspense>
+      </div>
       {!orientation ? (
         <p className="request-permission-button-wrapper">
           <button

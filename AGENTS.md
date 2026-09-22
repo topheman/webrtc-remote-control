@@ -177,6 +177,21 @@ re-exports `Peer` widened with that one missing overload, so the call sites stil
 there, so each arm hits a declared overload - is not the trade to make: it turns a
 type-level gap into code that ships.
 
+The accelerometer master draws every phone through one WebGL context. `Phone3D` renders a
+`<@react-three/drei>` `View` - a plain `<div>` that reserves a rectangle in the layout - and
+`demo/accelerometer-3d/js/PhonesCanvas.tsx` holds the single `<Canvas>` the whole page draws
+into, scissored one rectangle per tracked div. It used to be a `<Canvas>` per phone, which
+broke at the seventeenth remote: Chrome caps a page at sixteen active contexts and evicts
+the oldest past that, leaving those cards as a broken-image glyph while their peer id,
+angles and WebRTC traffic all kept working. Two things there are load-bearing. The canvas is
+`position: fixed` at the viewport's top left, because drei computes each scissor rectangle
+from the tracked div's viewport-relative `getBoundingClientRect()` against the canvas's own
+bounds - that is also what makes the phones follow the page as it scrolls. And it is handed
+an `eventSource` ref to an ancestor of both itself and the views, or a view's pointer
+handlers never fire; the remote page presses its phone to send a PING, so that is not
+hypothetical. Both `Phone3D` and `PhonesCanvas` stay behind the `lazy()` boundary the page
+already had, which is what keeps three out of a master with no remotes connected.
+
 `demo/types/` holds the ambient declarations the demo needs for things it does not import.
 `qrcode-global.d.ts` types the global `QRCode` constructor, which is loaded from a CDN
 `<script>` tag: the package is unmaintained and ships no types.
@@ -244,6 +259,13 @@ the remote never starts listening. And the remotes are driven by synthetic
 `deviceorientation` events fired on an interval, because a phone fires them continuously
 and the page only sends when the angles change; a single dispatch would race the master's
 listener after a reconnection.
+
+That suite's third scenario connects seventeen remotes rather than the fixture's two, which
+is why `connectAccelerometerDemo` is exported next to the fixture that wraps it. Seventeen
+is not a round number chosen for effect: Chrome caps a page at sixteen active WebGL
+contexts, so it is the first count the master's shared canvas has to survive. It costs about
+twenty-four seconds, roughly doubling the suite - worth it, because the bug it covers
+reached production invisible to every other assertion here, all of which read text.
 
 `testMatch` on each project is what keeps the two suites apart. The counter demo is the one
 that exists in three modes, so only its spec is parameterised that way; without a

@@ -29,6 +29,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
     "@vueuse/core": "^8.0.1",
     "@webrtc-remote-control/core": "workspace:^",
