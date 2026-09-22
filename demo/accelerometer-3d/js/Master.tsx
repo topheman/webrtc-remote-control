@@ -1,3 +1,7 @@
+/* eslint-disable no-console --
+ * The console is this page's event stream: it has no `<console-display>`, and
+ * `demo/e2e/accelerometer.fixtures.ts` reads the events back from there.
+ **/
 import { useEffect, useState } from "react";
 import { useMaster } from "@webrtc-remote-control/react";
 import type { WrcMasterEvents } from "@webrtc-remote-control/core/master";

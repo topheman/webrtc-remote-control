@@ -133,6 +133,7 @@ watch(state, (current, _, onCleanup) => {
   api.on("remote.disconnect", onRemoteDisconnect);
   api.on("data", onData);
   onCleanup(() => {
+    // eslint-disable-next-line no-console -- traces the teardown on purpose
     console.log("Master.vue.cleanup");
     api.off("remote.connect", onRemoteConnect);
     api.off("remote.disconnect", onRemoteDisconnect);

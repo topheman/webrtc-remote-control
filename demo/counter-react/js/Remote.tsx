@@ -92,6 +92,7 @@ export default function Remote() {
       }
     }
     return () => {
+      // eslint-disable-next-line no-console -- traces the teardown on purpose
       console.log("Remote.tsx.cleanup");
       if (ready) {
         api.off("remote.disconnect", onRemoteDisconnect);

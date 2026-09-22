@@ -1,6 +1,7 @@
 // inspired by https://trekhleb.dev/blog/2021/gyro-web/
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import lodashThrottle from "lodash/throttle";
+import type { DebouncedFunc } from "lodash";
 
 export interface DeviceOrientation {
   alpha: number | null;
@@ -22,6 +23,10 @@ export interface UseDeviceOrientationResult {
   revokeAccess: () => Promise<void>;
 }
 
+type OrientationListener = DebouncedFunc<
+  (event: DeviceOrientationEvent) => void
+>;
+
 export const useDeviceOrientation = ({
   precision,
   throttle = 0,
@@ -33,30 +38,23 @@ export const useDeviceOrientation = ({
   const [permissionState, setPermissionState] =
     useState<PermissionState | null>(null);
 
-  const onDeviceOrientation = lodashThrottle(
-    (event: DeviceOrientationEvent) => {
-      setOrientation({
-        // `alpha`, `beta` and `gamma` are nullable on the event. Rounding them
-        // unconditionally is what this did before the port; a browser that fires
-        // the event with null angles would have thrown then too.
-        alpha: precision
-          ? Number(event.alpha!.toFixed(precision))
-          : event.alpha,
-        beta: precision ? Number(event.beta!.toFixed(precision)) : event.beta,
-        gamma: precision
-          ? Number(event.gamma!.toFixed(precision))
-          : event.gamma,
-      });
-    },
-    throttle,
-  );
+  // `requestAccess` adds a listener and `revokeAccess` removes it, and
+  // `removeEventListener` only matches the exact function it was given - so the
+  // registered one is kept here rather than rebuilt each render. The permission
+  // gate in `accelerometer-3d/js/Remote.tsx` is the caller of both.
+  const listenerRef = useRef<OrientationListener | null>(null);
 
-  const revokeAccessAsync = async () => {
-    window.removeEventListener("deviceorientation", onDeviceOrientation);
+  const revokeAccess = useCallback(async () => {
+    if (listenerRef.current) {
+      window.removeEventListener("deviceorientation", listenerRef.current);
+      // a throttled call already scheduled would otherwise land after this
+      listenerRef.current.cancel();
+      listenerRef.current = null;
+    }
     setOrientation(null);
-  };
+  }, []);
 
-  const requestAccessAsync = async () => {
+  const requestAccess = useCallback(async () => {
     if (typeof DeviceOrientationEvent === "undefined") {
       setError(
         new Error("Device orientation event is not supported by your browser"),
@@ -92,13 +90,28 @@ export const useDeviceOrientation = ({
       }
     }
 
-    window.addEventListener("deviceorientation", onDeviceOrientation);
+    // Granting access twice would otherwise leave the first listener
+    // registered, since the one built below is a different reference.
+    await revokeAccess();
+
+    listenerRef.current = lodashThrottle((event: DeviceOrientationEvent) => {
+      setOrientation({
+        // `alpha`, `beta` and `gamma` are nullable on the event. Rounding them
+        // unconditionally is what this did before the port; a browser that fires
+        // the event with null angles would have thrown then too.
+        alpha: precision
+          ? Number(event.alpha!.toFixed(precision))
+          : event.alpha,
+        beta: precision ? Number(event.beta!.toFixed(precision)) : event.beta,
+        gamma: precision
+          ? Number(event.gamma!.toFixed(precision))
+          : event.gamma,
+      });
+    }, throttle);
+    window.addEventListener("deviceorientation", listenerRef.current);
 
     return true;
-  };
-
-  const requestAccess = useCallback(requestAccessAsync, []);
-  const revokeAccess = useCallback(revokeAccessAsync, []);
+  }, [precision, revokeAccess, throttle]);
 
   useEffect(() => {
     return () => {

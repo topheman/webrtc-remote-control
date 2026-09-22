@@ -1,5 +1,5 @@
 /* eslint-disable no-bitwise,no-plusplus */
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 // inspired by https://stackoverflow.com/questions/3426404/create-a-hexadecimal-colour-based-on-a-string-with-javascript
 function makeColor(str = "AZERTY"): string {
@@ -15,10 +15,9 @@ function makeColor(str = "AZERTY"): string {
   return colour;
 }
 
+// `Phone3D` gives every phone a colour of its own, derived from its peer id so
+// the same remote keeps the same one across reconnections. The id arrives a
+// moment after the phone first renders, hence the nullable argument.
 export function usePhoneColor(peerId?: string | null): string {
-  const [phoneColor, setPhoneColor] = useState("#900000");
-  useEffect(() => {
-    setPhoneColor(makeColor(peerId ?? ""));
-  }, [peerId]);
-  return phoneColor;
+  return useMemo(() => makeColor(peerId ?? ""), [peerId]);
 }
