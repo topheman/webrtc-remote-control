@@ -16,7 +16,7 @@ jobs:
         # Replaces pnpm/action-setup and actions/setup-node. The vp version comes
         # from the `vite-plus` catalog entry in pnpm-workspace.yaml, so it stays in
         # step with local development without being repeated here.
-        uses: voidzero-dev/setup-vp@v1.20.0
+        uses: voidzero-dev/setup-vp@v1.21.0
         with:
           node-version-file: .node-version
           cache: true
