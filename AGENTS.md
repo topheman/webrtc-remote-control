@@ -219,7 +219,15 @@ everything runs from the root. Two things are easy to trip over:
 
 `no-console` is an error in the published packages - a library has no business writing to
 the console of the application embedding it - with `warn` and `error` allowed. The demo is
-an application and logs on purpose, so a `demo/**` override keeps it at `warn`.
+an application and logs on purpose, so a `demo/**` override demotes it to `warn`, and
+repeats the `allow` list, because an override replaces a rule's options rather than merging
+with them.
+
+The demo's deliberate `console.log` calls carry a disable comment each, so `vp lint`
+reports no warnings at all and a new one means a stray log rather than more background
+noise. The accelerometer's `Master.tsx` and `Remote.tsx` disable the rule for the whole
+file instead: that page has no `<console-display>`, so the console is its event stream, and
+`demo/e2e/accelerometer.fixtures.ts` reads it back from there.
 
 Linting is Oxlint. Its `vue` plugin covers the script block of an SFC, not the template, so
 the seven components under `demo/counter-vue` are only half linted - `eslint-plugin-vue`'s

@@ -98,10 +98,14 @@ export default defineConfig({
       {
         // The demo is an application, not a library, and several of its pages
         // log on purpose - the accelerometer master prints every event it
-        // receives. Kept at "warn", which is what the whole repo reported
-        // before the packages were cleaned up.
+        // receives, and its end-to-end suite reads them back. Demoted to
+        // "warn", and the calls that are deliberate carry a disable comment, so
+        // that a warning here means a stray log rather than background noise.
+        // The `allow` list has to be repeated: an override replaces the rule's
+        // options rather than merging with them, so spelling the severity alone
+        // would start reporting `console.warn` and `console.error`.
         files: ["demo/**"],
-        rules: { "no-console": "warn" },
+        rules: { "no-console": ["warn", { allow: ["warn", "error"] }] },
       },
       {
         // react-three-fiber renders three.js objects as JSX intrinsics, so

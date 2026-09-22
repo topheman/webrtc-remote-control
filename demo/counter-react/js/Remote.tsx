@@ -92,6 +92,9 @@ export default function Remote() {
       }
     }
     return () => {
+      // Deliberate: these pages double as a walkthrough of the binding's
+      // lifecycle, so they trace when the listeners are torn down.
+      // eslint-disable-next-line no-console
       console.log("Remote.tsx.cleanup");
       if (ready) {
         api.off("remote.disconnect", onRemoteDisconnect);
