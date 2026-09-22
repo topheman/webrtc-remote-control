@@ -102,9 +102,7 @@ export default function Master() {
       api.on("data", onData);
     }
     return () => {
-      // Deliberate: these pages double as a walkthrough of the binding's
-      // lifecycle, so they trace when the listeners are torn down.
-      // eslint-disable-next-line no-console
+      // eslint-disable-next-line no-console -- traces the teardown on purpose
       console.log("Master.tsx.cleanup");
       if (ready) {
         api.off("remote.connect", onRemoteConnect);

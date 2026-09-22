@@ -225,8 +225,10 @@ with them.
 
 The demo's deliberate `console.log` calls carry a disable comment each, so `vp lint`
 reports no warnings at all and a new one means a stray log rather than more background
-noise. The accelerometer's `Master.tsx` and `Remote.tsx` disable the rule for the whole
-file instead: that page has no `<console-display>`, so the console is its event stream, and
+noise. Write them in the `-- reason` form Oxlint shares with ESLint, so the justification
+sits on the suppression rather than in a comment above it. The accelerometer's `Master.tsx`
+and `Remote.tsx` disable the rule for the whole file instead: that page has no
+`<console-display>`, so the console is its event stream, and
 `demo/e2e/accelerometer.fixtures.ts` reads it back from there.
 
 Linting is Oxlint. Its `vue` plugin covers the script block of an SFC, not the template, so

@@ -1,7 +1,7 @@
-// This page logs every event it receives to the console on purpose: unlike the
-// counter demos it has no `<console-display>`, so the console is where both a
-// reader and `demo/e2e/accelerometer.fixtures.ts` read the event stream.
-/* eslint-disable no-console */
+/* eslint-disable no-console --
+ * The console is this page's event stream: it has no `<console-display>`, and
+ * `demo/e2e/accelerometer.fixtures.ts` reads the events back from there.
+ **/
 import { useEffect, useState } from "react";
 import { useMaster } from "@webrtc-remote-control/react";
 import type { WrcMasterEvents } from "@webrtc-remote-control/core/master";
