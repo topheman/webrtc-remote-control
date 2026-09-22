@@ -1,12 +1,10 @@
 # AGENTS.md
 
 Guidance for AI agents working in this repository. It describes the repo **as it stands
-today**.
-
-> If `plan.local/post-merge-followups.md` exists in your checkout, read it before starting
-> work near what it tracks - it lists 0.3.0 fixes and open questions left over from the
-> 0.2.0 port that have not shipped yet. It is gitignored working state, so outside
-> contributors will not have it.
+today**, which makes keeping it true part of the work rather than a chore after it: a pull
+request that makes a statement here wrong corrects it in the same pull request. That
+applies to the load-bearing notes especially - they are the only written record of why a
+constraint exists, and a stale one is worse than a missing one.
 
 ## What this is
 
