@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vite-plus/test";
 import { disableConsole } from "../../test.helpers";
 
-import { makeLogger } from "./common";
+import { makeLogger, type LogEntry } from "./common";
 
 describe("common", () => {
   describe("makeLogger", () => {
@@ -64,7 +64,7 @@ describe("common", () => {
     });
     it("onLog callback should be called on log", () => {
       const restoreConsole = disableConsole();
-      const onLog = vi.fn();
+      const onLog = vi.fn<(logs: LogEntry[]) => void>();
       const logger = makeLogger({ onLog });
       logger.log("foo");
       expect(onLog).toHaveBeenNthCalledWith(1, [

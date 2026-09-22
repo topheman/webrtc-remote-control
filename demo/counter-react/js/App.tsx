@@ -1,5 +1,4 @@
-/* eslint-disable no-nested-ternary */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import { MasterProvider, RemoteProvider } from "@webrtc-remote-control/react";
 import type { GetPeerIdType } from "@webrtc-remote-control/core";
@@ -25,11 +24,14 @@ const init = ({ getPeerId }: { getPeerId: GetPeerIdType }) =>
   );
 
 export default function App() {
-  console.log("App render");
-  const [mode, setMode] = useState<"master" | "remote" | null>(null);
-  useEffect(() => {
-    setMode(window.location.hash ? "remote" : "master");
-  }, []);
+  // The hash is what tells this page which side it is: a remote is opened from
+  // the master's link, which carries the master's peer id as a fragment. It
+  // never changes afterwards, so it is read once, in the initializer - reading
+  // it from an effect instead cost a second render, and a "Loading ..." frame,
+  // on every page load.
+  const [mode] = useState<"master" | "remote">(() =>
+    window.location.hash ? "remote" : "master",
+  );
   return (
     <>
       {mode === "remote" ? (
@@ -40,12 +42,10 @@ export default function App() {
         >
           <Remote />
         </RemoteProvider>
-      ) : mode === "master" ? (
+      ) : (
         <MasterProvider init={init} sessionStorageKey={SESSION_STORAGE_KEY}>
           <Master />
         </MasterProvider>
-      ) : (
-        "Loading ..."
       )}
       <FooterDisplay from="2022" to={new Date().getFullYear()} />
     </>
