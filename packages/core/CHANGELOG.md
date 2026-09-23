@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.5.1
+
+### Patch Changes
+
+- [#82](https://github.com/topheman/webrtc-remote-control/pull/82) [`25e6723`](https://github.com/topheman/webrtc-remote-control/commit/25e6723d6e7aecf3f8df2b132fdb8f6d89328224) Thanks [@topheman](https://github.com/topheman)! - A remote now closes its connection on `pagehide` instead of `beforeunload`, which iOS Safari skips when it puts the page in the back/forward cache, so the master no longer keeps listing a remote that navigated away. When the page is restored from that cache, the remote reconnects, rejoining the signaling server first if it lost it.
+
 ## 0.5.0
 
 ### Minor Changes
