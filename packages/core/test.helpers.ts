@@ -54,7 +54,10 @@ export type FakePeer = Peer & {
    * to buy nothing - if the list is empty the test fails on the spot anyway.
    */
   lastConnection: () => FakeConnection;
+  reconnect: Mock<() => void>;
   emitOpen: (peerId?: string) => boolean;
+  /** Takes the peer off the signaling server, the way a lost socket does. */
+  emitDisconnected: () => boolean;
   emitConnection: (conn: FakeConnection) => boolean;
   emitError: (error: unknown) => boolean;
 };
@@ -117,10 +120,18 @@ export function makeFakePeer({
   const connections: FakeConnection[] = [];
   const peer = {
     id,
+    disconnected: false,
+    destroyed: false,
     on: ee.on.bind(ee),
+    once: ee.once.bind(ee),
     off: ee.off.bind(ee),
     disconnect: vi.fn<() => void>(),
-    destroy: vi.fn<() => void>(),
+    destroy: vi.fn<() => void>(() => {
+      peer.destroyed = true;
+    }),
+    // Real peerjs reopens the socket and emits "open" later; a test does that
+    // part with `emitOpen`.
+    reconnect: vi.fn<() => void>(),
     connect:
       connect ||
       vi.fn<
@@ -136,7 +147,14 @@ export function makeFakePeer({
     // test-facing
     connections,
     lastConnection: () => connections[connections.length - 1],
-    emitOpen: (peerId = id) => ee.emit("open", peerId),
+    emitOpen: (peerId = id) => {
+      peer.disconnected = false;
+      return ee.emit("open", peerId);
+    },
+    emitDisconnected: () => {
+      peer.disconnected = true;
+      return ee.emit("disconnected", id);
+    },
     emitConnection: (conn: FakeConnection) => ee.emit("connection", conn),
     emitError: (error: unknown) => ee.emit("error", error),
   };

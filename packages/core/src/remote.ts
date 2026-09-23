@@ -169,6 +169,10 @@ export default function prepare<TReconnecting = string, TStalled = string>({
           }
         };
 
+        // peerjs clears `peer.id` while the peer is off the signaling server,
+        // so the events carry the id it first opened with.
+        let remoteId = "";
+
         const createPeerConnectionWithReconnectOnClose = (
           onConnectionOpened?: () => void,
           { retryUntilOpen = false } = {},
@@ -176,29 +180,46 @@ export default function prepare<TReconnecting = string, TStalled = string>({
           const myGeneration = (generation += 1);
           const isCurrent = () => myGeneration === generation;
           conn = null;
-          const attemptConn = makePeerConnection(peer, masterPeerId, ee, () => {
-            if (!isCurrent()) {
-              return;
-            }
-            // Connected: the outage is over, so the loop stops and the next
-            // one starts from the first delay again.
-            clearRetryTimer();
-            attempt = 0;
-            reconnecting = false;
-            if (typeof onConnectionOpened === "function") {
-              onConnectionOpened();
-            }
-          });
-          conn = attemptConn;
-          attemptConn.on("close", () => {
-            if (!isCurrent()) {
-              return;
-            }
-            clearRetryTimer();
-            attempt = 0;
-            ee.emit("remote.disconnect", { id: peer.id });
-            reconnect();
-          });
+          let attemptConn: DataConnection | null = null;
+          const connectToMaster = () => {
+            const newConn = makePeerConnection(peer, masterPeerId, ee, () => {
+              if (!isCurrent()) {
+                return;
+              }
+              // Connected: the outage is over, so the loop stops and the next
+              // one starts from the first delay again.
+              clearRetryTimer();
+              attempt = 0;
+              reconnecting = false;
+              if (typeof onConnectionOpened === "function") {
+                onConnectionOpened();
+              }
+            });
+            attemptConn = newConn;
+            conn = newConn;
+            newConn.on("close", () => {
+              if (!isCurrent()) {
+                return;
+              }
+              clearRetryTimer();
+              attempt = 0;
+              ee.emit("remote.disconnect", { id: remoteId });
+              reconnect();
+            });
+          };
+          if (peer.disconnected) {
+            // peerjs refuses to connect while the peer is off the signaling
+            // server, which is where a lost socket or a bfcache freeze leaves
+            // it. The attempt's deadline below covers this wait too.
+            peer.once("open", () => {
+              if (isCurrent()) {
+                connectToMaster();
+              }
+            });
+            peer.reconnect();
+          } else {
+            connectToMaster();
+          }
           if (retryUntilOpen) {
             retryTimer = setTimeout(() => {
               retryTimer = null;
@@ -207,51 +228,70 @@ export default function prepare<TReconnecting = string, TStalled = string>({
               // it is, rather than as a fresh disconnection.
               generation += 1;
               attempt += 1;
-              attemptConn.close();
+              attemptConn?.close();
               reconnect();
             }, reconnectDelay(attempt));
           }
         };
 
         const reconnect = () => {
+          // A destroyed peer cannot come back, and `peer.reconnect()` throws.
+          if (peer.destroyed) {
+            reconnecting = false;
+            return;
+          }
           // Set before the event is emitted rather than after, so a handler
           // that reacts synchronously already sees the loop as running.
           reconnecting = true;
           ee.emit("remote.reconnecting", {
-            id: peer.id,
+            id: remoteId,
             attempt: attempt + 1,
             nextDelayMs: reconnectDelay(attempt),
           });
           createPeerConnectionWithReconnectOnClose(
             () => {
-              ee.emit("remote.reconnect", { id: peer.id });
+              ee.emit("remote.reconnect", { id: remoteId });
             },
             { retryUntilOpen: true },
           );
         };
-        peer.on("open", (peerId) => {
-          setPeerIdToSessionStorage(peerId);
-          createPeerConnectionWithReconnectOnClose(() => res(wrcRemote));
-          conn?.on("error", () => {
-            // todo emit some error ? same on master ?
-          });
-          // Close the connection when the page goes away, so the master hears
-          // about it at once instead of waiting for the data channel to time
-          // out on its own.
-          //
-          // Retiring the generation first is what keeps this from fighting the
-          // reconnection loop: `close()` makes peerjs emit "close", and
-          // without this the handler would read its own teardown as an outage
-          // and start retrying on a page that is already unloading.
-          const onBeforeUnloadCloseConnection = () => {
+        // Closes the connection when the page is hidden, and reconnects if the
+        // back/forward cache restores it.
+        //
+        // `pagehide` rather than `beforeunload`: iOS Safari puts the page in
+        // the bfcache without firing `beforeunload`, and a frozen page keeps
+        // its connection open, so the master would list it indefinitely.
+        //
+        // Retiring the generation first keeps the "close" that `close()`
+        // triggers from being read as an outage, which would start retrying
+        // on a page that is going away.
+        const listenToPageLifecycle = () => {
+          window.addEventListener("pagehide", () => {
             generation += 1;
             clearRetryTimer();
             conn?.close();
-          };
-          window.addEventListener(
-            "beforeunload",
-            onBeforeUnloadCloseConnection,
-          );
+          });
+          window.addEventListener("pageshow", (event) => {
+            if (!event.persisted) {
+              return;
+            }
+            attempt = 0;
+            ee.emit("remote.disconnect", { id: remoteId });
+            reconnect();
+          });
+        };
+        // `once`, because `peer.reconnect()` makes peerjs emit "open" again,
+        // and that one is handled by the attempt that requested it.
+        peer.once("open", (peerId) => {
+          remoteId = peerId;
+          setPeerIdToSessionStorage(peerId);
+          createPeerConnectionWithReconnectOnClose(() => {
+            listenToPageLifecycle();
+            res(wrcRemote);
+          });
+          conn?.on("error", () => {
+            // todo emit some error ? same on master ?
+          });
         });
       });
     },

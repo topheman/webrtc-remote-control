@@ -9,7 +9,11 @@ import {
 import prepare, { prepareUtils } from "./remote.js";
 import type { PrepareRemoteUtils } from "./remote.js";
 import { disableConsole, makeFakePeer } from "../test.helpers.js";
-import type { FakeConnection, FakeConnectFn } from "../test.helpers.js";
+import type {
+  FakeConnection,
+  FakeConnectFn,
+  FakePeer,
+} from "../test.helpers.js";
 
 /**
  * Behavioral baseline for the remote side of the connection.
@@ -19,12 +23,20 @@ import type { FakeConnection, FakeConnectFn } from "../test.helpers.js";
  */
 describe("remote", () => {
   let restoreConsole: () => void;
+  // Core's page lifecycle listeners stay on `window` for the life of the page,
+  // so every test's peer is destroyed afterwards to keep it out of later tests.
+  const peers: FakePeer[] = [];
+  const trackPeer = (peer: FakePeer) => {
+    peers.push(peer);
+    return peer;
+  };
 
   beforeEach(() => {
     restoreConsole = disableConsole();
   });
   afterEach(() => {
     restoreConsole();
+    peers.splice(0).forEach((peer) => peer.destroy());
     sessionStorage.clear();
     // Only the reconnection tests install fake timers, but leaving them on
     // would silently freeze every test that runs after one of them.
@@ -41,7 +53,9 @@ describe("remote", () => {
     peerOverrides = {},
   }: MakeWrcRemoteOptions = {}) {
     const utils = { ...prepareUtils(), ...utilsOverrides };
-    const peer = makeFakePeer({ id: "remote-peer-id", ...peerOverrides });
+    const peer = trackPeer(
+      makeFakePeer({ id: "remote-peer-id", ...peerOverrides }),
+    );
     // The prepared bundle comes back as well as the api, because
     // `isIgnorableError` lives on it rather than on the resolved connection.
     const prepared = prepare(utils);
@@ -195,7 +209,7 @@ describe("remote", () => {
       // `peer.connect` throws once the peer lost the signaling server, which is how the
       // connection can end up null: the close handler nulls it, then the rebuild throws.
       let attempts = 0;
-      const peer = makeFakePeer({ id: "remote-peer-id" });
+      const peer = trackPeer(makeFakePeer({ id: "remote-peer-id" }));
       const realConnect: FakeConnectFn = peer.connect;
       peer.connect = vi.fn<FakeConnectFn>((masterPeerId, options) => {
         attempts += 1;
@@ -476,28 +490,153 @@ describe("remote", () => {
     });
   });
 
-  describe("beforeunload", () => {
-    it("should close the connection when the page goes away", async () => {
+  describe("page lifecycle", () => {
+    const pagehide = (persisted: boolean) =>
+      window.dispatchEvent(
+        new window.PageTransitionEvent("pagehide", { persisted }),
+      );
+    const pageshow = (persisted: boolean) =>
+      window.dispatchEvent(
+        new window.PageTransitionEvent("pageshow", { persisted }),
+      );
+
+    it("should close the connection when the page is hidden", async () => {
       const { peer } = await connect();
       const conn: FakeConnection = peer.lastConnection();
 
-      window.dispatchEvent(new window.Event("beforeunload"));
+      pagehide(true);
 
       expect(conn.close).toHaveBeenCalledTimes(1);
     });
 
     // The close a page teardown causes is not an outage: reconnecting from it
     // would open a connection the master has to clean up again moments later,
-    // on a page that is going away regardless.
-    it("should not reconnect after closing on unload", async () => {
+    // on a page that is going away or about to be frozen.
+    it("should not reconnect after closing on pagehide", async () => {
       const { peer, wrc } = await connect();
       const onReconnecting = vi.fn<() => void>();
       wrc.on("remote.reconnecting", onReconnecting);
 
-      window.dispatchEvent(new window.Event("beforeunload"));
+      pagehide(false);
 
       expect(onReconnecting).not.toHaveBeenCalled();
       expect(peer.connect).toHaveBeenCalledTimes(1);
+    });
+
+    it("should cancel a pending retry when the page is hidden", async () => {
+      vi.useFakeTimers();
+      const { peer } = await connect();
+      peer.lastConnection().emitClose();
+      expect(peer.connect).toHaveBeenCalledTimes(2);
+
+      pagehide(true);
+      vi.advanceTimersByTime(60_000);
+
+      expect(peer.connect).toHaveBeenCalledTimes(2);
+    });
+
+    it("should reconnect when the back/forward cache restores the page", async () => {
+      const { peer, wrc } = await connect();
+      const events: string[] = [];
+      wrc.on("remote.disconnect", () => events.push("remote.disconnect"));
+      wrc.on("remote.reconnecting", ({ attempt }) =>
+        events.push(`remote.reconnecting #${attempt}`),
+      );
+      wrc.on("remote.reconnect", () => events.push("remote.reconnect"));
+      pagehide(true);
+
+      pageshow(true);
+      expect(peer.connect).toHaveBeenCalledTimes(2);
+      peer.lastConnection().emitOpen();
+
+      expect(events).toEqual([
+        "remote.disconnect",
+        "remote.reconnecting #1",
+        "remote.reconnect",
+      ]);
+      wrc.send({ type: "MOVE" });
+      expect(peer.lastConnection().send).toHaveBeenCalledWith({ type: "MOVE" });
+    });
+
+    it("should ignore a pageshow that is not a restore", async () => {
+      const { peer, wrc } = await connect();
+      const onReconnecting = vi.fn<() => void>();
+      wrc.on("remote.reconnecting", onReconnecting);
+
+      pageshow(false);
+
+      expect(onReconnecting).not.toHaveBeenCalled();
+      expect(peer.connect).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("disconnected peer", () => {
+    // A frozen page or a lost socket leaves the peer off the signaling server,
+    // where peerjs refuses to connect.
+    it("should rejoin the signaling server before connecting", async () => {
+      const { peer, wrc } = await connect();
+      const onReconnect = vi.fn<() => void>();
+      wrc.on("remote.reconnect", onReconnect);
+      peer.emitDisconnected();
+
+      peer.lastConnection().emitClose();
+      expect(peer.reconnect).toHaveBeenCalledTimes(1);
+      expect(peer.connect).toHaveBeenCalledTimes(1);
+
+      peer.emitOpen();
+      expect(peer.connect).toHaveBeenCalledTimes(2);
+      peer.lastConnection().emitOpen();
+      expect(onReconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it("should rejoin on a later attempt when the socket drops mid-retry", async () => {
+      vi.useFakeTimers();
+      const { peer } = await connect();
+      peer.lastConnection().emitClose();
+      expect(peer.connect).toHaveBeenCalledTimes(2);
+      peer.emitDisconnected();
+
+      vi.advanceTimersByTime(1000);
+
+      expect(peer.reconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not connect for an attempt abandoned while rejoining", async () => {
+      vi.useFakeTimers();
+      const { peer } = await connect();
+      peer.emitDisconnected();
+      peer.lastConnection().emitClose();
+      // The first attempt times out while the peer is still off the server,
+      // and the second one asks to rejoin again.
+      vi.advanceTimersByTime(1000);
+      expect(peer.reconnect).toHaveBeenCalledTimes(2);
+
+      peer.emitOpen();
+
+      expect(peer.connect).toHaveBeenCalledTimes(2);
+    });
+
+    it("should keep the id it opened with while peerjs has cleared it", async () => {
+      const { peer, wrc } = await connect();
+      const onDisconnect = vi.fn<(payload: { id: string }) => void>();
+      wrc.on("remote.disconnect", onDisconnect);
+      (peer as { id: string | null }).id = null;
+
+      peer.lastConnection().emitClose();
+
+      expect(onDisconnect).toHaveBeenCalledWith({ id: "remote-peer-id" });
+    });
+
+    it("should stop retrying once the peer is destroyed", async () => {
+      const { peer, wrc } = await connect();
+      const onReconnecting = vi.fn<() => void>();
+      wrc.on("remote.reconnecting", onReconnecting);
+      peer.destroy();
+
+      peer.lastConnection().emitClose();
+
+      expect(onReconnecting).not.toHaveBeenCalled();
+      expect(peer.reconnect).not.toHaveBeenCalled();
     });
   });
 });
