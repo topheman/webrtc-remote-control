@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.5.2
+
+### Patch Changes
+
+- [#84](https://github.com/topheman/webrtc-remote-control/pull/84) [`f6e61f8`](https://github.com/topheman/webrtc-remote-control/commit/f6e61f81d4a0bd4fe13ffd26b0136dddba9f532a) Thanks [@topheman](https://github.com/topheman)! - A remote now retries a first connection that never opens, on the same backoff as a reconnection, instead of leaving `bindConnection` pending forever when ICE stalls. A `peer-unavailable` before the first open still means the master id is wrong or gone, so it ends the retries and `isIgnorableError` keeps returning `false` for it.
+
 ## 0.5.1
 
 ### Patch Changes
