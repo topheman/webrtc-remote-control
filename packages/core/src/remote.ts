@@ -30,8 +30,8 @@ export interface WrcRemoteEvents {
   "remote.disconnect": (payload: { id: string }) => void;
   /**
    * A reconnection attempt is starting. Fired once per attempt, including the
-   * immediate one, and never for the first connection - which is not retried,
-   * so a `peer-unavailable` there really does mean "wrong or dead master id".
+   * immediate one, and never for the first connection: its retries happen
+   * before `bindConnection` resolves, so there is no one to tell.
    *
    * This is what lets an application tell "coming back" from "gone". Without
    * it the only signal is `peer-unavailable` on the `Peer`, which says nothing
@@ -99,12 +99,12 @@ export default function prepare<TReconnecting = string, TStalled = string>({
   ) => TReconnecting | TStalled,
 }: PrepareRemoteUtils<TReconnecting, TStalled>) {
   /**
-   * Whether the retry loop below is in flight. It lives here, in `prepare`'s
-   * closure rather than inside `bindConnection`, so `isIgnorableError` exists
-   * before any peer does: a consumer registers `peer.on("error", ...)` before
-   * awaiting `bindConnection`, and a first-connection failure arrives in
-   * exactly that window. `false` until the first retry starts is also the
-   * right answer there - a first connection is never retried.
+   * Whether the reconnection loop below is in flight. It lives here, in
+   * `prepare`'s closure rather than inside `bindConnection`, so
+   * `isIgnorableError` exists before any peer does: a consumer registers
+   * `peer.on("error", ...)` before awaiting `bindConnection`, and a
+   * first-connection failure arrives in exactly that window. `false` there is
+   * also the right answer, retries of a stalled first connection included.
    */
   let reconnecting = false;
   return {
@@ -122,8 +122,8 @@ export default function prepare<TReconnecting = string, TStalled = string>({
      *
      * Every retry that loses its race to the master re-registering makes peerjs
      * emit `peer-unavailable`. `humanizeError` turns those into advice to
-     * reload: wrong mid-recovery, right on a first connection - which is never
-     * retried. Only this library knows which of the two is happening.
+     * reload: wrong mid-recovery, right on a first connection, where it ends
+     * the retries. Only this library knows which of the two is happening.
      *
      * Nothing is intercepted; the consumer still gets every event and still
      * writes the `return`. It is `true` for `peer-unavailable` alone, and it
@@ -173,9 +173,11 @@ export default function prepare<TReconnecting = string, TStalled = string>({
         // so the events carry the id it first opened with.
         let remoteId = "";
 
+        // `retry` gives the attempt a deadline, and is what runs when it
+        // passes without the connection opening.
         const createPeerConnectionWithReconnectOnClose = (
           onConnectionOpened?: () => void,
-          { retryUntilOpen = false } = {},
+          retry?: () => void,
         ) => {
           const myGeneration = (generation += 1);
           const isCurrent = () => myGeneration === generation;
@@ -220,7 +222,7 @@ export default function prepare<TReconnecting = string, TStalled = string>({
           } else {
             connectToMaster();
           }
-          if (retryUntilOpen) {
+          if (retry) {
             retryTimer = setTimeout(() => {
               retryTimer = null;
               // This attempt never opened. Retiring its generation first means
@@ -229,7 +231,7 @@ export default function prepare<TReconnecting = string, TStalled = string>({
               generation += 1;
               attempt += 1;
               attemptConn?.close();
-              reconnect();
+              retry();
             }, reconnectDelay(attempt));
           }
         };
@@ -248,12 +250,9 @@ export default function prepare<TReconnecting = string, TStalled = string>({
             attempt: attempt + 1,
             nextDelayMs: reconnectDelay(attempt),
           });
-          createPeerConnectionWithReconnectOnClose(
-            () => {
-              ee.emit("remote.reconnect", { id: remoteId });
-            },
-            { retryUntilOpen: true },
-          );
+          createPeerConnectionWithReconnectOnClose(() => {
+            ee.emit("remote.reconnect", { id: remoteId });
+          }, reconnect);
         };
         // Closes the connection when the page is hidden, and reconnects if the
         // back/forward cache restores it.
@@ -282,13 +281,28 @@ export default function prepare<TReconnecting = string, TStalled = string>({
         };
         // `once`, because `peer.reconnect()` makes peerjs emit "open" again,
         // and that one is handled by the attempt that requested it.
+        // A first connection that stalls with the master up - ICE never
+        // completing - is retried like a reconnection, but quietly: nobody can
+        // subscribe to `wrcRemote` before it resolves, and `isIgnorableError`
+        // stays false. A `peer-unavailable` before the first open means the
+        // master id is wrong or gone, which no retry fixes, so it ends them.
+        const stopOnUnavailableMaster = (error: HumanizableError) => {
+          if (error.type === "peer-unavailable") {
+            clearRetryTimer();
+          }
+        };
+        const connectFirst = () => {
+          createPeerConnectionWithReconnectOnClose(() => {
+            peer.off("error", stopOnUnavailableMaster);
+            listenToPageLifecycle();
+            res(wrcRemote);
+          }, connectFirst);
+        };
         peer.once("open", (peerId) => {
           remoteId = peerId;
           setPeerIdToSessionStorage(peerId);
-          createPeerConnectionWithReconnectOnClose(() => {
-            listenToPageLifecycle();
-            res(wrcRemote);
-          });
+          peer.on("error", stopOnUnavailableMaster);
+          connectFirst();
           conn?.on("error", () => {
             // todo emit some error ? same on master ?
           });
