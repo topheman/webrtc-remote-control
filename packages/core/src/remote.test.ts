@@ -375,9 +375,59 @@ describe("remote", () => {
       ]);
     });
 
+    it("should retry a first connection that never opens", async () => {
+      vi.useFakeTimers();
+      const { peer, promise } = makeWrcRemote();
+      peer.emitOpen();
+      const stalled = peer.lastConnection();
+
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(stalled.close).toHaveBeenCalled();
+      expect(peer.connect).toHaveBeenCalledTimes(2);
+      peer.lastConnection().emitOpen();
+      await expect(promise).resolves.toBeDefined();
+    });
+
+    it("should back off between first connection attempts", async () => {
+      vi.useFakeTimers();
+      const { peer } = makeWrcRemote();
+      peer.emitOpen();
+
+      await vi.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1999);
+      expect(peer.connect).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(peer.connect).toHaveBeenCalledTimes(3);
+    });
+
+    it("should stop retrying the first connection once the master is unavailable", async () => {
+      // `peer-unavailable` before the first open means the master id is wrong
+      // or gone, which no retry fixes.
+      vi.useFakeTimers();
+      const { peer } = makeWrcRemote();
+      peer.emitOpen();
+
+      peer.emitError({ type: "peer-unavailable" });
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      expect(peer.connect).toHaveBeenCalledTimes(1);
+    });
+
+    it("should keep reconnecting through peer-unavailable once connected", async () => {
+      vi.useFakeTimers();
+      const { peer } = await connect();
+
+      peer.lastConnection().emitClose();
+      peer.emitError({ type: "peer-unavailable" });
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(peer.connect).toHaveBeenCalledTimes(3);
+    });
+
     it("should not announce a reconnection for the first connection", async () => {
-      // The first connection is not retried: `peer-unavailable` there means the
-      // master id is wrong or gone, and "try reloading" is the honest advice.
+      // `bindConnection` resolves on the first open, so its retries happen
+      // before anyone can subscribe, and are not a reconnection anyway.
       const { peer, promise } = makeWrcRemote();
       const onReconnecting =
         vi.fn<
@@ -431,11 +481,22 @@ describe("remote", () => {
    */
   describe("isIgnorableError", () => {
     it("should ignore nothing before the retry loop has ever run", () => {
-      // A first connection is not retried, so a `peer-unavailable` here really
-      // does mean the master id is wrong or dead - and the consumer's error
-      // handler is registered in exactly this window, before `bindConnection`
-      // has resolved.
+      // A `peer-unavailable` before the first open really does mean the master
+      // id is wrong or dead - and the consumer's error handler is registered in
+      // exactly this window, before `bindConnection` has resolved.
       const { prepared } = makeWrcRemote();
+
+      expect(prepared.isIgnorableError({ type: "peer-unavailable" })).toBe(
+        false,
+      );
+    });
+
+    it("should ignore nothing while retrying a stalled first connection", async () => {
+      vi.useFakeTimers();
+      const { peer, prepared } = makeWrcRemote();
+      peer.emitOpen();
+
+      await vi.advanceTimersByTimeAsync(1000);
 
       expect(prepared.isIgnorableError({ type: "peer-unavailable" })).toBe(
         false,

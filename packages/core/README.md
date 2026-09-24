@@ -111,6 +111,10 @@ repeatedly - and emits `remote.reconnecting` before each attempt, then
 `remote.reconnect` once it is back. The payload carries `id`, the `attempt`
 number, and `nextDelayMs`, the wait before the next try.
 
+A first connection that stalls is retried on the same backoff, silently, since
+`bindConnection` has not resolved yet. A `peer-unavailable` ends those retries:
+the master id is wrong or the master is gone.
+
 Deciding what to tell the user means knowing when "reconnecting" stops being a
 plausible thing to say, and that means comparing `nextDelayMs` against the
 backoff ceiling. That comparison is the library's job, so `prepareUtils` hands
@@ -171,7 +175,7 @@ While the retry loop runs, peerjs emits `peer-unavailable` for every attempt
 that loses its race to the master re-registering its stored id. Passing those
 through `humanizeError` talks over the notice with advice to reload - the one
 thing the user should not do mid-recovery. Rewording the message is not a fix
-either: on a first connection, which is never retried, that advice is correct.
+either: on a first connection, where `peer-unavailable` means the master id is wrong or gone and stops any retry, that advice is correct.
 
 What separates the two cases is whether the retry loop is running, and that is
 state only this library holds. `isIgnorableError` answers it, so you do not have
