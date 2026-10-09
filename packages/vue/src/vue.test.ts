@@ -308,6 +308,7 @@ describe("vue", () => {
     });
     afterEach(() => {
       vi.useRealTimers();
+      vi.restoreAllMocks();
       sessionStorage.clear();
     });
 
@@ -363,6 +364,40 @@ describe("vue", () => {
         "stored-id",
         undefined,
       ]);
+    });
+
+    it("should keep the stored id while a hidden master is refused", () => {
+      const visibility = vi
+        .spyOn(document, "visibilityState", "get")
+        .mockReturnValue("hidden");
+      const init = vi.fn<MasterInit>(nextPeer);
+      render(makeMasterRoot(init));
+
+      for (const delay of [1000, 2000, 4000, 8000, 8000, 8000]) {
+        peers.at(-1)!.emitIdTaken();
+        vi.advanceTimersByTime(delay);
+      }
+      expect(init).toHaveBeenCalledTimes(7);
+      expect(init.mock.calls.at(-1)![0].getPeerId()).toBe("stored-id");
+
+      visibility.mockReturnValue("visible");
+      peers.at(-1)!.emitIdTaken();
+      vi.advanceTimersByTime(8000);
+      expect(init.mock.calls.at(-1)![0].getPeerId()).toBeUndefined();
+    });
+
+    it("should not retry a fresh id the server refuses", () => {
+      const init = vi.fn<MasterInit>(nextPeer);
+      render(makeMasterRoot(init));
+      const { isIgnorableError } = init.mock.calls[0]![0];
+
+      for (const delay of [1000, 2000, 4000, 8000, 8000, 8000]) {
+        peers.at(-1)!.emitIdTaken();
+        vi.advanceTimersByTime(delay);
+      }
+
+      expect(init).toHaveBeenCalledTimes(6);
+      expect(isIgnorableError(idTaken)).toBe(false);
     });
 
     it("should not retry once the provider unmounts", () => {

@@ -209,9 +209,10 @@ peer.on("error", (error) => {
 
 Nothing is intercepted. You subscribe to your own `Peer` exactly as before and
 receive every event it emits; the predicate only answers a question, and you
-still write the `return`. It answers `true` only for `peer-unavailable`, and
-only while a reconnection is in flight - no other error type is ever this
-library's doing. What it cannot do is tell which peer an error is about, since
+still write the `return`. It answers `true` only while a reconnection is in
+flight, and only for `peer-unavailable` and `unavailable-id` - the second when
+the signaling server still holds the remote's id from before the outage. No
+other error type is ever this library's doing. What it cannot do is tell which peer an error is about, since
 peerjs carries that id only inside the message text, so a page whose `Peer` also
 connects to ids this library does not manage should not call it.
 
@@ -235,23 +236,27 @@ import {
 
 let attempt = 0;
 function start() {
-  // after five refusals, stop waiting for the id and take a fresh one
-  const peer = new Peer(
-    attempt < ID_TAKEN_MAX_ATTEMPTS ? getPeerId() : undefined,
-  );
-  const stop = onIdTakenBeforeOpen(peer, () => {
-    stop();
-    setTimeout(start, reconnectDelay(attempt));
-    attempt += 1;
-  });
+  // After five refusals, take a fresh id - on a master, only while someone can
+  // see its new link.
+  const fresh =
+    attempt >= ID_TAKEN_MAX_ATTEMPTS && document.visibilityState === "visible";
+  const peer = new Peer(fresh ? undefined : getPeerId());
+  // No other socket can hold a fresh id, so it is tried once.
+  if (!fresh) {
+    const stop = onIdTakenBeforeOpen(peer, () => {
+      stop();
+      setTimeout(start, reconnectDelay(attempt));
+      attempt += 1;
+    });
+  }
   bindConnection(peer /* , masterPeerId on the remote side */);
 }
 start();
 ```
 
 The listener only fires before the peer's first `open`: afterwards peerjs
-merely disconnects on `unavailable-id`, and the remote's reconnection loop
-already handles that. A master that ends up on a fresh id is no longer the one
+merely disconnects on `unavailable-id`, the remote's reconnection loop already
+handles that, and `isIgnorableError` says so. A master that ends up on a fresh id is no longer the one
 its remotes were pointed at, so they need its new link.
 
 ## TypeScript

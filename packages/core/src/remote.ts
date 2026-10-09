@@ -130,14 +130,21 @@ export default function prepare<TReconnecting = string, TStalled = string>({
      * reload: wrong mid-recovery, right on a first connection, where it ends
      * the retries. Only this library knows which of the two is happening.
      *
+     * Rejoining the signaling server can also be refused with `unavailable-id`
+     * while it still holds the id from before the outage; peerjs only
+     * disconnects, and the next attempt tries again.
+     *
      * Nothing is intercepted; the consumer still gets every event and still
-     * writes the `return`. It is `true` for `peer-unavailable` alone, and it
+     * writes the `return`. It is `true` for those two types alone, and it
      * cannot tell which peer an error is about, since peerjs carries that id
      * only in the message text - so a page whose `Peer` also connects to ids
      * this library does not manage should not call it.
      */
     isIgnorableError(error: HumanizableError): boolean {
-      return reconnecting && error.type === "peer-unavailable";
+      return (
+        reconnecting &&
+        (error.type === "peer-unavailable" || error.type === "unavailable-id")
+      );
     },
     bindConnection(peer: Peer, masterPeerId: string): Promise<WrcRemote> {
       return new Promise((res) => {

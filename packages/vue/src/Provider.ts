@@ -149,7 +149,12 @@ type Wire<
   prepared: PreparedUtils<TReconnecting, TStalled>,
   masterPeerId: TMasterPeerId,
   isRetryingIdTaken: () => boolean,
-) => { utils: TUtils; connect: (peer: PeerInstance) => Promise<TApi> };
+) => {
+  utils: TUtils;
+  connect: (peer: PeerInstance) => Promise<TApi>;
+  /** Whether a refused stored id may now be given up for a fresh one. */
+  mayTakeFreshId: () => boolean;
+};
 
 const wireMaster: Wire<
   MasterUtils,
@@ -165,6 +170,9 @@ const wireMaster: Wire<
         error.type === "unavailable-id" && isRetryingIdTaken(),
     },
     connect: (peer) => bindConnection(peer),
+    // A fresh id changes the master's link, so only while someone can see the
+    // new one; a hidden master keeps waiting for its own id to free up.
+    mayTakeFreshId: () => document.visibilityState === "visible",
   };
 };
 
@@ -179,6 +187,7 @@ function wireRemote<TReconnecting, TStalled>(
 ): {
   utils: RemoteUtils<TReconnecting, TStalled>;
   connect: (peer: PeerInstance) => Promise<RemoteBindConnectionApiResolved>;
+  mayTakeFreshId: () => boolean;
 } {
   const { bindConnection, ...utils } = remote.default(prepared);
   return {
@@ -191,6 +200,7 @@ function wireRemote<TReconnecting, TStalled>(
         utils.isIgnorableError(error),
     },
     connect: (peer) => bindConnection(peer, masterPeerId),
+    mayTakeFreshId: () => true,
   };
 }
 
@@ -219,15 +229,16 @@ function buildConnection<
     reconnectNotice,
   }: ProvideOptions<TReconnecting, TStalled>,
 ): TUtils & { state: ShallowRef<Connection<TApi>> } {
-  let opened = false;
-  const { utils, connect } = wire(
+  // Whether an `unavailable-id` would now be retried.
+  let retrying = false;
+  const { utils, connect, mayTakeFreshId } = wire(
     prepareUtils<TReconnecting, TStalled>({
       sessionStorageKey,
       humanErrors,
       reconnectNotice,
     }),
     masterPeerId,
-    () => !opened,
+    () => retrying,
   );
   const state = shallowRef<Connection<TApi>>({
     ready: false,
@@ -241,27 +252,30 @@ function buildConnection<
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   // peerjs destroys a peer whose id is refused before its first `open`, so
   // each refusal builds a new one with `init`, and the consumer sees a new
-  // `peer`. Past the ceiling the server picks a fresh id.
+  // `peer`. Past the ceiling the server picks a fresh id, tried once: no other
+  // socket can hold it.
   const start = () => {
+    const fresh = attempt >= ID_TAKEN_MAX_ATTEMPTS && mayTakeFreshId();
     // init callback that should return a peer instance like:
     // `({ getPeerId }) => new Peer(getPeerId())`
     const attemptPeer = init(
-      attempt < ID_TAKEN_MAX_ATTEMPTS
-        ? utils
-        : { ...utils, getPeerId: () => undefined },
+      fresh ? { ...utils, getPeerId: () => undefined } : utils,
     );
     peer = attemptPeer;
     // Replaced, never mutated: a shallow ref only notifies watchers when its
     // `.value` is reassigned, not when a member of it is written to.
     state.value = { ready: false, peer: attemptPeer, api: undefined };
+    retrying = !fresh;
     attemptPeer.once("open", () => {
-      opened = true;
+      retrying = false;
     });
-    stopWatching = onIdTakenBeforeOpen(attemptPeer, () => {
-      stopWatching();
-      retryTimer = setTimeout(start, reconnectDelay(attempt));
-      attempt += 1;
-    });
+    if (!fresh) {
+      stopWatching = onIdTakenBeforeOpen(attemptPeer, () => {
+        stopWatching();
+        retryTimer = setTimeout(start, reconnectDelay(attempt));
+        attempt += 1;
+      });
+    }
     void connect(attemptPeer).then((api) => {
       if (current) {
         state.value = { ready: true, peer: attemptPeer, api };

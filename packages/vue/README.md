@@ -116,8 +116,9 @@ The predicate also covers a reload, on both sides, which is why `useMaster` hand
 it out too. A page that reloads under its stored id can reach the signaling
 server before the old page's socket is gone, and is refused with
 `unavailable-id`. The provider then builds a new `Peer` under the same id,
-waiting a little longer each time, and takes a fresh id after five refusals;
-`isIgnorableError` is `true` for those errors until the peer first opens. Each
+waiting a little longer each time, and takes a fresh id after five refusals -
+once, and on a master only while the page is visible, since its link changes;
+`isIgnorableError` is `true` for those errors while they are being retried. Each
 attempt is a new `Peer`, so `state.value.peer` can change before `ready`:
 subscribe in a `watch` on it.
 

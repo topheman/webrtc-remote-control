@@ -384,6 +384,7 @@ describe("react", () => {
     });
     afterEach(() => {
       vi.useRealTimers();
+      vi.restoreAllMocks();
       sessionStorage.clear();
     });
 
@@ -443,6 +444,48 @@ describe("react", () => {
         "stored-id",
         undefined,
       ]);
+    });
+
+    it("should keep the stored id while a hidden master is refused", () => {
+      const visibility = vi
+        .spyOn(document, "visibilityState", "get")
+        .mockReturnValue("hidden");
+      const init = vi.fn<MasterProviderProps["init"]>(nextPeer);
+      render(
+        <MasterProvider init={init}>
+          <MasterConsumer />
+        </MasterProvider>,
+      );
+
+      for (const delay of [1000, 2000, 4000, 8000, 8000, 8000]) {
+        act(() => peers.at(-1)!.emitIdTaken());
+        act(() => vi.advanceTimersByTime(delay));
+      }
+      expect(init).toHaveBeenCalledTimes(7);
+      expect(init.mock.calls.at(-1)![0].getPeerId()).toBe("stored-id");
+
+      visibility.mockReturnValue("visible");
+      act(() => peers.at(-1)!.emitIdTaken());
+      act(() => vi.advanceTimersByTime(8000));
+      expect(init.mock.calls.at(-1)![0].getPeerId()).toBeUndefined();
+    });
+
+    it("should not retry a fresh id the server refuses", () => {
+      const init = vi.fn<MasterProviderProps["init"]>(nextPeer);
+      render(
+        <MasterProvider init={init}>
+          <MasterConsumer />
+        </MasterProvider>,
+      );
+      const { isIgnorableError } = init.mock.calls[0]![0];
+
+      for (const delay of [1000, 2000, 4000, 8000, 8000, 8000]) {
+        act(() => peers.at(-1)!.emitIdTaken());
+        act(() => vi.advanceTimersByTime(delay));
+      }
+
+      expect(init).toHaveBeenCalledTimes(6);
+      expect(isIgnorableError(idTaken)).toBe(false);
     });
 
     it("should not retry once the provider unmounts", () => {

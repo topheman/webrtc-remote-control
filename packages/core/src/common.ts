@@ -155,9 +155,11 @@ export function reconnectDelay(attempt: number): number {
 }
 
 /**
- * How many times a first `open` refused with `unavailable-id` is retried under
- * the stored id, waiting `reconnectDelay(attempt)` before each, after which a
- * fresh id is asked for: about 23 seconds in all.
+ * How many refusals of a first `open` with `unavailable-id` the stored id gets,
+ * each followed by a wait of `reconnectDelay(attempt)`, before a fresh id is
+ * asked for: about 23 seconds in all. Deliberately shorter than the signaling
+ * server's timeout for a socket that died without closing (60 to 90 seconds):
+ * nobody waits that long in front of a screen that says nothing.
  */
 export const ID_TAKEN_MAX_ATTEMPTS = 5;
 

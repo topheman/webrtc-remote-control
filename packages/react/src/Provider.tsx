@@ -179,7 +179,12 @@ type Wire<
   prepared: PreparedUtils<TReconnecting, TStalled>,
   masterPeerId: TMasterPeerId,
   isRetryingIdTaken: () => boolean,
-) => { utils: TUtils; connect: (peer: PeerInstance) => Promise<TApi> };
+) => {
+  utils: TUtils;
+  connect: (peer: PeerInstance) => Promise<TApi>;
+  /** Whether a refused stored id may now be given up for a fresh one. */
+  mayTakeFreshId: () => boolean;
+};
 
 const wireMaster: Wire<
   MasterUtils,
@@ -195,6 +200,9 @@ const wireMaster: Wire<
         error.type === "unavailable-id" && isRetryingIdTaken(),
     },
     connect: (peer) => bindConnection(peer),
+    // A fresh id changes the master's link, so only while someone can see the
+    // new one; a hidden master keeps waiting for its own id to free up.
+    mayTakeFreshId: () => document.visibilityState === "visible",
   };
 };
 
@@ -210,6 +218,7 @@ function wireRemote<TReconnecting, TStalled>(
 ): {
   utils: RemoteUtils<TReconnecting, TStalled>;
   connect: (peer: PeerInstance) => Promise<RemoteBindConnectionApiResolved>;
+  mayTakeFreshId: () => boolean;
 } {
   const { bindConnection, ...utils } = remote.default(prepared);
   return {
@@ -222,12 +231,13 @@ function wireRemote<TReconnecting, TStalled>(
         utils.isIgnorableError(error),
     },
     connect: (peer) => bindConnection(peer, masterPeerId),
+    mayTakeFreshId: () => true,
   };
 }
 
 /**
- * Whether the current connection's peer has opened yet. Kept out of React
- * state: only the effect writes it and only error handlers read it.
+ * Whether an `unavailable-id` would now be retried. Kept out of React state:
+ * only the effect writes it and only error handlers read it.
  */
 function makeFlag() {
   let value = false;
@@ -268,8 +278,8 @@ function useWrcConnection<
    */
   const [initialHumanErrors] = useState(humanErrors);
   const [initialReconnectNotice] = useState(reconnectNotice);
-  const { utils, connect, opened } = useMemo(() => {
-    const opened = makeFlag();
+  const { utils, connect, mayTakeFreshId, retrying } = useMemo(() => {
+    const retrying = makeFlag();
     return {
       ...wire(
         prepareUtils<TReconnecting, TStalled>({
@@ -278,9 +288,9 @@ function useWrcConnection<
           reconnectNotice: initialReconnectNotice,
         }),
         masterPeerId,
-        () => !opened.get(),
+        retrying.get,
       ),
-      opened,
+      retrying,
     };
   }, [
     wire,
@@ -313,28 +323,30 @@ function useWrcConnection<
     let peer: PeerInstance;
     let stopWatching = () => {};
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
-    opened.set(false);
     // peerjs destroys a peer whose id is refused before its first `open`, so
     // each refusal builds a new one with `init`, and the consumer sees a new
-    // `peer`. Past the ceiling the server picks a fresh id.
+    // `peer`. Past the ceiling the server picks a fresh id, tried once: no
+    // other socket can hold it.
     const start = () => {
+      const fresh = attempt >= ID_TAKEN_MAX_ATTEMPTS && mayTakeFreshId();
       // init callback that should return a peer instance like:
       // `({ getPeerId }) => new Peer(getPeerId())`
       const attemptPeer = initRef.current(
-        attempt < ID_TAKEN_MAX_ATTEMPTS
-          ? utils
-          : { ...utils, getPeerId: () => undefined },
+        fresh ? { ...utils, getPeerId: () => undefined } : utils,
       );
       peer = attemptPeer;
       setConnection({ ready: false, peer: attemptPeer, api: undefined });
+      retrying.set(!fresh);
       attemptPeer.once("open", () => {
-        opened.set(true);
+        retrying.set(false);
       });
-      stopWatching = onIdTakenBeforeOpen(attemptPeer, () => {
-        stopWatching();
-        retryTimer = setTimeout(start, reconnectDelay(attempt));
-        attempt += 1;
-      });
+      if (!fresh) {
+        stopWatching = onIdTakenBeforeOpen(attemptPeer, () => {
+          stopWatching();
+          retryTimer = setTimeout(start, reconnectDelay(attempt));
+          attempt += 1;
+        });
+      }
       void connect(attemptPeer).then((api) => {
         if (current) {
           setConnection({ ready: true, peer: attemptPeer, api });
@@ -350,7 +362,7 @@ function useWrcConnection<
       stopWatching();
       peer.disconnect();
     };
-  }, [utils, connect, opened]);
+  }, [utils, connect, mayTakeFreshId, retrying]);
   return connection.ready
     ? { ...utils, ready: true, peer: connection.peer, api: connection.api }
     : { ...utils, ready: false, peer: connection.peer, api: undefined };
