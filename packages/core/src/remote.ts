@@ -1,7 +1,8 @@
-import EventEmitter from "eventemitter3";
+import type EventEmitter from "eventemitter3";
 import type { DataConnection, Peer } from "peerjs";
 
 import {
+  DataQueueEmitter,
   makeConnectionFilterUtilities,
   makeReconnectNotice,
   reconnectDelay,
@@ -67,7 +68,7 @@ export interface PrepareRemoteUtils<TReconnecting = string, TStalled = string> {
 function makePeerConnection(
   peer: Peer,
   masterPeerId: string,
-  ee: EventEmitter<WrcRemoteEvents>,
+  ee: DataQueueEmitter<WrcRemoteEvents>,
   onConnectionOpened?: () => void,
 ): DataConnection {
   const { connMetadata } = makeConnectionFilterUtilities();
@@ -82,7 +83,7 @@ function makePeerConnection(
     }
   });
   conn.on("data", (data) => {
-    ee.emit("data", { from: "master" }, data);
+    ee.relayData({ from: "master" }, data);
   });
   return conn;
 }
@@ -137,7 +138,7 @@ export default function prepare<TReconnecting = string, TStalled = string>({
     bindConnection(peer: Peer, masterPeerId: string): Promise<WrcRemote> {
       return new Promise((res) => {
         let conn: DataConnection | null = null;
-        const ee = new EventEmitter<WrcRemoteEvents>();
+        const ee = new DataQueueEmitter<WrcRemoteEvents>();
         const wrcRemote: WrcRemote = {
           send(payload) {
             if (!conn) {

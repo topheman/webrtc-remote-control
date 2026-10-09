@@ -147,6 +147,35 @@ describe("master", () => {
       );
     });
 
+    it("should deliver the `data` received before the first listener, with each sender's id, in order", async () => {
+      const { peer, promise } = makeWrcMaster();
+      peer.emitOpen();
+      const wrc = await promise;
+      const one = makeFakeConnection({ peer: "remote-1" });
+      const two = makeFakeConnection({ peer: "remote-2" });
+      peer.emitConnection(one);
+      peer.emitConnection(two);
+      one.emitOpen();
+      two.emitOpen();
+      one.emitData("a");
+      two.emitData("b");
+      one.emitData("c");
+      const onData =
+        vi.fn<
+          (payload: { id: string; from: "remote" }, data: unknown) => void
+        >();
+
+      wrc.on("data", onData);
+      expect(onData).not.toHaveBeenCalled();
+      await Promise.resolve();
+
+      expect(onData.mock.calls).toEqual([
+        [{ id: "remote-1", from: "remote" }, "a"],
+        [{ id: "remote-2", from: "remote" }, "b"],
+        [{ id: "remote-1", from: "remote" }, "c"],
+      ]);
+    });
+
     it("should emit `remote.disconnect` on close and drop the connection", async () => {
       const { peer, promise } = makeWrcMaster();
       peer.emitOpen();

@@ -1,3 +1,5 @@
+import EventEmitter from "eventemitter3";
+
 /**
  * The shape `humanizeError` accepts. peerjs errors carry a `type`, but the
  * function is deliberately tolerant: anything with an optional `type` and
@@ -149,6 +151,100 @@ export function reconnectDelay(attempt: number): number {
     RECONNECT_FIRST_DELAY_MS * 2 ** attempt,
     RECONNECT_MAX_DELAY_MS,
   );
+}
+
+/** How many messages received before the first `data` listener are kept. */
+export const MAX_PENDING_DATA = 100;
+
+type DataEvents = { data: (...args: never[]) => void };
+
+/**
+ * An emitter that queues the `data` it relays until a `data` listener is
+ * added, then delivers the queue in a microtask, so every listener added in
+ * the same synchronous run gets it. After that the queue only keeps order
+ * until it is empty, and is never used again.
+ *
+ * The hook is on the emitter rather than the api object because `on` returns
+ * the emitter, and a chained `.on("data")` must count too. Both `master.ts`
+ * and `remote.ts` hold one per `bindConnection`: a remote's reconnection
+ * keeps its emitter, so the queue survives it.
+ */
+export class DataQueueEmitter<
+  TEvents extends DataEvents,
+> extends EventEmitter<TEvents> {
+  #pending: Parameters<TEvents["data"]>[] = [];
+  #listenedTo = false;
+
+  relayData(...args: Parameters<TEvents["data"]>) {
+    if (!this.#listenedTo || this.#pending.length > 0) {
+      this.#pending.push(args);
+      if (this.#pending.length > MAX_PENDING_DATA) {
+        this.#pending.shift();
+      }
+      return;
+    }
+    this.#emitData(args);
+  }
+
+  override on<T extends EventEmitter.EventNames<TEvents>>(
+    event: T,
+    fn: EventEmitter.EventListener<TEvents, T>,
+    context?: unknown,
+  ): this {
+    super.on(event, fn, context);
+    this.#added(event);
+    return this;
+  }
+
+  override addListener<T extends EventEmitter.EventNames<TEvents>>(
+    event: T,
+    fn: EventEmitter.EventListener<TEvents, T>,
+    context?: unknown,
+  ): this {
+    return this.on(event, fn, context);
+  }
+
+  override once<T extends EventEmitter.EventNames<TEvents>>(
+    event: T,
+    fn: EventEmitter.EventListener<TEvents, T>,
+    context?: unknown,
+  ): this {
+    super.once(event, fn, context);
+    this.#added(event);
+    return this;
+  }
+
+  #added(event: unknown) {
+    if (event !== "data" || this.#listenedTo) {
+      return;
+    }
+    this.#listenedTo = true;
+    if (this.#pending.length > 0) {
+      queueMicrotask(() => this.#flush());
+    }
+  }
+
+  // One message at a time, so a listener that throws loses only its own
+  // message: the error is rethrown in a task of its own and the rest follow.
+  #flush() {
+    while (this.#pending.length > 0) {
+      const args = this.#pending.shift()!;
+      try {
+        this.#emitData(args);
+      } catch (error) {
+        setTimeout(() => {
+          throw error;
+        });
+      }
+    }
+  }
+
+  #emitData(args: Parameters<TEvents["data"]>) {
+    (this.emit as (event: "data", ...args: unknown[]) => boolean)(
+      "data",
+      ...args,
+    );
+  }
 }
 
 const builtinReconnectNotice = {

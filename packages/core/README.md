@@ -104,6 +104,18 @@ async function init() {
 }
 ```
 
+### Messages sent before you listen
+
+On both the master and the remote, `data` received before the first
+`api.on("data", ...)` is not lost: it is queued and delivered to that first
+listener, in order, at most 100 messages (the oldest are dropped past that).
+Every listener added in the same synchronous run gets them; one added later, or
+after all listeners were removed, does not.
+
+Only `data` is queued. A master that subscribes late can receive `data` from a
+remote whose `remote.connect` it never saw, so do not assume every `id` is
+already known.
+
 ### Telling the user about a reconnection
 
 A remote that loses its master retries on a backoff - 1s, 2s, 4s, then 8s

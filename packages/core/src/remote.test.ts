@@ -6,6 +6,7 @@ import {
   it,
   vi,
 } from "vite-plus/test";
+import { MAX_PENDING_DATA } from "./common.js";
 import prepare, { prepareUtils } from "./remote.js";
 import type { PrepareRemoteUtils } from "./remote.js";
 import { disableConsole, makeFakePeer } from "../test.helpers.js";
@@ -179,6 +180,155 @@ describe("remote", () => {
       peer.lastConnection().emitData({ type: "PING" });
 
       expect(onData).not.toHaveBeenCalled();
+    });
+
+    describe("received before the first listener", () => {
+      type OnData = (payload: { from: "master" }, data: unknown) => void;
+
+      it("should deliver them in order, in a microtask after `on`", async () => {
+        const { peer, wrc } = await connect();
+        peer.lastConnection().emitData(1);
+        peer.lastConnection().emitData(2);
+        const onData = vi.fn<OnData>();
+
+        wrc.on("data", onData);
+        expect(onData).not.toHaveBeenCalled();
+        await Promise.resolve();
+
+        expect(onData.mock.calls).toEqual([
+          [{ from: "master" }, 1],
+          [{ from: "master" }, 2],
+        ]);
+      });
+
+      it("should deliver them to every listener added in the same synchronous run, and only those", async () => {
+        const { peer, wrc } = await connect();
+        peer.lastConnection().emitData(1);
+        const first = vi.fn<OnData>();
+        const second = vi.fn<OnData>();
+        const late = vi.fn<OnData>();
+
+        wrc.on("data", first);
+        wrc.on("data", second);
+        await Promise.resolve();
+        wrc.on("data", late);
+        await Promise.resolve();
+
+        expect(first).toHaveBeenCalledWith({ from: "master" }, 1);
+        expect(second).toHaveBeenCalledWith({ from: "master" }, 1);
+        expect(late).not.toHaveBeenCalled();
+      });
+
+      it("should keep a message arriving before the queue is emptied behind the queued ones", async () => {
+        const { peer, wrc } = await connect();
+        peer.lastConnection().emitData(1);
+        const onData = vi.fn<OnData>();
+
+        wrc.on("data", onData);
+        peer.lastConnection().emitData(2);
+        await Promise.resolve();
+        peer.lastConnection().emitData(3);
+
+        expect(onData.mock.calls.map(([, data]) => data)).toEqual([1, 2, 3]);
+      });
+
+      it("should keep only the last MAX_PENDING_DATA, dropping the oldest", async () => {
+        const { peer, wrc } = await connect();
+        const overflow = 5;
+        for (let i = 0; i < MAX_PENDING_DATA + overflow; i += 1) {
+          peer.lastConnection().emitData(i);
+        }
+        const onData = vi.fn<OnData>();
+
+        wrc.on("data", onData);
+        await Promise.resolve();
+
+        const received = onData.mock.calls.map(([, data]) => data);
+        expect(received).toHaveLength(MAX_PENDING_DATA);
+        expect(received[0]).toBe(overflow);
+        expect(received.at(-1)).toBe(MAX_PENDING_DATA + overflow - 1);
+      });
+
+      it("should count a `data` listener added through the emitter `on` returns", async () => {
+        const { peer, wrc } = await connect();
+        peer.lastConnection().emitData(1);
+        const onData = vi.fn<OnData>();
+
+        wrc.on("remote.disconnect", () => {}).on("data", onData);
+        await Promise.resolve();
+        peer.lastConnection().emitData(2);
+
+        expect(onData.mock.calls.map(([, data]) => data)).toEqual([1, 2]);
+      });
+
+      it("should keep queuing while only other events are listened to", async () => {
+        const { peer, wrc } = await connect();
+        wrc.on("remote.disconnect", () => {});
+        peer.lastConnection().emitData(1);
+        const onData = vi.fn<OnData>();
+
+        wrc.on("data", onData);
+        await Promise.resolve();
+
+        expect(onData).toHaveBeenCalledWith({ from: "master" }, 1);
+      });
+
+      it("should deliver the rest of the queue when a listener throws, and rethrow apart", async () => {
+        const deferred: (() => void)[] = [];
+        const setTimeoutSpy = vi
+          .spyOn(globalThis, "setTimeout")
+          .mockImplementation(((fn: () => void) => {
+            deferred.push(fn);
+            return 0;
+          }) as typeof setTimeout);
+        try {
+          const { peer, wrc } = await connect();
+          peer.lastConnection().emitData(1);
+          peer.lastConnection().emitData(2);
+          const received: unknown[] = [];
+
+          wrc.on("data", (_, data) => {
+            received.push(data);
+            if (data === 1) {
+              throw new Error("listener failed");
+            }
+          });
+          await Promise.resolve();
+
+          expect(received).toEqual([1, 2]);
+          const rethrow = deferred.at(-1);
+          expect(rethrow).toThrow("listener failed");
+        } finally {
+          setTimeoutSpy.mockRestore();
+        }
+      });
+
+      it("should not queue anything once a listener has been added, even if it is removed", async () => {
+        const { peer, wrc } = await connect();
+        const first = vi.fn<OnData>();
+        wrc.on("data", first);
+        wrc.off("data", first);
+        peer.lastConnection().emitData(1);
+        const second = vi.fn<OnData>();
+
+        wrc.on("data", second);
+        await Promise.resolve();
+
+        expect(second).not.toHaveBeenCalled();
+      });
+
+      it("should queue what a reconnected connection receives before the first listener", async () => {
+        const { peer, wrc } = await connect();
+        peer.lastConnection().emitClose();
+        peer.lastConnection().emitOpen();
+        peer.lastConnection().emitData(1);
+        const onData = vi.fn<OnData>();
+
+        wrc.on("data", onData);
+        await Promise.resolve();
+
+        expect(onData).toHaveBeenCalledWith({ from: "master" }, 1);
+      });
     });
   });
 
