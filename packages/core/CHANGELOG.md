@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.5.3
+
+### Patch Changes
+
+- [#88](https://github.com/topheman/webrtc-remote-control/pull/88) [`5fd04c9`](https://github.com/topheman/webrtc-remote-control/commit/5fd04c9a8fd1ce8a13f36b083484a070739d1343) Thanks [@topheman](https://github.com/topheman)! - Deliver `data` received before the first `data` listener instead of dropping it, on both the master and the remote. Up to 100 messages are queued and handed to the listeners added in the same synchronous run as the first one. This fixes the React bindings losing a message sent right after the connection opened.
+
 ## 0.5.2
 
 ### Patch Changes
