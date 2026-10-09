@@ -126,8 +126,19 @@ export function makeFakePeer({
     once: ee.once.bind(ee),
     off: ee.off.bind(ee),
     disconnect: vi.fn<() => void>(),
+    // In peerjs's order: off the signaling server, then each connection
+    // closed, emitting "close", and only then marked destroyed.
     destroy: vi.fn<() => void>(() => {
+      if (peer.destroyed) {
+        return;
+      }
+      if (!peer.disconnected) {
+        peer.disconnected = true;
+        ee.emit("disconnected", id);
+      }
+      connections.forEach((conn) => conn.close());
       peer.destroyed = true;
+      ee.emit("close");
     }),
     // Real peerjs reopens the socket and emits "open" later; a test does that
     // part with `emitOpen`.
