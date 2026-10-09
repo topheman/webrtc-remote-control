@@ -1,6 +1,7 @@
 import EventEmitter from "eventemitter3";
 import type { DataConnection, Peer } from "peerjs";
 
+import { makeDataQueue } from "./common.js";
 import type {
   GetPeerIdType,
   HumanizeErrorType,
@@ -51,6 +52,9 @@ export default function prepare({
       return new Promise((res) => {
         const ee = new EventEmitter<WrcMasterEvents>();
         const connections = new Map<string, DataConnection>();
+        const dataQueue = makeDataQueue((id: string, data: unknown) => {
+          ee.emit("data", { id, from: "remote" }, data);
+        });
         const wrcMaster: WrcMaster = {
           sendTo(id, payload) {
             const conn = connections.get(id);
@@ -64,7 +68,13 @@ export default function prepare({
               conn.send(payload);
             });
           },
-          on: ee.on.bind(ee),
+          on(event, fn, context) {
+            ee.on(event, fn, context);
+            if (event === "data") {
+              dataQueue.listened();
+            }
+            return ee;
+          },
           off: ee.off.bind(ee),
         };
         peer.on("open", (peerId) => {
@@ -98,7 +108,7 @@ export default function prepare({
             ee.emit("remote.connect", { id: conn.peer });
           });
           conn.on("data", (data) => {
-            ee.emit("data", { id: conn.peer, from: "remote" }, data);
+            dataQueue.relay(conn.peer, data);
           });
           conn.on("close", () => {
             // A connection already superseded in the map must not evict its

@@ -180,6 +180,100 @@ describe("remote", () => {
 
       expect(onData).not.toHaveBeenCalled();
     });
+
+    describe("received before the first listener", () => {
+      type OnData = (payload: { from: "master" }, data: unknown) => void;
+
+      it("should deliver them in order, in a microtask after `on`", async () => {
+        const { peer, wrc } = await connect();
+        peer.lastConnection().emitData(1);
+        peer.lastConnection().emitData(2);
+        const onData = vi.fn<OnData>();
+
+        wrc.on("data", onData);
+        expect(onData).not.toHaveBeenCalled();
+        await Promise.resolve();
+
+        expect(onData.mock.calls).toEqual([
+          [{ from: "master" }, 1],
+          [{ from: "master" }, 2],
+        ]);
+      });
+
+      it("should deliver them to every listener added in the same synchronous run, and only those", async () => {
+        const { peer, wrc } = await connect();
+        peer.lastConnection().emitData(1);
+        const first = vi.fn<OnData>();
+        const second = vi.fn<OnData>();
+        const late = vi.fn<OnData>();
+
+        wrc.on("data", first);
+        wrc.on("data", second);
+        await Promise.resolve();
+        wrc.on("data", late);
+        await Promise.resolve();
+
+        expect(first).toHaveBeenCalledWith({ from: "master" }, 1);
+        expect(second).toHaveBeenCalledWith({ from: "master" }, 1);
+        expect(late).not.toHaveBeenCalled();
+      });
+
+      it("should keep a message arriving before the queue is emptied behind the queued ones", async () => {
+        const { peer, wrc } = await connect();
+        peer.lastConnection().emitData(1);
+        const onData = vi.fn<OnData>();
+
+        wrc.on("data", onData);
+        peer.lastConnection().emitData(2);
+        await Promise.resolve();
+        peer.lastConnection().emitData(3);
+
+        expect(onData.mock.calls.map(([, data]) => data)).toEqual([1, 2, 3]);
+      });
+
+      it("should keep only the last 100, dropping the oldest", async () => {
+        const { peer, wrc } = await connect();
+        for (let i = 0; i < 105; i += 1) {
+          peer.lastConnection().emitData(i);
+        }
+        const onData = vi.fn<OnData>();
+
+        wrc.on("data", onData);
+        await Promise.resolve();
+
+        const received = onData.mock.calls.map(([, data]) => data);
+        expect(received).toHaveLength(100);
+        expect(received[0]).toBe(5);
+        expect(received[99]).toBe(104);
+      });
+
+      it("should not queue anything once a listener has been added, even if it is removed", async () => {
+        const { peer, wrc } = await connect();
+        const first = vi.fn<OnData>();
+        wrc.on("data", first);
+        wrc.off("data", first);
+        peer.lastConnection().emitData(1);
+        const second = vi.fn<OnData>();
+
+        wrc.on("data", second);
+        await Promise.resolve();
+
+        expect(second).not.toHaveBeenCalled();
+      });
+
+      it("should queue what a reconnected connection receives before the first listener", async () => {
+        const { peer, wrc } = await connect();
+        peer.lastConnection().emitClose();
+        peer.lastConnection().emitOpen();
+        peer.lastConnection().emitData(1);
+        const onData = vi.fn<OnData>();
+
+        wrc.on("data", onData);
+        await Promise.resolve();
+
+        expect(onData).toHaveBeenCalledWith({ from: "master" }, 1);
+      });
+    });
   });
 
   describe("send", () => {

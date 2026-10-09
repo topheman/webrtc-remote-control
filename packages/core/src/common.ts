@@ -151,6 +151,56 @@ export function reconnectDelay(attempt: number): number {
   );
 }
 
+/** How many messages received before the first `data` listener are kept. */
+export const MAX_PENDING_DATA = 100;
+
+/**
+ * Holds the `data` events received before anyone listens, and delivers them
+ * to the first listeners. Used by both `master.ts` and `remote.ts`, one per
+ * emitter: a remote's reconnection reuses its emitter, whose listener is
+ * already there.
+ *
+ * Without it, a binding that subscribes a render later than the connection
+ * resolves - React's provider does - loses whatever the peer sent in between.
+ *
+ * `relay` replaces the emitter's `emit("data", ...)`, and `listened` is called
+ * whenever a `data` listener is added. The first call schedules a microtask
+ * that empties the queue in order, so every listener added in the same
+ * synchronous run gets every queued message. After that the queue is only
+ * used to keep order until it is empty, and never again.
+ */
+export function makeDataQueue<TArgs extends unknown[]>(
+  emit: (...args: TArgs) => void,
+) {
+  const pending: TArgs[] = [];
+  let listenedTo = false;
+  return {
+    relay(...args: TArgs) {
+      if (!listenedTo || pending.length > 0) {
+        pending.push(args);
+        if (pending.length > MAX_PENDING_DATA) {
+          pending.shift();
+        }
+        return;
+      }
+      emit(...args);
+    },
+    listened() {
+      if (listenedTo) {
+        return;
+      }
+      listenedTo = true;
+      if (pending.length > 0) {
+        queueMicrotask(() => {
+          for (const args of pending.splice(0)) {
+            emit(...args);
+          }
+        });
+      }
+    },
+  };
+}
+
 const builtinReconnectNotice = {
   reconnecting: "Lost connection to the peer, reconnecting...",
   stalled: ({ attempt }: ReconnectingPayload) =>

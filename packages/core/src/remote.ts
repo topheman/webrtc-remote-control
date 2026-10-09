@@ -3,6 +3,7 @@ import type { DataConnection, Peer } from "peerjs";
 
 import {
   makeConnectionFilterUtilities,
+  makeDataQueue,
   makeReconnectNotice,
   reconnectDelay,
 } from "./common.js";
@@ -67,7 +68,7 @@ export interface PrepareRemoteUtils<TReconnecting = string, TStalled = string> {
 function makePeerConnection(
   peer: Peer,
   masterPeerId: string,
-  ee: EventEmitter<WrcRemoteEvents>,
+  relayData: (data: unknown) => void,
   onConnectionOpened?: () => void,
 ): DataConnection {
   const { connMetadata } = makeConnectionFilterUtilities();
@@ -81,9 +82,7 @@ function makePeerConnection(
       onConnectionOpened();
     }
   });
-  conn.on("data", (data) => {
-    ee.emit("data", { from: "master" }, data);
-  });
+  conn.on("data", relayData);
   return conn;
 }
 
@@ -138,6 +137,9 @@ export default function prepare<TReconnecting = string, TStalled = string>({
       return new Promise((res) => {
         let conn: DataConnection | null = null;
         const ee = new EventEmitter<WrcRemoteEvents>();
+        const dataQueue = makeDataQueue((data: unknown) => {
+          ee.emit("data", { from: "master" }, data);
+        });
         const wrcRemote: WrcRemote = {
           send(payload) {
             if (!conn) {
@@ -152,7 +154,13 @@ export default function prepare<TReconnecting = string, TStalled = string>({
             }
             conn.send(payload);
           },
-          on: ee.on.bind(ee),
+          on(event, fn, context) {
+            ee.on(event, fn, context);
+            if (event === "data") {
+              dataQueue.listened();
+            }
+            return ee;
+          },
           off: ee.off.bind(ee),
         };
         let retryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -184,19 +192,24 @@ export default function prepare<TReconnecting = string, TStalled = string>({
           conn = null;
           let attemptConn: DataConnection | null = null;
           const connectToMaster = () => {
-            const newConn = makePeerConnection(peer, masterPeerId, ee, () => {
-              if (!isCurrent()) {
-                return;
-              }
-              // Connected: the outage is over, so the loop stops and the next
-              // one starts from the first delay again.
-              clearRetryTimer();
-              attempt = 0;
-              reconnecting = false;
-              if (typeof onConnectionOpened === "function") {
-                onConnectionOpened();
-              }
-            });
+            const newConn = makePeerConnection(
+              peer,
+              masterPeerId,
+              dataQueue.relay,
+              () => {
+                if (!isCurrent()) {
+                  return;
+                }
+                // Connected: the outage is over, so the loop stops and the next
+                // one starts from the first delay again.
+                clearRetryTimer();
+                attempt = 0;
+                reconnecting = false;
+                if (typeof onConnectionOpened === "function") {
+                  onConnectionOpened();
+                }
+              },
+            );
             attemptConn = newConn;
             conn = newConn;
             newConn.on("close", () => {
