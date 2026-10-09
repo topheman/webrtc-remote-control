@@ -1,3 +1,5 @@
+import EventEmitter from "eventemitter3";
+
 /**
  * The shape `humanizeError` accepts. peerjs errors carry a `type`, but the
  * function is deliberately tolerant: anything with an optional `type` and
@@ -154,51 +156,95 @@ export function reconnectDelay(attempt: number): number {
 /** How many messages received before the first `data` listener are kept. */
 export const MAX_PENDING_DATA = 100;
 
+type DataEvents = { data: (...args: never[]) => void };
+
 /**
- * Holds the `data` events received before anyone listens, and delivers them
- * to the first listeners. Used by both `master.ts` and `remote.ts`, one per
- * emitter: a remote's reconnection reuses its emitter, whose listener is
- * already there.
+ * An emitter that queues the `data` it relays until a `data` listener is
+ * added, then delivers the queue in a microtask, so every listener added in
+ * the same synchronous run gets it. After that the queue only keeps order
+ * until it is empty, and is never used again.
  *
- * Without it, a binding that subscribes a render later than the connection
- * resolves - React's provider does - loses whatever the peer sent in between.
- *
- * `relay` replaces the emitter's `emit("data", ...)`, and `listened` is called
- * whenever a `data` listener is added. The first call schedules a microtask
- * that empties the queue in order, so every listener added in the same
- * synchronous run gets every queued message. After that the queue is only
- * used to keep order until it is empty, and never again.
+ * The hook is on the emitter rather than the api object because `on` returns
+ * the emitter, and a chained `.on("data")` must count too. Both `master.ts`
+ * and `remote.ts` hold one per `bindConnection`: a remote's reconnection
+ * keeps its emitter, so the queue survives it.
  */
-export function makeDataQueue<TArgs extends unknown[]>(
-  emit: (...args: TArgs) => void,
-) {
-  const pending: TArgs[] = [];
-  let listenedTo = false;
-  return {
-    relay(...args: TArgs) {
-      if (!listenedTo || pending.length > 0) {
-        pending.push(args);
-        if (pending.length > MAX_PENDING_DATA) {
-          pending.shift();
-        }
-        return;
+export class DataQueueEmitter<
+  TEvents extends DataEvents,
+> extends EventEmitter<TEvents> {
+  #pending: Parameters<TEvents["data"]>[] = [];
+  #listenedTo = false;
+
+  relayData(...args: Parameters<TEvents["data"]>) {
+    if (!this.#listenedTo || this.#pending.length > 0) {
+      this.#pending.push(args);
+      if (this.#pending.length > MAX_PENDING_DATA) {
+        this.#pending.shift();
       }
-      emit(...args);
-    },
-    listened() {
-      if (listenedTo) {
-        return;
-      }
-      listenedTo = true;
-      if (pending.length > 0) {
-        queueMicrotask(() => {
-          for (const args of pending.splice(0)) {
-            emit(...args);
-          }
+      return;
+    }
+    this.#emitData(args);
+  }
+
+  override on<T extends EventEmitter.EventNames<TEvents>>(
+    event: T,
+    fn: EventEmitter.EventListener<TEvents, T>,
+    context?: unknown,
+  ): this {
+    super.on(event, fn, context);
+    this.#added(event);
+    return this;
+  }
+
+  override addListener<T extends EventEmitter.EventNames<TEvents>>(
+    event: T,
+    fn: EventEmitter.EventListener<TEvents, T>,
+    context?: unknown,
+  ): this {
+    return this.on(event, fn, context);
+  }
+
+  override once<T extends EventEmitter.EventNames<TEvents>>(
+    event: T,
+    fn: EventEmitter.EventListener<TEvents, T>,
+    context?: unknown,
+  ): this {
+    super.once(event, fn, context);
+    this.#added(event);
+    return this;
+  }
+
+  #added(event: unknown) {
+    if (event !== "data" || this.#listenedTo) {
+      return;
+    }
+    this.#listenedTo = true;
+    if (this.#pending.length > 0) {
+      queueMicrotask(() => this.#flush());
+    }
+  }
+
+  // One message at a time, so a listener that throws loses only its own
+  // message: the error is rethrown in a task of its own and the rest follow.
+  #flush() {
+    while (this.#pending.length > 0) {
+      const args = this.#pending.shift()!;
+      try {
+        this.#emitData(args);
+      } catch (error) {
+        setTimeout(() => {
+          throw error;
         });
       }
-    },
-  };
+    }
+  }
+
+  #emitData(args: Parameters<TEvents["data"]>) {
+    (this.emit as (event: "data", ...args: unknown[]) => boolean)(
+      "data",
+      ...args,
+    );
+  }
 }
 
 const builtinReconnectNotice = {

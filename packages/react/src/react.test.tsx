@@ -7,6 +7,7 @@ import {
   vi,
 } from "vite-plus/test";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { useEffect } from "react";
 
 import {
   MasterProvider,
@@ -180,6 +181,46 @@ describe("react", () => {
       await waitFor(() => {
         expect(screen.getByTestId("out").textContent).toBe(
           "remote master-peer-id off|on|send",
+        );
+      });
+    });
+
+    it("should deliver a message the master sends before the consumer's effect subscribes", async () => {
+      const peer = makeFakePeer({ id: "remote-peer-id" });
+      const onData =
+        vi.fn<(payload: { from: "master" }, data: unknown) => void>();
+      function DataConsumer() {
+        const { ready, api } = useRemote();
+        useEffect(() => {
+          if (!ready) {
+            return;
+          }
+          api.on("data", onData);
+          return () => {
+            api.off("data", onData);
+          };
+        }, [ready, api]);
+        return null;
+      }
+
+      render(
+        <RemoteProvider masterPeerId="master-peer-id" init={() => peer}>
+          <DataConsumer />
+        </RemoteProvider>,
+      );
+      // The connection opens and the master sends at once, before React has
+      // rendered the resolved api and run the effect that subscribes.
+      await act(async () => {
+        peer.emitOpen("remote-peer-id");
+        peer.lastConnection().emitOpen();
+        await Promise.resolve();
+        peer.lastConnection().emitData({ type: "WELCOME" });
+      });
+
+      await waitFor(() => {
+        expect(onData).toHaveBeenCalledWith(
+          { from: "master" },
+          { type: "WELCOME" },
         );
       });
     });
