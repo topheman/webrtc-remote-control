@@ -851,5 +851,16 @@ describe("remote", () => {
       expect(peer.reconnect).not.toHaveBeenCalled();
       expect(peer.connect).toHaveBeenCalledTimes(1);
     });
+
+    it("should throw on `send` once the peer is destroyed", async () => {
+      const { peer, wrc } = await connect();
+
+      peer.destroy();
+      await Promise.resolve();
+
+      expect(() => wrc.send({ type: "MOVE" })).toThrow(
+        "webrtc-remote-control: `send` was called before a connection was established",
+      );
+    });
   });
 });

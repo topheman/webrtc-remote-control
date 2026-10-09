@@ -216,7 +216,7 @@ export default function prepare<TReconnecting = string, TStalled = string>({
               // until the page unloads.
               queueMicrotask(() => {
                 if (peer.destroyed) {
-                  reconnecting = false;
+                  conn = null;
                   return;
                 }
                 ee.emit("remote.disconnect", { id: remoteId });
