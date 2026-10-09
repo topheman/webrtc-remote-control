@@ -60,6 +60,11 @@ export type FakePeer = Peer & {
   emitDisconnected: () => boolean;
   emitConnection: (conn: FakeConnection) => boolean;
   emitError: (error: unknown) => boolean;
+  /**
+   * The signaling server refusing the id, handled the way peerjs does: the
+   * error, then the peer destroyed if it never opened, or only disconnected.
+   */
+  emitIdTaken: () => void;
 };
 
 /**
@@ -127,8 +132,10 @@ export function makeFakePeer({
 } = {}): FakePeer {
   const ee = new EventEmitter();
   const connections: FakeConnection[] = [];
+  let everOpened = false;
   const peer = {
     id,
+    open: false,
     disconnected: false,
     destroyed: false,
     on: ee.on.bind(ee),
@@ -143,6 +150,7 @@ export function makeFakePeer({
       }
       if (!peer.disconnected) {
         peer.disconnected = true;
+        peer.open = false;
         ee.emit("disconnected", id);
       }
       connections.forEach((conn) => conn.close());
@@ -169,14 +177,28 @@ export function makeFakePeer({
     lastConnection: () => connections[connections.length - 1],
     emitOpen: (peerId = id) => {
       peer.disconnected = false;
+      peer.open = true;
+      everOpened = true;
       return ee.emit("open", peerId);
     },
     emitDisconnected: () => {
       peer.disconnected = true;
+      peer.open = false;
       return ee.emit("disconnected", id);
     },
     emitConnection: (conn: FakeConnection) => ee.emit("connection", conn),
     emitError: (error: unknown) => ee.emit("error", error),
+    emitIdTaken: () => {
+      ee.emit("error", {
+        type: "unavailable-id",
+        message: `ID "${id}" is taken`,
+      });
+      if (everOpened) {
+        peer.emitDisconnected();
+      } else {
+        peer.destroy();
+      }
+    },
   };
   return peer as unknown as FakePeer;
 }

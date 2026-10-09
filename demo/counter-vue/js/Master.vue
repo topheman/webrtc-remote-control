@@ -66,11 +66,11 @@ const remotesList = ref<RemoteCounter[]>([]);
 const errors = ref<string[] | null>(null);
 const reversedLogs = computed(() => [...logs.value].reverse());
 
-// `humanizeError` is a plain function: it is built with the connection and
-// never changes, so only the part that does is a ref. `state.value.ready` is
+// `humanizeError` and `isIgnorableError` are plain functions: they are built
+// with the connection and never change, so only the part that does is a ref. `state.value.ready` is
 // the discriminant of that ref's union, so reading it narrows `api` and `peer`
 // on the same value - nothing below needs an assertion.
-const { state, humanizeError } = useMaster();
+const { state, humanizeError, isIgnorableError } = useMaster();
 
 const onRemoteConnect: WrcMasterEvents["remote.connect"] = ({ id }) => {
   const countersFromStorage = getCountersFromStorage();
@@ -98,8 +98,11 @@ const onData: WrcMasterEvents["data"] = ({ id }, data) => {
   remotesList.value = newRemotesListValue;
 };
 const onPeerError = (error: Error) => {
-  peerId.value = null;
   logger.error({ event: "error", error });
+  if (isIgnorableError(error)) {
+    return;
+  }
+  peerId.value = null;
   errors.value = [humanizeError(error)];
 };
 

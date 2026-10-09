@@ -217,6 +217,43 @@ connects to ids this library does not manage should not call it.
 
 Like `reconnectNotice`, it is handed out by the remote side alone.
 
+### Retrying an id the signaling server still holds
+
+A page that reloads under the id `getPeerId` kept for it can reach the
+signaling server before the old page's socket is gone. The server then refuses
+the id with `unavailable-id`, and peerjs destroys a `Peer` that has never
+opened, so `bindConnection` waits for an `open` that never comes. Recovering
+means building another `Peer`. The react and vue providers do it for you; with
+core alone, the pieces are exported:
+
+```js
+import {
+  ID_TAKEN_MAX_ATTEMPTS,
+  onIdTakenBeforeOpen,
+  reconnectDelay,
+} from "@webrtc-remote-control/core";
+
+let attempt = 0;
+function start() {
+  // after five refusals, stop waiting for the id and take a fresh one
+  const peer = new Peer(
+    attempt < ID_TAKEN_MAX_ATTEMPTS ? getPeerId() : undefined,
+  );
+  const stop = onIdTakenBeforeOpen(peer, () => {
+    stop();
+    setTimeout(start, reconnectDelay(attempt));
+    attempt += 1;
+  });
+  bindConnection(peer /* , masterPeerId on the remote side */);
+}
+start();
+```
+
+The listener only fires before the peer's first `open`: afterwards peerjs
+merely disconnects on `unavailable-id`, and the remote's reconnection loop
+already handles that. A master that ends up on a fresh id is no longer the one
+its remotes were pointed at, so they need its new link.
+
 ## TypeScript
 
 TypeScript types are shipped with the package.

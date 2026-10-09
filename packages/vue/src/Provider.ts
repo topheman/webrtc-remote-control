@@ -1,7 +1,15 @@
 import { onUnmounted, provide, shallowRef } from "vue";
 import type { InjectionKey, ShallowRef } from "vue";
-import { master, prepareUtils, remote } from "@webrtc-remote-control/core";
+import {
+  ID_TAKEN_MAX_ATTEMPTS,
+  master,
+  onIdTakenBeforeOpen,
+  prepareUtils,
+  reconnectDelay,
+  remote,
+} from "@webrtc-remote-control/core";
 import type {
+  HumanizableError,
   MakeHumanizeErrorOptions,
   MakeReconnectNoticeOptions,
   MasterBindConnectionApiResolved,
@@ -30,8 +38,16 @@ type PreparedUtils<TReconnecting = string, TStalled = string> = ReturnType<
 >;
 
 /**
+ * Whether an error the consumer just received from their `Peer` is one the
+ * library is already recovering from, and so safe not to show anyone. On top
+ * of what core's remote side ignores, both sides ignore the `unavailable-id`
+ * the provider retries before the first `open`.
+ */
+type IsIgnorableError = (error: HumanizableError) => boolean;
+
+/**
  * The utilities the master side works with: core's own per-mode bundle, minus
- * the function that opens the connection.
+ * the function that opens the connection, plus `isIgnorableError`.
  *
  * One type does two jobs on purpose. It is what `init` is handed, and it is the
  * constant half of what `useMaster` returns - `provideMaster` gives a consumer
@@ -44,7 +60,7 @@ type PreparedUtils<TReconnecting = string, TStalled = string> = ReturnType<
 export type MasterUtils = Omit<
   ReturnType<typeof master.default>,
   "bindConnection"
-> & { mode: "master" };
+> & { mode: "master"; isIgnorableError: IsIgnorableError };
 
 /**
  * The remote side's half of {@link MasterUtils}. It has no connection filter,
@@ -132,16 +148,22 @@ type Wire<
 > = (
   prepared: PreparedUtils<TReconnecting, TStalled>,
   masterPeerId: TMasterPeerId,
+  isRetryingIdTaken: () => boolean,
 ) => { utils: TUtils; connect: (peer: PeerInstance) => Promise<TApi> };
 
 const wireMaster: Wire<
   MasterUtils,
   MasterBindConnectionApiResolved,
   undefined
-> = (prepared) => {
+> = (prepared, _masterPeerId, isRetryingIdTaken) => {
   const { bindConnection, ...utils } = master.default(prepared);
   return {
-    utils: { ...utils, mode: "master" },
+    utils: {
+      ...utils,
+      mode: "master",
+      isIgnorableError: (error) =>
+        error.type === "unavailable-id" && isRetryingIdTaken(),
+    },
     connect: (peer) => bindConnection(peer),
   };
 };
@@ -153,13 +175,21 @@ const wireMaster: Wire<
 function wireRemote<TReconnecting, TStalled>(
   prepared: PreparedUtils<TReconnecting, TStalled>,
   masterPeerId: string,
+  isRetryingIdTaken: () => boolean,
 ): {
   utils: RemoteUtils<TReconnecting, TStalled>;
   connect: (peer: PeerInstance) => Promise<RemoteBindConnectionApiResolved>;
 } {
   const { bindConnection, ...utils } = remote.default(prepared);
   return {
-    utils: { ...utils, mode: "remote", masterPeerId },
+    utils: {
+      ...utils,
+      mode: "remote",
+      masterPeerId,
+      isIgnorableError: (error) =>
+        (error.type === "unavailable-id" && isRetryingIdTaken()) ||
+        utils.isIgnorableError(error),
+    },
     connect: (peer) => bindConnection(peer, masterPeerId),
   };
 }
@@ -174,7 +204,7 @@ function wireRemote<TReconnecting, TStalled>(
  * straight line code is the same behaviour, spelled honestly.
  */
 function buildConnection<
-  TUtils,
+  TUtils extends { getPeerId: () => string | undefined },
   TApi,
   TMasterPeerId extends string | undefined,
   TReconnecting = string,
@@ -189,6 +219,7 @@ function buildConnection<
     reconnectNotice,
   }: ProvideOptions<TReconnecting, TStalled>,
 ): TUtils & { state: ShallowRef<Connection<TApi>> } {
+  let opened = false;
   const { utils, connect } = wire(
     prepareUtils<TReconnecting, TStalled>({
       sessionStorageKey,
@@ -196,21 +227,52 @@ function buildConnection<
       reconnectNotice,
     }),
     masterPeerId,
+    () => !opened,
   );
-  // init callback that should return a peer instance like:
-  // `({ getPeerId }) => new Peer(getPeerId())`
-  const peer = init(utils);
   const state = shallowRef<Connection<TApi>>({
     ready: false,
-    peer,
+    peer: null,
     api: undefined,
   });
-  void connect(peer).then((api) => {
+  let current = true;
+  let attempt = 0;
+  let peer: PeerInstance;
+  let stopWatching = () => {};
+  let retryTimer: ReturnType<typeof setTimeout> | undefined;
+  // peerjs destroys a peer whose id is refused before its first `open`, so
+  // each refusal builds a new one with `init`, and the consumer sees a new
+  // `peer`. Past the ceiling the server picks a fresh id.
+  const start = () => {
+    // init callback that should return a peer instance like:
+    // `({ getPeerId }) => new Peer(getPeerId())`
+    const attemptPeer = init(
+      attempt < ID_TAKEN_MAX_ATTEMPTS
+        ? utils
+        : { ...utils, getPeerId: () => undefined },
+    );
+    peer = attemptPeer;
     // Replaced, never mutated: a shallow ref only notifies watchers when its
     // `.value` is reassigned, not when a member of it is written to.
-    state.value = { ready: true, peer, api };
-  });
+    state.value = { ready: false, peer: attemptPeer, api: undefined };
+    attemptPeer.once("open", () => {
+      opened = true;
+    });
+    stopWatching = onIdTakenBeforeOpen(attemptPeer, () => {
+      stopWatching();
+      retryTimer = setTimeout(start, reconnectDelay(attempt));
+      attempt += 1;
+    });
+    void connect(attemptPeer).then((api) => {
+      if (current) {
+        state.value = { ready: true, peer: attemptPeer, api };
+      }
+    });
+  };
+  start();
   onUnmounted(() => {
+    current = false;
+    clearTimeout(retryTimer);
+    stopWatching();
     peer.disconnect();
   });
   return { ...utils, state };

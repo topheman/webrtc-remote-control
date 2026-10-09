@@ -1,11 +1,20 @@
-import { afterEach, describe, expect, expectTypeOf, it } from "vite-plus/test";
 import {
+  afterEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+  vi,
+} from "vite-plus/test";
+import {
+  onIdTakenBeforeOpen,
   makeStoreAccessor,
   makeConnectionFilterUtilities,
   makeHumanizeError,
   makeReconnectNotice,
   prepareUtils,
 } from "./common.js";
+import { makeFakePeer } from "../test.helpers.js";
 
 describe("common", () => {
   describe("makeStoreAccessor", () => {
@@ -248,6 +257,65 @@ describe("common", () => {
       expect(getPeerId()).toBe("bar");
       expect(sessionStorage.getItem("my-key")).toBe("bar");
       expect(humanizeError({ type: "network" })).toBe("My custom message");
+    });
+  });
+
+  describe("onIdTakenBeforeOpen", () => {
+    it("should call back on an `unavailable-id` before the first open", () => {
+      const peer = makeFakePeer();
+      const listener = vi.fn<() => void>();
+      onIdTakenBeforeOpen(peer, listener);
+
+      peer.emitIdTaken();
+
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "unavailable-id" }),
+      );
+    });
+
+    it("should ignore other errors", () => {
+      const peer = makeFakePeer();
+      const listener = vi.fn<() => void>();
+      onIdTakenBeforeOpen(peer, listener);
+
+      peer.emitError({ type: "network" });
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("should ignore an `unavailable-id` once the peer has opened", () => {
+      const peer = makeFakePeer();
+      const listener = vi.fn<() => void>();
+      onIdTakenBeforeOpen(peer, listener);
+      peer.emitOpen();
+      peer.emitDisconnected();
+      peer.reconnect();
+
+      peer.emitIdTaken();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("should not listen to a peer that is already open", () => {
+      const peer = makeFakePeer();
+      peer.emitOpen();
+      const listener = vi.fn<() => void>();
+      onIdTakenBeforeOpen(peer, listener);
+
+      peer.emitIdTaken();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("should stop listening when the returned function is called", () => {
+      const peer = makeFakePeer();
+      const listener = vi.fn<() => void>();
+      const stop = onIdTakenBeforeOpen(peer, listener);
+
+      stop();
+      peer.emitIdTaken();
+
+      expect(listener).not.toHaveBeenCalled();
     });
   });
 });
