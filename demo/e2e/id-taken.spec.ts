@@ -16,6 +16,9 @@ test.skip(
 
 const HOLD_MS = 3_500;
 
+/** What the signaling server answers instead of `OPEN` when it refuses an id. */
+const REFUSALS = new Set(["ID-TAKEN", "INVALID-KEY", "ERROR"]);
+
 /**
  * Registers `id` on the local signaling server from Node, the way a page whose
  * socket the server has not seen close yet does. Rejects with the server's
@@ -26,36 +29,33 @@ function hold(id: string): Promise<WebSocket> {
     `ws://localhost:9000/myapp/peerjs?key=peerjs&id=${id}&token=holder`,
   );
   return new Promise((resolve, reject) => {
-    // Only the server's first answer: once the id is held, the remotes' offers
-    // to it arrive on this socket too.
-    socket.addEventListener(
-      "message",
-      (event) => {
-        const { type } = JSON.parse(String(event.data)) as { type: string };
-        if (type === "OPEN") {
-          resolve(socket);
-        } else {
-          socket.close();
-          reject(new Error(type));
-        }
-      },
-      { once: true },
-    );
+    // Offers the remotes send to the id arrive here too, even before `OPEN`.
+    socket.addEventListener("message", (event) => {
+      const { type } = JSON.parse(String(event.data)) as { type: string };
+      if (type === "OPEN") {
+        resolve(socket);
+      } else if (REFUSALS.has(type)) {
+        socket.close();
+        reject(new Error(type));
+      }
+    });
     socket.addEventListener("error", () => reject(new Error("socket error")));
   });
 }
 
 /** Takes `id` as soon as the page that held it has left the server. */
 async function holdOnceFree(id: string): Promise<WebSocket> {
+  let holder: WebSocket | undefined;
   await expect
-    .poll(() =>
-      hold(id).then(
-        (socket) => (socket.close(), true),
-        () => false,
-      ),
-    )
+    .poll(async () => {
+      holder = await hold(id).catch(() => undefined);
+      return holder !== undefined;
+    })
     .toBe(true);
-  return hold(id);
+  if (!holder) {
+    throw new Error(`could not hold ${id}`);
+  }
+  return holder;
 }
 
 /** Every error message `<errors-display>` shows over `ms`, sampled every 100 ms. */
