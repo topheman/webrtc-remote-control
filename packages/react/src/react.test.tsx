@@ -422,6 +422,34 @@ describe("react", () => {
       expect(isIgnorableError(idTaken)).toBe(false);
     });
 
+    it("should ignore every refusal of a master's id and connect it with that id", async () => {
+      const init = vi.fn<MasterProviderProps["init"]>(nextPeer);
+      render(
+        <MasterProvider init={init}>
+          <MasterConsumer />
+        </MasterProvider>,
+      );
+      const { isIgnorableError } = init.mock.calls[0]![0];
+
+      for (const delay of [1000, 2000]) {
+        act(() => peers.at(-1)!.emitIdTaken());
+        expect(isIgnorableError(idTaken)).toBe(true);
+        act(() => vi.advanceTimersByTime(delay));
+      }
+      expect(init.mock.calls.map(([utils]) => utils.getPeerId())).toEqual([
+        "stored-id",
+        "stored-id",
+        "stored-id",
+      ]);
+
+      await act(async () => peers[2]!.emitOpen());
+
+      expect(screen.getByTestId("out").textContent).toBe(
+        "master off|on|sendAll|sendTo",
+      );
+      expect(isIgnorableError(idTaken)).toBe(false);
+    });
+
     it("should ask for a fresh id after five refusals", () => {
       const init = vi.fn<MasterProviderProps["init"]>(nextPeer);
       render(

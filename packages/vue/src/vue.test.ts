@@ -346,6 +346,32 @@ describe("vue", () => {
       expect(isIgnorableError(idTaken)).toBe(false);
     });
 
+    it("should ignore every refusal of a master's id and connect it with that id", async () => {
+      const init = vi.fn<MasterInit>(nextPeer);
+      const { getByTestId } = render(makeMasterRoot(init));
+      const { isIgnorableError } = init.mock.calls[0]![0];
+
+      for (const delay of [1000, 2000]) {
+        peers.at(-1)!.emitIdTaken();
+        expect(isIgnorableError(idTaken)).toBe(true);
+        vi.advanceTimersByTime(delay);
+      }
+      expect(init.mock.calls.map(([utils]) => utils.getPeerId())).toEqual([
+        "stored-id",
+        "stored-id",
+        "stored-id",
+      ]);
+
+      peers[2]!.emitOpen();
+      await vi.advanceTimersByTimeAsync(0);
+      await nextTick();
+
+      expect(getByTestId("out").textContent).toBe(
+        "master off|on|sendAll|sendTo",
+      );
+      expect(isIgnorableError(idTaken)).toBe(false);
+    });
+
     it("should ask for a fresh id after five refusals", () => {
       const init = vi.fn<MasterInit>(nextPeer);
       render(makeMasterRoot(init));

@@ -18,6 +18,8 @@ export interface DemoEvent {
    * through `waitForPeerId` rather than compared whole.
    */
   comment?: string;
+  /** Only `error` events carry one: the peerjs error, as far as it serializes. */
+  error?: { type?: string };
 }
 
 export interface RemotePeer {
@@ -56,7 +58,7 @@ const REMOTE_COUNT = 3;
  * survive `JSON.stringify` inside the page, which is what the Jest suite did
  * too.
  */
-async function readEvents(page: Page): Promise<DemoEvent[]> {
+export async function readEvents(page: Page): Promise<DemoEvent[]> {
   const serialized = await page.evaluate(() =>
     JSON.stringify(document.querySelector("console-display")?.data ?? []),
   );
