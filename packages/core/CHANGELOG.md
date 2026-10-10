@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.6.0
+
+### Minor Changes
+
+- [#92](https://github.com/topheman/webrtc-remote-control/pull/92) [`dc82b70`](https://github.com/topheman/webrtc-remote-control/commit/dc82b70493d3cfb8460a9c086ad656fa21d0224e) Thanks [@topheman](https://github.com/topheman)! - Retry a page whose stored peer id the signaling server still holds. A reload could reach the server before the old page's socket was gone; peerjs then destroyed the unopened peer and the page never connected. The react and vue providers now build a new peer under the same id with a growing delay, and take a fresh id after five refusals - once, and on a master only while the page is visible. `isIgnorableError` is `true` for those `unavailable-id` errors and is now handed out by `useMaster` too. Core's remote `isIgnorableError` also covers an `unavailable-id` met while reconnecting. Core exports `onIdTakenBeforeOpen`, `reconnectDelay` and `ID_TAKEN_MAX_ATTEMPTS` for applications without a provider.
+
+### Patch Changes
+
+- [#91](https://github.com/topheman/webrtc-remote-control/pull/91) [`5609996`](https://github.com/topheman/webrtc-remote-control/commit/56099967312945c8e2ac192e37e84cd3157ea8ab) Thanks [@topheman](https://github.com/topheman)! - Stop a remote from reconnecting when the application destroys its peer. peerjs closes the connections before it marks the peer destroyed, so the remote used to reconnect from inside `peer.destroy()`, opening a signaling socket that kept the peer id taken until the page unloaded. `remote.disconnect` and `remote.reconnecting` are no longer emitted in that case.
+
 ## 0.5.3
 
 ### Patch Changes
