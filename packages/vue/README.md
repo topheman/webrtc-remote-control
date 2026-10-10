@@ -111,7 +111,7 @@ the ones worth showing. Your subscription to your peer is untouched - the
 predicate answers a question, and you still write the `return`:
 
 ```js
-const { state, humanizeError, isIgnorableError } = useMaster();
+const { state, humanizeError, isIgnorableError } = useMaster(); // same for useRemote()
 
 watch(
   () => state.value.peer,

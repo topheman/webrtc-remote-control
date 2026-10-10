@@ -112,7 +112,7 @@ the ones worth showing. Your subscription to your peer is untouched - the
 predicate answers a question, and you still write the `return`:
 
 ```jsx
-const { peer, humanizeError, isIgnorableError } = useMaster();
+const { peer, humanizeError, isIgnorableError } = useMaster(); // same for useRemote()
 
 useEffect(() => {
   if (!peer) {
