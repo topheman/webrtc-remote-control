@@ -245,6 +245,7 @@ Here's a minimal Master component:
 <template>
   <div>
     <h1>Master Counter</h1>
+    <p v-for="error in errors" :key="error">{{ error }}</p>
     <!-- the URL of the remote page, not the bare id - see above -->
     <QRCode v-if="peerId" :value="makeRemoteUrl(peerId)" />
     <a v-if="peerId" :href="makeRemoteUrl(peerId)">open a remote</a>
@@ -272,11 +273,12 @@ interface RemoteCounter {
 
 const peerId = ref<string | null>(null);
 const remotesList = ref<RemoteCounter[]>([]);
+const errors = ref<string[] | null>(null);
 const total = computed(() =>
   remotesList.value.reduce((sum, remote) => sum + remote.counter, 0),
 );
 
-const { state } = useMaster();
+const { state, humanizeError, isIgnorableError } = useMaster();
 
 const onRemoteConnect: WrcMasterEvents["remote.connect"] = ({ id }) => {
   remotesList.value = [...remotesList.value, { id, counter: 0 }];
@@ -293,6 +295,27 @@ const onData: WrcMasterEvents["data"] = ({ id }, data) => {
     );
   }
 };
+const onPeerError = (error: Error) => {
+  if (isIgnorableError(error)) {
+    return;
+  }
+  errors.value = [humanizeError(error)];
+};
+
+// errors come from `peer`, not from `api`, and a peer exists before the
+// connection is ready - see "Showing errors" below
+watch(
+  () => state.value.peer,
+  (currentPeer, _, onCleanup) => {
+    if (currentPeer) {
+      currentPeer.on("error", onPeerError);
+      onCleanup(() => {
+        currentPeer.off("error", onPeerError);
+      });
+    }
+  },
+  { immediate: true },
+);
 
 watch(state, (current, _, onCleanup) => {
   if (!current.ready) {
@@ -315,6 +338,25 @@ watch(state, (current, _, onCleanup) => {
 Naming the handlers rather than passing inline arrows is what makes the
 `onCleanup` above able to unsubscribe them: `api.off` needs the same reference
 `api.on` was given.
+
+#### Showing errors
+
+Errors come from your `Peer`, which is why the example watches
+`state.value.peer` rather than handling them in the `ready` branch. A peer
+exists before the connection opens, and it can change until then. A page that
+reloads under its stored id can reach the signaling server before the old
+page's socket is gone, and is refused with `unavailable-id`. The provider then
+builds a new `Peer` under the same id, waiting a little longer each time, and
+takes a fresh id after five refusals - once, and only while the page is
+visible, since the master's link changes with its id.
+
+Those refusals are not worth showing: the provider is already dealing with
+them. Do not track that yourself with a flag - `isIgnorableError` is handed out
+by `useMaster` and returns `true` for them while the provider retries. Nothing
+is intercepted - every error still reaches your handler, so log there freely;
+the predicate only decides what is worth putting on screen. `useRemote` hands
+out the same predicate, which covers one more case on that side - see
+[Telling the user about a reconnection](#telling-the-user-about-a-reconnection).
 
 ### 4. Remote Component Implementation
 
@@ -434,8 +476,8 @@ user does not need to do. Do not track that yourself with a flag: the
 retrying. Nothing is intercepted - every error still reaches your handler, so
 log there freely; the predicate only decides what is worth putting on screen. It
 says `true` for `peer-unavailable` while a reconnection is in flight, and for
-`unavailable-id` while the provider retries a reloaded page's stored id -
-`useMaster` hands it out for that second case too.
+`unavailable-id` while the provider retries a reloaded page's stored id, as on
+the master - see [Showing errors](#showing-errors).
 
 Both messages are overridable, on `provideRemote`, and either may be a value or
 a function of the payload - `{ id, attempt, nextDelayMs }`:
@@ -465,7 +507,9 @@ You should:
 - Read `state.value.ready` to narrow, rather than asserting on `api` or `peer`
 - Unsubscribe in `onCleanup`, with named handlers so `api.off` gets the same
   reference
-- Implement proper error handling, using the `humanizeError` function
+- Implement proper error handling, using the `humanizeError` function, on both
+  sides - after filtering out what `isIgnorableError` says the library is
+  already handling
 - Make sure your application correctly behaves in reconnection scenarios - see
   [Telling the user about a reconnection](#telling-the-user-about-a-reconnection)
 
