@@ -96,38 +96,57 @@ cannot carry that inference to the composable. Name it there instead:
 const { reconnectNotice } = useRemote<VNode>();
 ```
 
-`useRemote` hands out one more thing for the same outage: `isIgnorableError`,
-which tells the `peer-unavailable` errors the retry loop provokes from the ones
-worth showing. Your subscription to your own peer is untouched - the predicate
-answers a question, and you still write the `return`:
-
-```js
-const { humanizeError, isIgnorableError } = useRemote();
-
-peer.on("error", (error) => {
-  if (isIgnorableError(error)) {
-    return;
-  }
-  errors.value = [humanizeError(error)];
-});
-```
-
-The predicate also covers a reload, on both sides, which is why `useMaster` hands
-it out too. A page that reloads under its stored id can reach the signaling
-server before the old page's socket is gone, and is refused with
-`unavailable-id`. The provider then builds a new `Peer` under the same id,
-waiting a little longer each time, and takes a fresh id after five refusals -
-once, and on a master only while the page is visible, since its link changes;
-`isIgnorableError` is `true` for those errors while they are being retried. Each
-attempt is a new `Peer`, so `state.value.peer` can change before `ready`:
-subscribe in a `watch` on it.
-
 `reconnectNotice` has no counterpart on `useMaster`: reconnecting is something a
 remote does to its master, not the other way round.
 
 See [the core README](https://github.com/topheman/webrtc-remote-control/tree/master/packages/core#telling-the-user-about-a-reconnection)
-for what the notice decides, and
-[the section after it](https://github.com/topheman/webrtc-remote-control/tree/master/packages/core#skipping-the-errors-the-retry-loop-provokes)
+for what the notice decides.
+
+## Errors
+
+Errors come from your own `Peer`, and both `useMaster` and `useRemote` hand out
+two helpers for them: `humanizeError` turns one into a message, and
+`isIgnorableError` tells the errors this library provokes while it retries from
+the ones worth showing. Your subscription to your peer is untouched - the
+predicate answers a question, and you still write the `return`:
+
+```js
+const { state, humanizeError, isIgnorableError } = useMaster(); // same for useRemote()
+
+watch(
+  () => state.value.peer,
+  (peer, _, onCleanup) => {
+    if (!peer) {
+      return;
+    }
+    const onPeerError = (error) => {
+      if (isIgnorableError(error)) {
+        return;
+      }
+      errors.value = [humanizeError(error)];
+    };
+    peer.on("error", onPeerError);
+    onCleanup(() => {
+      peer.off("error", onPeerError);
+    });
+  },
+  { immediate: true },
+);
+```
+
+Subscribe in a `watch` on `state.value.peer`, not once `ready` is true. A page
+that reloads under its stored id can reach the signaling server before the old
+page's socket is gone, and is refused with `unavailable-id`. The provider then
+builds a new `Peer` under the same id, waiting a little longer each time, and
+takes a fresh id after five refusals - once, and on a master only while the page
+is visible, since its link changes. Each attempt is a new `Peer`, so
+`state.value.peer` can change before `ready`, and `isIgnorableError` is `true`
+for those errors while they are being retried.
+
+On a remote, the predicate also covers the `peer-unavailable` errors the
+reconnection loop provokes, which `humanizeError` would otherwise turn into
+advice to reload, talking over the notice. See
+[the core README](https://github.com/topheman/webrtc-remote-control/tree/master/packages/core#skipping-the-errors-the-retry-loop-provokes)
 for what the predicate does and does not claim.
 
 ## TypeScript

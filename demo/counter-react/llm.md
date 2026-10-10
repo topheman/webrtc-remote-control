@@ -203,8 +203,27 @@ interface RemoteCounter {
 
 function Master() {
   // which provider is above you is what types `api`, so nothing is asserted
-  const { ready, api, peer } = useMaster();
+  const { ready, api, peer, humanizeError, isIgnorableError } = useMaster();
   const [remotesList, setRemotesList] = useState<RemoteCounter[]>([]);
+  const [errors, setErrors] = useState<string[] | null>(null);
+
+  // errors come from `peer`, not from `api`, and a peer exists before the
+  // connection is ready - see "Showing errors" below
+  useEffect(() => {
+    if (!peer) {
+      return;
+    }
+    const onPeerError = (error: Error) => {
+      if (isIgnorableError(error)) {
+        return;
+      }
+      setErrors([humanizeError(error)]);
+    };
+    peer.on("error", onPeerError);
+    return () => {
+      peer.off("error", onPeerError);
+    };
+  }, [peer]);
 
   useEffect(() => {
     // `ready` is the discriminant of the union the hook returns, so this
@@ -239,6 +258,9 @@ function Master() {
   return (
     <div>
       <h1>Master Counter</h1>
+      {errors?.map((error) => (
+        <p key={error}>{error}</p>
+      ))}
       {/* the URL of the remote page, not the bare id - see above */}
       {ready && <QRCode value={makeRemoteUrl(peer.id)} />}
       {ready && <a href={makeRemoteUrl(peer.id)}>open a remote</a>}
@@ -259,6 +281,25 @@ function Master() {
   );
 }
 ```
+
+#### Showing errors
+
+Errors come from your `Peer`, which is why the example subscribes in an effect
+that depends on `peer` rather than inside the `ready` branch. `peer` exists
+before the connection opens, and it can change until then. A page that reloads
+under its stored id can reach the signaling server before the old page's socket
+is gone, and is refused with `unavailable-id`. The provider then builds a new
+`Peer` under the same id, waiting a little longer each time, and takes a fresh
+id after five refusals - once, and only while the page is visible, since the
+master's link changes with its id.
+
+Those refusals are not worth showing: the provider is already dealing with
+them. Do not track that yourself with a flag - `isIgnorableError` is handed out
+by `useMaster` and returns `true` for them while the provider retries. Nothing
+is intercepted - every error still reaches your handler, so log there freely;
+the predicate only decides what is worth putting on screen. `useRemote` hands
+out the same predicate, which covers one more case on that side - see
+[Telling the user about a reconnection](#telling-the-user-about-a-reconnection).
 
 ### 3. Remote Component Implementation
 
@@ -355,8 +396,8 @@ user does not need to do. Do not track that yourself with a flag: the
 retrying. Nothing is intercepted - every error still reaches your handler, so
 log there freely; the predicate only decides what is worth putting on screen. It
 says `true` for `peer-unavailable` while a reconnection is in flight, and for
-`unavailable-id` while the provider retries a reloaded page's stored id -
-`useMaster` hands it out for that second case too.
+`unavailable-id` while the provider retries a reloaded page's stored id, as on
+the master - see [Showing errors](#showing-errors).
 
 Both messages are overridable, on the provider, and either may be a value or a
 function of the payload - `{ id, attempt, nextDelayMs }`:
@@ -384,7 +425,9 @@ round.
 You should:
 
 - Use `useMaster` or `useRemote` for all WebRTC operations
-- Implement proper error handling, using the `humanizeError` function
+- Implement proper error handling, using the `humanizeError` function, on both
+  sides - after filtering out what `isIgnorableError` says the library is
+  already handling
 - Clean up connections in useEffect
 - Make sure your application correctly behaves in reconnection scenarios - see
   [Telling the user about a reconnection](#telling-the-user-about-a-reconnection)
