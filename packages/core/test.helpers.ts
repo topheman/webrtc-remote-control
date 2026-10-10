@@ -79,22 +79,31 @@ export function makeFakeConnection(
     ? options.metadata
     : "from-webrtc-remote-control";
   const ee = new EventEmitter();
+  let open = false;
   return {
     peer,
     metadata,
     on: ee.on.bind(ee),
     off: ee.off.bind(ee),
     send: vi.fn<DataConnection["send"]>(),
-    // Real peerjs emits "close" from `close()`, and the reconnection backoff
-    // relies on that: an attempt that never opened is abandoned by closing it,
-    // and the resulting event has to be ignored rather than treated as a fresh
-    // disconnection.
+    // Like peerjs, `close()` emits "close" synchronously, and only on an open
+    // connection.
     close: vi.fn<DataConnection["close"]>(() => {
+      if (!open) {
+        return;
+      }
+      open = false;
       ee.emit("close");
     }),
-    emitOpen: () => ee.emit("open"),
+    emitOpen: () => {
+      open = true;
+      return ee.emit("open");
+    },
     emitData: (data: unknown) => ee.emit("data", data),
-    emitClose: () => ee.emit("close"),
+    emitClose: () => {
+      open = false;
+      return ee.emit("close");
+    },
     emitError: (error: unknown) => ee.emit("error", error),
   } as unknown as FakeConnection;
 }
@@ -126,8 +135,19 @@ export function makeFakePeer({
     once: ee.once.bind(ee),
     off: ee.off.bind(ee),
     disconnect: vi.fn<() => void>(),
+    // In peerjs's order: off the signaling server, then each connection
+    // closed, emitting "close", and only then marked destroyed.
     destroy: vi.fn<() => void>(() => {
+      if (peer.destroyed) {
+        return;
+      }
+      if (!peer.disconnected) {
+        peer.disconnected = true;
+        ee.emit("disconnected", id);
+      }
+      connections.forEach((conn) => conn.close());
       peer.destroyed = true;
+      ee.emit("close");
     }),
     // Real peerjs reopens the socket and emits "open" later; a test does that
     // part with `emitOpen`.

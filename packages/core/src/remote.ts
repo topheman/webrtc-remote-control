@@ -28,6 +28,10 @@ export { makeReconnectNotice, prepareUtils } from "./common.js";
  * The events a remote emits. See the note on `WrcMasterEvents`.
  */
 export interface WrcRemoteEvents {
+  /**
+   * The connection to the master closed and a reconnection is starting. Not
+   * fired when the application destroyed the peer itself.
+   */
   "remote.disconnect": (payload: { id: string }) => void;
   /**
    * A reconnection attempt is starting. Fired once per attempt, including the
@@ -206,8 +210,18 @@ export default function prepare<TReconnecting = string, TStalled = string>({
               }
               clearRetryTimer();
               attempt = 0;
-              ee.emit("remote.disconnect", { id: remoteId });
-              reconnect();
+              // peerjs's `destroy()` closes each connection before it sets
+              // `destroyed`, so this waits a microtask to tell. Reconnecting
+              // from inside it would open a signaling socket that holds the id
+              // until the page unloads.
+              queueMicrotask(() => {
+                if (peer.destroyed) {
+                  conn = null;
+                  return;
+                }
+                ee.emit("remote.disconnect", { id: remoteId });
+                reconnect();
+              });
             });
           };
           if (peer.disconnected) {

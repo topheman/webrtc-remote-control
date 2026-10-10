@@ -10,11 +10,7 @@ import { MAX_PENDING_DATA } from "./common.js";
 import prepare, { prepareUtils } from "./remote.js";
 import type { PrepareRemoteUtils } from "./remote.js";
 import { disableConsole, makeFakePeer } from "../test.helpers.js";
-import type {
-  FakeConnection,
-  FakeConnectFn,
-  FakePeer,
-} from "../test.helpers.js";
+import type { FakeConnection, FakePeer } from "../test.helpers.js";
 
 /**
  * Behavioral baseline for the remote side of the connection.
@@ -320,6 +316,7 @@ describe("remote", () => {
       it("should queue what a reconnected connection receives before the first listener", async () => {
         const { peer, wrc } = await connect();
         peer.lastConnection().emitClose();
+        await Promise.resolve();
         peer.lastConnection().emitOpen();
         peer.lastConnection().emitData(1);
         const onData = vi.fn<OnData>();
@@ -345,6 +342,7 @@ describe("remote", () => {
       const { peer, wrc } = await connect();
       const first = peer.lastConnection();
       first.emitClose();
+      await Promise.resolve();
       const second = peer.lastConnection();
       second.emitOpen();
 
@@ -355,32 +353,11 @@ describe("remote", () => {
       expect(second.send).toHaveBeenCalledWith({ type: "MOVE" });
     });
 
-    it("should take the no-connection branch when reconnecting failed", async () => {
-      // `peer.connect` throws once the peer lost the signaling server, which is how the
-      // connection can end up null: the close handler nulls it, then the rebuild throws.
-      let attempts = 0;
-      const peer = trackPeer(makeFakePeer({ id: "remote-peer-id" }));
-      const realConnect: FakeConnectFn = peer.connect;
-      peer.connect = vi.fn<FakeConnectFn>((masterPeerId, options) => {
-        attempts += 1;
-        if (attempts > 1) {
-          throw new Error(
-            "Cannot connect to new Peer after disconnecting from server.",
-          );
-        }
-        return realConnect(masterPeerId, options);
-      });
-      const promise = prepare(prepareUtils()).bindConnection(
-        peer,
-        "master-peer-id",
-      );
-      peer.emitOpen();
-      peer.lastConnection().emitOpen();
-      const wrc = await promise;
-
-      expect(() => peer.lastConnection().emitClose()).toThrow(
-        "Cannot connect to new Peer after disconnecting from server.",
-      );
+    it("should take the no-connection branch while rejoining the signaling server", async () => {
+      const { peer, wrc } = await connect();
+      peer.emitDisconnected();
+      peer.lastConnection().emitClose();
+      await Promise.resolve();
 
       // Sending with no connection is a caller mistake and throws. Before the
       // TypeScript port it threw by accident, from a call to the non-existent
@@ -403,6 +380,7 @@ describe("remote", () => {
       );
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       expect(events).toEqual([["remote.disconnect", { id: "remote-peer-id" }]]);
       expect(peer.connect).toHaveBeenCalledTimes(2);
 
@@ -426,6 +404,7 @@ describe("remote", () => {
       wrc.on("remote.reconnect", onReconnect);
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
 
       // The first retry is immediate, which is what it has always been.
       expect(peer.connect).toHaveBeenCalledTimes(2);
@@ -465,6 +444,7 @@ describe("remote", () => {
       wrc.on("remote.disconnect", onDisconnect);
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       await vi.advanceTimersByTimeAsync(30000);
 
       expect(peer.connect.mock.calls.length).toBeGreaterThan(2);
@@ -476,12 +456,14 @@ describe("remote", () => {
       const { peer } = await connect();
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       await vi.advanceTimersByTimeAsync(1000);
       expect(peer.connect).toHaveBeenCalledTimes(3);
       peer.lastConnection().emitOpen();
 
       // A later outage waits 1s again rather than resuming at the 2s step.
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       expect(peer.connect).toHaveBeenCalledTimes(4);
       await vi.advanceTimersByTimeAsync(1000);
       expect(peer.connect).toHaveBeenCalledTimes(5);
@@ -492,6 +474,7 @@ describe("remote", () => {
       const { peer, wrc } = await connect();
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       await vi.advanceTimersByTimeAsync(3000);
       const opened = peer.lastConnection();
       opened.emitOpen();
@@ -512,6 +495,7 @@ describe("remote", () => {
       wrc.on("remote.reconnecting", (payload) => attempts.push(payload));
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       await vi.advanceTimersByTimeAsync(30000);
 
       // The first entry lands with the immediate retry, so an application has
@@ -569,6 +553,7 @@ describe("remote", () => {
       const { peer } = await connect();
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       peer.emitError({ type: "peer-unavailable" });
       await vi.advanceTimersByTimeAsync(1000);
 
@@ -602,9 +587,11 @@ describe("remote", () => {
       wrc.on("remote.reconnecting", ({ attempt }) => attempts.push(attempt));
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       await vi.advanceTimersByTimeAsync(1000);
       peer.lastConnection().emitOpen();
       peer.lastConnection().emitClose();
+      await Promise.resolve();
 
       expect(attempts).toEqual([1, 2, 1]);
     });
@@ -615,8 +602,10 @@ describe("remote", () => {
       wrc.on("remote.reconnect", onReconnect);
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       peer.lastConnection().emitOpen();
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       peer.lastConnection().emitOpen();
 
       expect(peer.connect).toHaveBeenCalledTimes(3);
@@ -657,6 +646,7 @@ describe("remote", () => {
       const { peer, prepared } = await connect();
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
 
       expect(prepared.isIgnorableError({ type: "peer-unavailable" })).toBe(
         true,
@@ -674,6 +664,7 @@ describe("remote", () => {
       });
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
 
       expect(answers).toEqual([true]);
     });
@@ -682,6 +673,7 @@ describe("remote", () => {
       const { peer, prepared } = await connect();
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       peer.lastConnection().emitOpen();
 
       expect(prepared.isIgnorableError({ type: "peer-unavailable" })).toBe(
@@ -695,6 +687,7 @@ describe("remote", () => {
       const { peer, prepared } = await connect();
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
 
       expect(prepared.isIgnorableError({ type: "network" })).toBe(false);
       expect(prepared.isIgnorableError({})).toBe(false);
@@ -738,6 +731,7 @@ describe("remote", () => {
       vi.useFakeTimers();
       const { peer } = await connect();
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       expect(peer.connect).toHaveBeenCalledTimes(2);
 
       pagehide(true);
@@ -791,6 +785,7 @@ describe("remote", () => {
       peer.emitDisconnected();
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       expect(peer.reconnect).toHaveBeenCalledTimes(1);
       expect(peer.connect).toHaveBeenCalledTimes(1);
 
@@ -804,6 +799,7 @@ describe("remote", () => {
       vi.useFakeTimers();
       const { peer } = await connect();
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       expect(peer.connect).toHaveBeenCalledTimes(2);
       peer.emitDisconnected();
 
@@ -817,6 +813,7 @@ describe("remote", () => {
       const { peer } = await connect();
       peer.emitDisconnected();
       peer.lastConnection().emitClose();
+      await Promise.resolve();
       // The first attempt times out while the peer is still off the server,
       // and the second one asks to rejoin again.
       vi.advanceTimersByTime(1000);
@@ -834,20 +831,36 @@ describe("remote", () => {
       (peer as { id: string | null }).id = null;
 
       peer.lastConnection().emitClose();
+      await Promise.resolve();
 
       expect(onDisconnect).toHaveBeenCalledWith({ id: "remote-peer-id" });
     });
 
-    it("should stop retrying once the peer is destroyed", async () => {
+    it("should not reconnect when the peer is destroyed", async () => {
       const { peer, wrc } = await connect();
+      const onDisconnect = vi.fn<() => void>();
       const onReconnecting = vi.fn<() => void>();
+      wrc.on("remote.disconnect", onDisconnect);
       wrc.on("remote.reconnecting", onReconnecting);
+
       peer.destroy();
+      await Promise.resolve();
 
-      peer.lastConnection().emitClose();
-
+      expect(onDisconnect).not.toHaveBeenCalled();
       expect(onReconnecting).not.toHaveBeenCalled();
       expect(peer.reconnect).not.toHaveBeenCalled();
+      expect(peer.connect).toHaveBeenCalledTimes(1);
+    });
+
+    it("should throw on `send` once the peer is destroyed", async () => {
+      const { peer, wrc } = await connect();
+
+      peer.destroy();
+      await Promise.resolve();
+
+      expect(() => wrc.send({ type: "MOVE" })).toThrow(
+        "webrtc-remote-control: `send` was called before a connection was established",
+      );
     });
   });
 });
