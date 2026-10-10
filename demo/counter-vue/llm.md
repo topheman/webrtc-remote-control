@@ -433,7 +433,9 @@ user does not need to do. Do not track that yourself with a flag: the
 `isIgnorableError` above is handed out by `useRemote` and knows whether core is
 retrying. Nothing is intercepted - every error still reaches your handler, so
 log there freely; the predicate only decides what is worth putting on screen. It
-says `true` only for `peer-unavailable`, only while a reconnection is in flight.
+says `true` for `peer-unavailable` while a reconnection is in flight, and for
+`unavailable-id` while the provider retries a reloaded page's stored id -
+`useMaster` hands it out for that second case too.
 
 Both messages are overridable, on `provideRemote`, and either may be a value or
 a function of the payload - `{ id, attempt, nextDelayMs }`:

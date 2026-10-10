@@ -34,7 +34,7 @@ export default function Master() {
 
   // `ready` is the discriminant of the union the hook returns, so it narrows
   // `api` and `peer` on its own - nothing below needs an assertion.
-  const { ready, api, peer, humanizeError } = useMaster();
+  const { ready, api, peer, humanizeError, isIgnorableError } = useMaster();
 
   const onRemoteConnect: WrcMasterEvents["remote.connect"] = ({ id }) => {
     console.log({ event: "remote.connect", payload: { id } });
@@ -60,8 +60,11 @@ export default function Master() {
     });
   };
   const onPeerError = (error: Error) => {
-    setPeerId(null);
     console.error({ event: "error", error });
+    if (isIgnorableError(error)) {
+      return;
+    }
+    setPeerId(null);
     setErrors([humanizeError(error)]);
   };
 

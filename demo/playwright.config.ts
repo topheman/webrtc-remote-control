@@ -53,24 +53,24 @@ export default defineConfig<DemoOptions>({
   // One project per demo mode, replacing the old `describe.each` over a `MODE`
   // env var. `pnpm run test:e2e --project=vue` now runs one mode.
   //
-  // The counter demo is the one that exists in three modes, so only its spec is
-  // parameterised that way. `testMatch` keeps the two suites apart: without it
+  // The counter demo is the one that exists in three modes, so only its specs
+  // are parameterised that way. `testMatch` keeps the two suites apart: without it
   // every project runs every spec, and the accelerometer one - which has a
   // single implementation - would run three times.
   projects: [
     {
       name: "vanilla",
-      testMatch: /counter\.spec\.ts/,
+      testMatch: /(counter|id-taken)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], demoMode: "vanilla" },
     },
     {
       name: "react",
-      testMatch: /counter\.spec\.ts/,
+      testMatch: /(counter|id-taken)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], demoMode: "react" },
     },
     {
       name: "vue",
-      testMatch: /counter\.spec\.ts/,
+      testMatch: /(counter|id-taken)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], demoMode: "vue" },
     },
     {

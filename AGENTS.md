@@ -255,6 +255,10 @@ End-to-end tests are Playwright, in `demo/e2e`, configured by `demo/playwright.c
 opening the master page and connecting three remotes - and the assertion helpers;
 `demo/e2e/counter.spec.ts` holds the three scenarios.
 
+`demo/e2e/id-taken.spec.ts` reloads a peer while Node holds its id on the signaling server,
+so the page gets `ID-TAKEN` the way it does when the server has not yet seen the old socket
+close. It runs in the react and vue modes and skips vanilla, which has no provider to retry.
+
 The accelerometer demo has a suite of its own, `demo/e2e/accelerometer.spec.ts`, on
 `demo/e2e/accelerometer.fixtures.ts`. It needs a separate fixture because that page shares
 nothing with the counter demos on the surface the tests read: it has no
@@ -276,7 +280,7 @@ twenty-four seconds, roughly doubling the suite - worth it, because the bug it c
 reached production invisible to every other assertion here, all of which read text.
 
 `testMatch` on each project is what keeps the two suites apart. The counter demo is the one
-that exists in three modes, so only its spec is parameterised that way; without a
+that exists in three modes, so only its specs are parameterised that way; without a
 `testMatch` every project runs every spec and the accelerometer suite, which has a single
 implementation, would run three times.
 

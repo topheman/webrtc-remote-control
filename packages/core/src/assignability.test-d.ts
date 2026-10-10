@@ -108,6 +108,14 @@ expectTypeOf<CurrentRemoteApi["on"]>()
 // point of the assertion is that the root export follows the *module* rather
 // than the file - a runtime export added on purpose is the case it is meant to
 // allow, as opposed to `export *` quietly dragging the whole of `common` back in.
+// The last three are for applications retrying a first `open` refused with
+// `unavailable-id` the way the react and vue providers do.
 expectTypeOf<keyof typeof import("./index.js")>().toEqualTypeOf<
-  "master" | "remote" | "prepareUtils" | "makeReconnectNotice"
+  | "master"
+  | "remote"
+  | "prepareUtils"
+  | "makeReconnectNotice"
+  | "onIdTakenBeforeOpen"
+  | "reconnectDelay"
+  | "ID_TAKEN_MAX_ATTEMPTS"
 >();

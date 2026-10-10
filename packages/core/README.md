@@ -209,13 +209,55 @@ peer.on("error", (error) => {
 
 Nothing is intercepted. You subscribe to your own `Peer` exactly as before and
 receive every event it emits; the predicate only answers a question, and you
-still write the `return`. It answers `true` only for `peer-unavailable`, and
-only while a reconnection is in flight - no other error type is ever this
-library's doing. What it cannot do is tell which peer an error is about, since
+still write the `return`. It answers `true` only while a reconnection is in
+flight, and only for `peer-unavailable` and `unavailable-id` - the second when
+the signaling server still holds the remote's id from before the outage. No
+other error type is ever this library's doing. What it cannot do is tell which peer an error is about, since
 peerjs carries that id only inside the message text, so a page whose `Peer` also
 connects to ids this library does not manage should not call it.
 
 Like `reconnectNotice`, it is handed out by the remote side alone.
+
+### Retrying an id the signaling server still holds
+
+A page that reloads under the id `getPeerId` kept for it can reach the
+signaling server before the old page's socket is gone. The server then refuses
+the id with `unavailable-id`, and peerjs destroys a `Peer` that has never
+opened, so `bindConnection` waits for an `open` that never comes. Recovering
+means building another `Peer`. The react and vue providers do it for you; with
+core alone, the pieces are exported:
+
+```js
+import {
+  ID_TAKEN_MAX_ATTEMPTS,
+  onIdTakenBeforeOpen,
+  reconnectDelay,
+} from "@webrtc-remote-control/core";
+
+let attempt = 0;
+function start() {
+  // After five refusals, take a fresh id - on a master, only while someone can
+  // see its new link.
+  const fresh =
+    attempt >= ID_TAKEN_MAX_ATTEMPTS && document.visibilityState === "visible";
+  const peer = new Peer(fresh ? undefined : getPeerId());
+  // No other socket can hold a fresh id, so it is tried once.
+  if (!fresh) {
+    const stop = onIdTakenBeforeOpen(peer, () => {
+      stop();
+      setTimeout(start, reconnectDelay(attempt));
+      attempt += 1;
+    });
+  }
+  bindConnection(peer /* , masterPeerId on the remote side */);
+}
+start();
+```
+
+The listener only fires before the peer's first `open`: afterwards peerjs
+merely disconnects on `unavailable-id`, the remote's reconnection loop already
+handles that, and `isIgnorableError` says so. A master that ends up on a fresh id is no longer the one
+its remotes were pointed at, so they need its new link.
 
 ## TypeScript
 

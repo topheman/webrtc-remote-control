@@ -653,6 +653,15 @@ describe("remote", () => {
       );
     });
 
+    it("should ignore an unavailable-id while reconnecting", async () => {
+      const { peer, prepared } = await connect();
+
+      peer.lastConnection().emitClose();
+      await Promise.resolve();
+
+      expect(prepared.isIgnorableError({ type: "unavailable-id" })).toBe(true);
+    });
+
     it("should already say so from inside a remote.reconnecting handler", async () => {
       // The flag is set before the event is emitted, so a handler reacting
       // synchronously to the notice sees the same answer the error handler

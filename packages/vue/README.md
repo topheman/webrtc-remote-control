@@ -112,7 +112,17 @@ peer.on("error", (error) => {
 });
 ```
 
-`useMaster` has no counterpart for either of these: reconnecting is something a
+The predicate also covers a reload, on both sides, which is why `useMaster` hands
+it out too. A page that reloads under its stored id can reach the signaling
+server before the old page's socket is gone, and is refused with
+`unavailable-id`. The provider then builds a new `Peer` under the same id,
+waiting a little longer each time, and takes a fresh id after five refusals -
+once, and on a master only while the page is visible, since its link changes;
+`isIgnorableError` is `true` for those errors while they are being retried. Each
+attempt is a new `Peer`, so `state.value.peer` can change before `ready`:
+subscribe in a `watch` on it.
+
+`reconnectNotice` has no counterpart on `useMaster`: reconnecting is something a
 remote does to its master, not the other way round.
 
 See [the core README](https://github.com/topheman/webrtc-remote-control/tree/master/packages/core#telling-the-user-about-a-reconnection)

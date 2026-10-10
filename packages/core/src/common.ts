@@ -1,4 +1,5 @@
 import EventEmitter from "eventemitter3";
+import type { Peer } from "peerjs";
 
 /**
  * The shape `humanizeError` accepts. peerjs errors carry a `type`, but the
@@ -151,6 +152,44 @@ export function reconnectDelay(attempt: number): number {
     RECONNECT_FIRST_DELAY_MS * 2 ** attempt,
     RECONNECT_MAX_DELAY_MS,
   );
+}
+
+/**
+ * How many refusals of a first `open` with `unavailable-id` the stored id gets,
+ * each followed by a wait of `reconnectDelay(attempt)`, before a fresh id is
+ * asked for: about 23 seconds in all. Deliberately shorter than the signaling
+ * server's timeout for a socket that died without closing (60 to 90 seconds):
+ * nobody waits that long in front of a screen that says nothing.
+ */
+export const ID_TAKEN_MAX_ATTEMPTS = 5;
+
+/**
+ * Calls `listener` when the signaling server refuses `peer`'s id before its
+ * first `open`, and returns a function that stops listening.
+ *
+ * That is the one `unavailable-id` peerjs answers by destroying the peer, so
+ * recovering means building a new one; after an `open`, peerjs only
+ * disconnects. Nothing public on the peer tells the two apart, which is why
+ * this watches `open` itself. It stops listening once the peer opens.
+ */
+export function onIdTakenBeforeOpen(
+  peer: Peer,
+  listener: (error: HumanizableError) => void,
+): () => void {
+  const onError = (error: HumanizableError) => {
+    if (error.type === "unavailable-id") {
+      listener(error);
+    }
+  };
+  const stop = () => {
+    peer.off("open", stop);
+    peer.off("error", onError);
+  };
+  if (!peer.open) {
+    peer.once("open", stop);
+    peer.on("error", onError);
+  }
+  return stop;
 }
 
 /** How many messages received before the first `data` listener are kept. */

@@ -9,8 +9,16 @@ import React, {
   useState,
 } from "react";
 import type { ReactElement, ReactNode } from "react";
-import { master, prepareUtils, remote } from "@webrtc-remote-control/core";
+import {
+  ID_TAKEN_MAX_ATTEMPTS,
+  master,
+  onIdTakenBeforeOpen,
+  prepareUtils,
+  reconnectDelay,
+  remote,
+} from "@webrtc-remote-control/core";
 import type {
+  HumanizableError,
   MakeHumanizeErrorOptions,
   MakeReconnectNoticeOptions,
   MasterBindConnectionApiResolved,
@@ -39,8 +47,16 @@ type PreparedUtils<TReconnecting = string, TStalled = string> = ReturnType<
 >;
 
 /**
+ * Whether an error the consumer just received from their `Peer` is one the
+ * library is already recovering from, and so safe not to show anyone. On top
+ * of what core's remote side ignores, both sides ignore the `unavailable-id`
+ * the provider retries before the first `open`.
+ */
+type IsIgnorableError = (error: HumanizableError) => boolean;
+
+/**
  * The utilities the master side works with: core's own per-mode bundle, minus
- * the function that opens the connection.
+ * the function that opens the connection, plus `isIgnorableError`.
  *
  * One type does two jobs on purpose. It is what `init` is handed, and it is the
  * constant half of what `useMaster` returns - the provider gives a consumer
@@ -50,7 +66,7 @@ type PreparedUtils<TReconnecting = string, TStalled = string> = ReturnType<
 export type MasterUtils = Omit<
   ReturnType<typeof master.default>,
   "bindConnection"
-> & { mode: "master" };
+> & { mode: "master"; isIgnorableError: IsIgnorableError };
 
 /**
  * The remote side's half of {@link MasterUtils}. It has no connection filter,
@@ -162,17 +178,31 @@ type Wire<
 > = (
   prepared: PreparedUtils<TReconnecting, TStalled>,
   masterPeerId: TMasterPeerId,
-) => { utils: TUtils; connect: (peer: PeerInstance) => Promise<TApi> };
+  isRetryingIdTaken: () => boolean,
+) => {
+  utils: TUtils;
+  connect: (peer: PeerInstance) => Promise<TApi>;
+  /** Whether a refused stored id may now be given up for a fresh one. */
+  mayTakeFreshId: () => boolean;
+};
 
 const wireMaster: Wire<
   MasterUtils,
   MasterBindConnectionApiResolved,
   undefined
-> = (prepared) => {
+> = (prepared, _masterPeerId, isRetryingIdTaken) => {
   const { bindConnection, ...utils } = master.default(prepared);
   return {
-    utils: { ...utils, mode: "master" },
+    utils: {
+      ...utils,
+      mode: "master",
+      isIgnorableError: (error) =>
+        error.type === "unavailable-id" && isRetryingIdTaken(),
+    },
     connect: (peer) => bindConnection(peer),
+    // A fresh id changes the master's link, so only while someone can see the
+    // new one; a hidden master keeps waiting for its own id to free up.
+    mayTakeFreshId: () => document.visibilityState === "visible",
   };
 };
 
@@ -184,14 +214,38 @@ const wireMaster: Wire<
 function wireRemote<TReconnecting, TStalled>(
   prepared: PreparedUtils<TReconnecting, TStalled>,
   masterPeerId: string,
+  isRetryingIdTaken: () => boolean,
 ): {
   utils: RemoteUtils<TReconnecting, TStalled>;
   connect: (peer: PeerInstance) => Promise<RemoteBindConnectionApiResolved>;
+  mayTakeFreshId: () => boolean;
 } {
   const { bindConnection, ...utils } = remote.default(prepared);
   return {
-    utils: { ...utils, mode: "remote", masterPeerId },
+    utils: {
+      ...utils,
+      mode: "remote",
+      masterPeerId,
+      isIgnorableError: (error) =>
+        (error.type === "unavailable-id" && isRetryingIdTaken()) ||
+        utils.isIgnorableError(error),
+    },
     connect: (peer) => bindConnection(peer, masterPeerId),
+    mayTakeFreshId: () => true,
+  };
+}
+
+/**
+ * Whether an `unavailable-id` would now be retried. Kept out of React state:
+ * only the effect writes it and only error handlers read it.
+ */
+function makeFlag() {
+  let value = false;
+  return {
+    get: () => value,
+    set: (next: boolean) => {
+      value = next;
+    },
   };
 }
 
@@ -200,7 +254,7 @@ function wireRemote<TReconnecting, TStalled>(
  * in the implementation: the two sides differ only in the `Wire` they hand in.
  */
 function useWrcConnection<
-  TUtils,
+  TUtils extends { getPeerId: () => string | undefined },
   TApi,
   TMasterPeerId extends string | undefined,
   TReconnecting = string,
@@ -224,24 +278,27 @@ function useWrcConnection<
    */
   const [initialHumanErrors] = useState(humanErrors);
   const [initialReconnectNotice] = useState(reconnectNotice);
-  const { utils, connect } = useMemo(
-    () =>
-      wire(
+  const { utils, connect, mayTakeFreshId, retrying } = useMemo(() => {
+    const retrying = makeFlag();
+    return {
+      ...wire(
         prepareUtils<TReconnecting, TStalled>({
           sessionStorageKey,
           humanErrors: initialHumanErrors,
           reconnectNotice: initialReconnectNotice,
         }),
         masterPeerId,
+        retrying.get,
       ),
-    [
-      wire,
-      masterPeerId,
-      sessionStorageKey,
-      initialHumanErrors,
-      initialReconnectNotice,
-    ],
-  );
+      retrying,
+    };
+  }, [
+    wire,
+    masterPeerId,
+    sessionStorageKey,
+    initialHumanErrors,
+    initialReconnectNotice,
+  ]);
   /**
    * `init` is read by the connection effect but deliberately kept out of its
    * dependencies: a caller writing `init={({ getPeerId }) => ...}` inline hands
@@ -261,23 +318,51 @@ function useWrcConnection<
     api: undefined,
   });
   useEffect(() => {
-    // init callback that should return a peer instance like:
-    // `({ getPeerId }) => new Peer(getPeerId())`
-    const peer = initRef.current(utils);
-    setConnection({ ready: false, peer, api: undefined });
     let current = true;
-    void connect(peer).then((api) => {
-      if (current) {
-        setConnection({ ready: true, peer, api });
+    let attempt = 0;
+    let peer: PeerInstance;
+    let stopWatching = () => {};
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    // peerjs destroys a peer whose id is refused before its first `open`, so
+    // each refusal builds a new one with `init`, and the consumer sees a new
+    // `peer`. Past the ceiling the server picks a fresh id, tried once: no
+    // other socket can hold it.
+    const start = () => {
+      const fresh = attempt >= ID_TAKEN_MAX_ATTEMPTS && mayTakeFreshId();
+      // init callback that should return a peer instance like:
+      // `({ getPeerId }) => new Peer(getPeerId())`
+      const attemptPeer = initRef.current(
+        fresh ? { ...utils, getPeerId: () => undefined } : utils,
+      );
+      peer = attemptPeer;
+      setConnection({ ready: false, peer: attemptPeer, api: undefined });
+      retrying.set(!fresh);
+      attemptPeer.once("open", () => {
+        retrying.set(false);
+      });
+      if (!fresh) {
+        stopWatching = onIdTakenBeforeOpen(attemptPeer, () => {
+          stopWatching();
+          retryTimer = setTimeout(start, reconnectDelay(attempt));
+          attempt += 1;
+        });
       }
-    });
+      void connect(attemptPeer).then((api) => {
+        if (current) {
+          setConnection({ ready: true, peer: attemptPeer, api });
+        }
+      });
+    };
+    start();
     return () => {
       // The api this promise resolves to belongs to a peer that is about to be
       // disconnected, so a late resolution must not be published.
       current = false;
+      clearTimeout(retryTimer);
+      stopWatching();
       peer.disconnect();
     };
-  }, [utils, connect]);
+  }, [utils, connect, mayTakeFreshId, retrying]);
   return connection.ready
     ? { ...utils, ready: true, peer: connection.peer, api: connection.api }
     : { ...utils, ready: false, peer: connection.peer, api: undefined };

@@ -2,12 +2,13 @@ import {
   afterAll,
   afterEach,
   beforeAll,
+  beforeEach,
   describe,
   expect,
   it,
   vi,
 } from "vite-plus/test";
-import { defineComponent, h } from "vue";
+import { defineComponent, h, nextTick } from "vue";
 import type { Component } from "vue";
 import { cleanup, render, waitFor } from "@testing-library/vue";
 
@@ -19,6 +20,7 @@ import type {
   RemoteUtils,
 } from "./vue.js";
 import { disableConsole, makeFakePeer } from "../../core/test.helpers.js";
+import type { FakePeer } from "../../core/test.helpers.js";
 
 /**
  * Behavioral baseline for the vue binding.
@@ -175,6 +177,7 @@ describe("vue", () => {
         "getPeerId",
         "humanizeError",
         "isConnectionFromRemote",
+        "isIgnorableError",
         "mode",
       ]);
       expect(getByTestId("out").textContent).toBe("not-ready");
@@ -209,8 +212,7 @@ describe("vue", () => {
 
       // The remote side has no use for the connection filter, so it is not
       // offered one - it is not on the type, and not on the value either. It
-      // does get `isIgnorableError` and `reconnectNotice`, which the master
-      // side has no use for.
+      // does get `reconnectNotice`, which the master side has no use for.
       expect(Object.keys(init.mock.calls[0]?.[0] ?? {}).sort()).toEqual([
         "getPeerId",
         "humanizeError",
@@ -287,6 +289,166 @@ describe("vue", () => {
           nextDelayMs: 1000,
         }),
       ).toBe("Lost connection to the peer, reconnecting...");
+    });
+  });
+
+  describe("id taken before the first open", () => {
+    const idTaken = { type: "unavailable-id" };
+    let peers: FakePeer[];
+    const nextPeer = () => {
+      const peer = makeFakePeer({ id: "stored-id" });
+      peers.push(peer);
+      return peer;
+    };
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      peers = [];
+      sessionStorage.setItem("webrtc-remote-control-peer-id", "stored-id");
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+      sessionStorage.clear();
+    });
+
+    it("should build a new peer after the delay and connect with it", async () => {
+      const init = vi.fn<RemoteInit>(nextPeer);
+      let state: ReturnType<typeof useRemote>["state"] | undefined;
+      const StateConsumer = defineComponent({
+        setup() {
+          state = useRemote().state;
+        },
+        render: () => h(RemoteConsumer),
+      });
+      const { getByTestId } = render(
+        makeRemoteRoot(init, { masterPeerId: "master-peer-id" }, StateConsumer),
+      );
+      const { isIgnorableError } = init.mock.calls[0]![0];
+
+      peers[0]!.emitIdTaken();
+      expect(isIgnorableError(idTaken)).toBe(true);
+      vi.advanceTimersByTime(999);
+      expect(init).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(1);
+      expect(init).toHaveBeenCalledTimes(2);
+      expect(init.mock.calls[1]![0].getPeerId()).toBe("stored-id");
+      expect(state?.value.peer).toBe(peers[1]);
+
+      peers[1]!.emitOpen();
+      peers[1]!.lastConnection().emitOpen();
+      await vi.advanceTimersByTimeAsync(0);
+      await nextTick();
+
+      expect(getByTestId("out").textContent).toBe(
+        "remote master-peer-id off|on|send",
+      );
+      expect(isIgnorableError(idTaken)).toBe(false);
+    });
+
+    it("should ignore every refusal of a master's id and connect it with that id", async () => {
+      const init = vi.fn<MasterInit>(nextPeer);
+      const { getByTestId } = render(makeMasterRoot(init));
+      const { isIgnorableError } = init.mock.calls[0]![0];
+
+      for (const delay of [1000, 2000]) {
+        peers.at(-1)!.emitIdTaken();
+        expect(isIgnorableError(idTaken)).toBe(true);
+        vi.advanceTimersByTime(delay);
+      }
+      expect(init.mock.calls.map(([utils]) => utils.getPeerId())).toEqual([
+        "stored-id",
+        "stored-id",
+        "stored-id",
+      ]);
+
+      peers[2]!.emitOpen();
+      await vi.advanceTimersByTimeAsync(0);
+      await nextTick();
+
+      expect(getByTestId("out").textContent).toBe(
+        "master off|on|sendAll|sendTo",
+      );
+      expect(isIgnorableError(idTaken)).toBe(false);
+    });
+
+    it("should ask for a fresh id after five refusals", () => {
+      const init = vi.fn<MasterInit>(nextPeer);
+      render(makeMasterRoot(init));
+
+      for (const delay of [1000, 2000, 4000, 8000, 8000]) {
+        peers.at(-1)!.emitIdTaken();
+        vi.advanceTimersByTime(delay);
+      }
+
+      expect(init).toHaveBeenCalledTimes(6);
+      expect(init.mock.calls.map(([utils]) => utils.getPeerId())).toEqual([
+        "stored-id",
+        "stored-id",
+        "stored-id",
+        "stored-id",
+        "stored-id",
+        undefined,
+      ]);
+    });
+
+    it("should keep the stored id while a hidden master is refused", () => {
+      const visibility = vi
+        .spyOn(document, "visibilityState", "get")
+        .mockReturnValue("hidden");
+      const init = vi.fn<MasterInit>(nextPeer);
+      render(makeMasterRoot(init));
+
+      for (const delay of [1000, 2000, 4000, 8000, 8000, 8000]) {
+        peers.at(-1)!.emitIdTaken();
+        vi.advanceTimersByTime(delay);
+      }
+      expect(init).toHaveBeenCalledTimes(7);
+      expect(init.mock.calls.at(-1)![0].getPeerId()).toBe("stored-id");
+
+      visibility.mockReturnValue("visible");
+      peers.at(-1)!.emitIdTaken();
+      vi.advanceTimersByTime(8000);
+      expect(init.mock.calls.at(-1)![0].getPeerId()).toBeUndefined();
+    });
+
+    it("should not retry a fresh id the server refuses", () => {
+      const init = vi.fn<MasterInit>(nextPeer);
+      render(makeMasterRoot(init));
+      const { isIgnorableError } = init.mock.calls[0]![0];
+
+      for (const delay of [1000, 2000, 4000, 8000, 8000, 8000]) {
+        peers.at(-1)!.emitIdTaken();
+        vi.advanceTimersByTime(delay);
+      }
+
+      expect(init).toHaveBeenCalledTimes(6);
+      expect(isIgnorableError(idTaken)).toBe(false);
+    });
+
+    it("should not retry once the provider unmounts", () => {
+      const init = vi.fn<MasterInit>(nextPeer);
+      const { unmount } = render(makeMasterRoot(init));
+      peers[0]!.emitIdTaken();
+
+      unmount();
+      vi.advanceTimersByTime(1000);
+
+      expect(init).toHaveBeenCalledTimes(1);
+    });
+
+    it("should leave an `unavailable-id` after the first open to the application", () => {
+      const init = vi.fn<MasterInit>(nextPeer);
+      render(makeMasterRoot(init));
+      const { isIgnorableError } = init.mock.calls[0]![0];
+      expect(isIgnorableError({ type: "network" })).toBe(false);
+
+      peers[0]!.emitOpen();
+      peers[0]!.emitIdTaken();
+      vi.advanceTimersByTime(8000);
+
+      expect(isIgnorableError(idTaken)).toBe(false);
+      expect(init).toHaveBeenCalledTimes(1);
     });
   });
 });
