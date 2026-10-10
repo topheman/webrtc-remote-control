@@ -334,3 +334,13 @@ A few things are load-bearing:
   repository squash-merges, the hash only exists after the merge, so such a rewrite has to
   land as its own pull request and the file is updated in a later one.
 - Pull requests that change a published package carry a changeset.
+- A change to a published package's API updates the documents that describe it, in the
+  same pull request. They are three, and they do not do the same job:
+  - each package's `README.md` is the reference a person reads on npm and GitHub: the
+    feature belongs in the section about its concept, with an example;
+  - `demo/counter-react/llm.md` and `demo/counter-vue/llm.md` are complete applications
+    for coding assistants, which reproduce the examples and tend to drop what is only
+    prose - so anything an application is expected to do goes into the example code,
+    not just the text around it;
+  - `demo/public/llms.txt` indexes both, and names core's API surface - update it when a
+    document is added, changes role, or that list goes stale.
