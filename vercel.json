@@ -1,4 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "node -e \"process.exit(process.versions.node.startsWith('26.') ? 0 : 1)\" && VP_GIT_HOOKS=0 pnpm install --frozen-lockfile"
+  "installCommand": "VP_GIT_HOOKS=0 pnpm install --frozen-lockfile"
 }
