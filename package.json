@@ -69,5 +69,8 @@
     "vite-plus": "catalog:",
     "vue-tsc": "3.3.11"
   },
+  "engines": {
+    "node": "26.x"
+  },
   "packageManager": "pnpm@12.4.1"
 }

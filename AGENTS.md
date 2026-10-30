@@ -123,6 +123,10 @@ the repo. The one exception is `vercel.json`, which pins `installCommand` to pnp
 dashboard still carried an `npm install` override from before the pnpm migration, and
 settings in `vercel.json` take precedence over the dashboard. npm cannot resolve the
 `catalog:` protocol, so a preview deploy installing with npm fails outright.
+The Node.js major Vercel builds with comes from `engines.node` in the root
+`package.json`, which overrides the dashboard's Node.js Version setting; Vercel ignores
+`.node-version`, so bumping Node means changing both. Only the major can be chosen - Vercel
+rolls out patch releases on its own.
 
 Releases run on Changesets with independent versions, driven by
 `.github/workflows/release.yml`. That workflow picks between versioning and publishing

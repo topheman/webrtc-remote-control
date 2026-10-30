@@ -4,10 +4,11 @@
 
 ## Prerequisites
 
-- Nodejs >=24 (see [.node-version](.node-version)). [.nvmrc](.nvmrc) carries the same
+- Node.js 26 (see [.node-version](.node-version)). [.nvmrc](.nvmrc) carries the same
   version for nvm's benefit - nvm reads only that file, while the toolchain and CI read
   `.node-version`. Keep the two in step when bumping Node.
-- pnpm >=12 - `corepack enable pnpm` picks up the version pinned in `packageManager`
+- pnpm 12, the version pinned in `packageManager`. Node.js stopped shipping Corepack in
+  version 25, so install pnpm on its own - see [pnpm's installation guide](https://pnpm.io/installation).
 
 Everything else this repository builds with comes down with `pnpm install` - see
 [The toolchain](#the-toolchain) below.
