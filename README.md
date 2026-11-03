@@ -17,11 +17,9 @@ Implementations
 
 ## Built with webrtc-remote-control
 
-<a href="https://pingpad.app"><img src="./demo/public/images/pingpad.png" alt="pingpad: your phone is the paddle" width="240" align="left" hspace="12"></a>
+<a href="https://pingpad.app"><img src="./demo/public/images/pingpad.png" alt="pingpad: your phone is the paddle" width="320"></a>
 
 [**pingpad**](https://pingpad.app): table tennis in the browser, with your phone as the paddle. Scan the QR code, nothing to install. Read [how pingpad was built](https://dev.to/topheman/pingpad-table-tennis-in-the-browser-with-your-phone-as-the-paddle-3e1b) on dev.to.
-
-<br clear="left">
 
 ## The problem
 
