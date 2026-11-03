@@ -79,6 +79,32 @@
           display: block;
         }
       }
+      .showcase {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin: 30px 0;
+      }
+      .showcase img {
+        display: block;
+        width: 280px;
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+      }
+      .showcase h2 {
+        margin: 0 0 8px;
+        font-size: 120%;
+      }
+      .showcase p {
+        margin: 0 0 8px;
+      }
+      @media (max-width: 768px) {
+        .showcase {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
       .github-sources-wrapper {
         margin-top: 40px;
         text-align: right;
@@ -117,6 +143,30 @@
         As for now, there are multiple implementations : VanillaJS, react and
         vue.
       </p>
+      <section class="showcase">
+        <a href="https://pingpad.app" title="Play pingpad">
+          <img
+            src="./images/pingpad.png"
+            alt="pingpad: your phone is the paddle"
+            width="1000"
+            height="420"
+          />
+        </a>
+        <div>
+          <h2>Built with webrtc-remote-control</h2>
+          <p>
+            <a href="https://pingpad.app"><strong>pingpad</strong></a
+            >: table tennis in the browser, with your phone as the paddle. Scan
+            the QR code, nothing to install.
+          </p>
+          <p>
+            <a
+              href="https://dev.to/topheman/pingpad-table-tennis-in-the-browser-with-your-phone-as-the-paddle-3e1b"
+              >How pingpad was built</a
+            >, on dev.to.
+          </p>
+        </div>
+      </section>
       <p>
         Try the <strong>demos</strong> for the different implementations (you'll
         find a direct link to the source code):
