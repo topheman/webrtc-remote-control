@@ -54,55 +54,143 @@
     />
     <meta name="keywords" content="WebRTC, PeerJS, DataChannels, React, Vue" />
     <style>
-      .demo-list {
-        font-size: 120%;
+      #content {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      .intro {
+        font-size: 110%;
         line-height: 150%;
       }
-      .demo-list li {
+      .section-title {
+        margin: 36px 0 6px;
+        font-size: 140%;
       }
-      .demo-list li a {
+      .section-lead {
+        margin: 0 0 18px;
+        color: #444;
+      }
+      .demo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .demo-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-sizing: border-box;
+        padding: 18px 20px;
+        border: 2px solid #900000;
+        border-radius: 10px;
+        color: #222;
         text-decoration: none;
+        transition:
+          background-color 0.2s,
+          transform 0.2s,
+          box-shadow 0.2s;
       }
-      .demo-list li a .demo-name {
-        text-decoration: underline;
+      .demo-card:hover,
+      .demo-card:focus-visible {
+        background-color: #fff5f5;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(144, 0, 0, 0.18);
       }
-      .demo-list li a:hover .demo-name {
-        text-decoration: none;
+      .demo-card h3 {
+        margin: 0 0 6px;
+        font-size: 130%;
       }
-      .demo-list li a .demo-package {
-        margin-left: 10px;
-        text-decoration: none;
+      .demo-card .demo-package {
+        align-self: flex-start;
+        margin-bottom: 12px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background-color: #900000;
+        color: #fff;
+        font-family: Menlo, Consolas, monospace;
         font-size: 80%;
       }
-      @media (max-width: 768px) {
-        .demo-list li a .demo-package {
-          display: block;
-        }
+      .demo-card p {
+        flex: 1;
+        margin: 0 0 14px;
+        line-height: 140%;
+      }
+      .demo-card .demo-cta {
+        color: #900000;
+        font-weight: bold;
+      }
+      .demo-grid .featured-item {
+        grid-column: 1 / -1;
+      }
+      .demo-card.featured {
+        background-color: #900000;
+        color: #fff;
+      }
+      .demo-card.featured h3,
+      .demo-card.featured .demo-cta {
+        color: #fff;
+      }
+      .demo-card.featured .demo-package {
+        background-color: #fff;
+        color: #900000;
+      }
+      .demo-card.featured:hover,
+      .demo-card.featured:focus-visible {
+        background-color: #a80000;
       }
       .showcase {
+        margin-top: 40px;
+      }
+      .showcase-card {
         display: flex;
         align-items: center;
-        gap: 20px;
-        margin: 30px 0;
+        gap: 24px;
+        padding: 18px 20px;
+        border: 2px solid #900000;
+        border-radius: 10px;
+        color: #222;
       }
-      .showcase img {
+      .showcase-card img {
         display: block;
         width: 280px;
         max-width: 100%;
         height: auto;
         border-radius: 8px;
       }
-      .showcase h2 {
-        margin: 0 0 8px;
-        font-size: 120%;
+      .showcase-card h3 {
+        margin: 0 0 6px;
+        font-size: 130%;
       }
-      .showcase p {
-        margin: 0 0 8px;
+      .showcase-card h3 a {
+        text-decoration: none;
+      }
+      .showcase-card p {
+        margin: 0 0 14px;
+        line-height: 140%;
+      }
+      .showcase-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+        font-weight: bold;
+      }
+      .showcase-links a {
+        text-decoration: none;
+      }
+      .showcase-links a:hover,
+      .showcase-links a:focus-visible {
+        text-decoration: underline;
       }
       @media (max-width: 768px) {
-        .showcase {
+        .showcase-card {
           flex-direction: column;
-          align-items: flex-start;
+          align-items: stretch;
+        }
+        .showcase-card img {
+          width: 100%;
         }
       }
       .github-sources-wrapper {
@@ -133,81 +221,100 @@
       <h1 class="title">webrtc-remote-control</h1>
     </header>
     <div id="content">
-      <p>
+      <p class="intro">
         <strong>webrtc-remote-control</strong> is a set of tools providing a
         thin abstraction layer above <strong>peerjs</strong> that will let you
         be more productive at making <strong>WebRTC</strong> data channels based
-        apps.
+        apps, with implementations for VanillaJS, React and Vue.
       </p>
-      <p>
-        As for now, there are multiple implementations : VanillaJS, react and
-        vue.
+      <h2 class="section-title">Try the demos</h2>
+      <p class="section-lead">
+        Open a demo on your computer, then scan its QR code with your phone to
+        use it as a remote. Each demo links to its source code.
       </p>
-      <section class="showcase">
-        <a href="https://pingpad.app" title="Play pingpad">
-          <img
-            src="./images/pingpad.png"
-            alt="pingpad: your phone is the paddle"
-            width="1000"
-            height="420"
-          />
-        </a>
-        <div>
-          <h2>Built with webrtc-remote-control</h2>
-          <p>
-            <a href="https://pingpad.app"><strong>pingpad</strong></a
-            >: table tennis in the browser, with your phone as the paddle. Scan
-            the QR code, nothing to install.
-          </p>
-          <p>
-            <a
-              href="https://dev.to/topheman/pingpad-table-tennis-in-the-browser-with-your-phone-as-the-paddle-3e1b"
-              >How pingpad was built</a
-            >, on dev.to.
-          </p>
-        </div>
-      </section>
-      <p>
-        Try the <strong>demos</strong> for the different implementations (you'll
-        find a direct link to the source code):
-      </p>
-      <ul class="demo-list">
+      <ul class="demo-grid">
         <li>
           <a
+            class="demo-card"
             href="./counter-vanilla/master.html"
             title="Demo (counter) with VanillaJS implementation"
-            ><span class="demo-name">counter / vanilla</span
-            ><span class="demo-package">@webrtc-remote-control/core</span></a
           >
+            <h3>Counter / vanilla</h3>
+            <span class="demo-package">@webrtc-remote-control/core</span>
+            <p>
+              Remotes increment and decrement a shared counter. No framework.
+            </p>
+            <span class="demo-cta">Open demo &rarr;</span>
+          </a>
         </li>
         <li>
           <a
+            class="demo-card"
             href="./counter-react/index.html"
             title="Demo (counter) with React implementation"
-            ><span class="demo-name">counter / react</span
-            ><span class="demo-package">@webrtc-remote-control/react</span></a
           >
+            <h3>Counter / react</h3>
+            <span class="demo-package">@webrtc-remote-control/react</span>
+            <p>The same counter, built with the React providers and hooks.</p>
+            <span class="demo-cta">Open demo &rarr;</span>
+          </a>
         </li>
         <li>
           <a
+            class="demo-card"
             href="./counter-vue/index.html"
             title="Demo (counter) with Vue implementation"
-            ><span class="demo-name">counter / vue</span
-            ><span class="demo-package">@webrtc-remote-control/vue</span></a
           >
+            <h3>Counter / vue</h3>
+            <span class="demo-package">@webrtc-remote-control/vue</span>
+            <p>
+              The same counter, built with the Vue providers and composables.
+            </p>
+            <span class="demo-cta">Open demo &rarr;</span>
+          </a>
+        </li>
+        <li class="featured-item">
+          <a
+            class="demo-card featured"
+            href="./accelerometer-3d/index.html"
+            title="Demo using your phone's accelerometer and 3D"
+          >
+            <h3>Accelerometer 3D</h3>
+            <span class="demo-package">@webrtc-remote-control/react</span>
+            <p>
+              Tilt your phone and watch its 3D model follow on the big screen.
+            </p>
+            <span class="demo-cta">Open demo &rarr;</span>
+          </a>
         </li>
       </ul>
-      <p>Checkout more advanced demos:</p>
-      <ul class="demo-list">
-        <li>
-          <a href="./accelerometer-3d/index.html"
-            ><span class="demo-name">accelerometer-3d</span
-            ><span class="demo-package"
-              >(WebRTC + Your phone's accelerometer and 3D)</span
-            ></a
-          >
-        </li>
-      </ul>
+      <section class="showcase">
+        <h2 class="section-title">Built with webrtc-remote-control</h2>
+        <div class="showcase-card">
+          <a href="https://pingpad.app" title="Play pingpad">
+            <img
+              src="./images/pingpad.png"
+              alt="pingpad: your phone is the paddle"
+              width="1000"
+              height="420"
+            />
+          </a>
+          <div>
+            <h3><a href="https://pingpad.app">pingpad</a></h3>
+            <p>
+              Table tennis in the browser, with your phone as the paddle. Scan
+              the QR code, nothing to install.
+            </p>
+            <div class="showcase-links">
+              <a href="https://pingpad.app">Play pingpad &rarr;</a>
+              <a
+                href="https://dev.to/topheman/pingpad-table-tennis-in-the-browser-with-your-phone-as-the-paddle-3e1b"
+                >How pingpad was built, on dev.to &rarr;</a
+              >
+            </div>
+          </div>
+        </div>
+      </section>
       <p class="github-sources-wrapper">
         <a
           href="https://github.com/topheman/webrtc-remote-control"
